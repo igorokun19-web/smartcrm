@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const db = require('./db');
 const authRoutes = require('./routes/auth');
 
@@ -22,6 +23,9 @@ app.use(cors({
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files (frontend)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================
 // ROOT ROUTE
@@ -62,12 +66,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// 404 handler - serve index.html for SPA routes
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'הנתיב לא נמצא'
-  });
+  // If it's an API request, return 404 JSON
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({
+      success: false,
+      error: 'הנתיב לא נמצא'
+    });
+  }
+  // For non-API requests, serve index.html (for React Router)
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ============================================
