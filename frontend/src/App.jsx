@@ -46,10 +46,10 @@ function AppContent() {
       <div className="flex min-h-screen">
         <Sidebar />
 
-        <main className="flex-1">
+        <main className="flex-1 w-full">
           <Header />
 
-          <div className="p-6">
+          <div className="p-3 md:p-6 pb-20 md:pb-6">
             <Routes>
               <Route
                 path="/"

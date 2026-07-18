@@ -287,11 +287,11 @@ export default function Leads() {
   const filteredLeads = filteredSortedLeads;
 
   return (
-    <div className="p-6" dir={language === "he" ? "rtl" : "ltr"}>
-      <h1 className="text-3xl font-bold mb-6">{t("leads.title")}</h1>
+    <div className="p-3 md:p-6" dir={language === "he" ? "rtl" : "ltr"}>
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">{t("leads.title")}</h1>
 
-      <div className="bg-white rounded-xl shadow p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">
+      <div className="bg-white rounded-xl shadow p-4 md:p-6 mb-4 md:mb-6">
+        <h2 className="text-lg md:text-xl font-semibold mb-4">
           {editingId ? t("leads.editLead") : t("leads.addNewLead")}
         </h2>
 
@@ -302,7 +302,7 @@ export default function Leads() {
             value={formData.name}
             onChange={handleChange}
             placeholder={t("leads.namePlaceholder")}
-            className="border rounded-lg p-3 text-right"
+            className="border rounded-lg p-3 text-right text-sm md:text-base"
           />
 
           <input
@@ -311,7 +311,7 @@ export default function Leads() {
             value={formData.phone}
             onChange={handleChange}
             placeholder={t("leads.phonePlaceholder")}
-            className="border rounded-lg p-3 text-right"
+            className="border rounded-lg p-3 text-right text-sm md:text-base"
           />
 
           <textarea
@@ -320,13 +320,13 @@ export default function Leads() {
             onChange={handleChange}
             placeholder={t("leads.messagePlaceholder")}
             rows="3"
-            className="border rounded-lg p-3 text-right"
+            className="border rounded-lg p-3 text-right text-sm md:text-base"
           />
 
           <div className="flex gap-3 flex-wrap">
             <button
               onClick={saveLead}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-5 rounded-lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 md:py-3 px-4 md:px-5 rounded-lg text-sm md:text-base"
             >
               {editingId ? t("leads.updateLead") : t("leads.saveLead")}
             </button>
@@ -334,7 +334,7 @@ export default function Leads() {
             {editingId && (
               <button
                 onClick={resetForm}
-                className="bg-gray-500 hover:bg-gray-600 text-white py-3 px-5 rounded-lg"
+                className="bg-gray-500 hover:bg-gray-600 text-white py-2 md:py-3 px-4 md:px-5 rounded-lg text-sm md:text-base"
               >
                 {t("common.cancel")}
               </button>
@@ -343,8 +343,8 @@ export default function Leads() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow p-6 mb-6">
-        <div className="flex gap-4 flex-wrap items-center mb-4">
+      <div className="bg-white rounded-xl shadow p-4 md:p-6 mb-4 md:mb-6">
+        <div className="flex gap-2 md:gap-4 flex-wrap items-center mb-4">
           <input
             type="text"
             value={searchInput}

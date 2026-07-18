@@ -93,12 +93,12 @@ export default function Dashboard() {
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-neutral-900">{t("dashboard.title")}</h1>
-        <p className="text-neutral-500 mt-1">{t("dashboard.subtitle")}</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">{t("dashboard.title")}</h1>
+        <p className="text-neutral-500 text-sm md:text-base mt-1">{t("dashboard.subtitle")}</p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         <KPICard icon={Users} label={t("dashboard.totalLeads")} value={totalLeads} color="text-blue-600" />
         <KPICard icon={CheckCircle} label={t("dashboard.closedDeals")} value={closedDeals} color="text-green-600" />
         <KPICard icon={TrendingUp} label={t("dashboard.quotes")} value={quotedDeals} color="text-yellow-600" />
@@ -106,7 +106,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
         {/* Pipeline Trend Chart */}
         <Card>
           <h2 className="text-lg font-bold text-neutral-900 mb-6">
