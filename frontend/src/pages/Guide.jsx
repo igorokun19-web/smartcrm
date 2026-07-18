@@ -502,28 +502,17 @@ export default function Guide() {
           <h2 className="text-2xl font-bold text-gray-900">סרטו הדגמה - MyServices CRM בפעולה</h2>
         </div>
         
-        <div className="bg-gradient-to-br from-purple-900 via-blue-900 to-black rounded-lg overflow-hidden shadow-lg mb-4" style={{ aspectRatio: "16 / 9" }}>
-          <div className="w-full h-full flex flex-col items-center justify-center p-6">
-            <div className="text-center">
-              <p className="text-6xl mb-4">🎬</p>
-              <h3 className="text-2xl font-bold text-white mb-2">סרטונים מקצועיים מתקרבים</h3>
-              <p className="text-xl text-gray-300 mb-4">צפיפול בערוץ שלנו ליוטיוב</p>
-              <p className="text-gray-400 mb-6">
-                🎥 סרטוני הדגמה פרופסיונליים מחכים לך
-              </p>
-              <a
-                href="https://www.youtube.com/channel/UCWAppffFEXjPyUGHOE3kVdg"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg transition transform hover:scale-105"
-              >
-                ✅ עקוב בערוץ YouTube
-              </a>
-              <p className="text-sm text-gray-500 mt-4">
-                Subscribe להודעות על סרטונים חדשים
-              </p>
-            </div>
-          </div>
+        <div className="bg-black rounded-lg overflow-hidden shadow-lg mb-4" style={{ aspectRatio: "16 / 9" }}>
+          <video 
+            width="100%" 
+            height="100%" 
+            controls 
+            className="w-full h-full"
+            style={{ display: 'block' }}
+          >
+            <source src="/demo_video.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
 
         <div className="space-y-3">
