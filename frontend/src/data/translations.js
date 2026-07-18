@@ -26,7 +26,7 @@ export const translations = {
 
     // Dashboard
     dashboard: {
-      title: "Dashboard Pro",
+      title: "דשבורד Pro",
       subtitle: "סקירת ביצועים בזמן אמת",
       totalLeads: "סה״כ לידים",
       closedDeals: "עסקאות סגורות",
@@ -49,7 +49,7 @@ export const translations = {
 
     // Leads
     leads: {
-      title: "Leads Pro v2",
+      title: "ניהול לידים Pro v2",
       addNewLead: "הוספת ליד חדש",
       addLead: "הוספת ליד חדש",
       editLead: "עריכת ליד",
@@ -269,7 +269,7 @@ export const translations = {
       services: "ניהול שירותים",
       invoices: "חשבוניות",
       reports: "דוחות",
-      whatsapp: "WhatsApp Integration",
+      whatsapp: "אינטגרציה WhatsApp",
       moreQuestions: "עוד שאלות?",
       contactUs: "אם משהו לא ברור, בואו נדבר!",
     },
@@ -291,8 +291,8 @@ export const translations = {
       licensing: "עבור נותני שירות",
       about: "עבור מי?",
       salesOptions: "אפשרויות מכירה",
-      openSource: "Open Source",
-      credits: "credits",
+      openSource: "קוד פתוח",
+      credits: "קרדיטים",
       contact: "צור קשר",
       email: "דוא״ל",
       phone: "טלפון/WhatsApp",
