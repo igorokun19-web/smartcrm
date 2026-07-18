@@ -202,22 +202,7 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Demo Credentials */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 space-y-2">
-              <p className="text-xs font-semibold text-gray-700 text-center">
-                🎯 פרטי ההתחברות לדמו:
-              </p>
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-white rounded-lg p-2 border border-indigo-100">
-                  <p className="text-gray-600 font-semibold">👤 שם משתמש</p>
-                  <p className="text-indigo-600 font-mono font-bold">admin</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 border border-indigo-100">
-                  <p className="text-gray-600 font-semibold">🔑 סיסמה</p>
-                  <p className="text-indigo-600 font-mono font-bold">admin123</p>
-                </div>
-              </div>
-            </div>
+
 
             {/* Footer */}
             <div className="text-center">
