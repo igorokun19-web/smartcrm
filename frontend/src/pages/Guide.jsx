@@ -498,26 +498,13 @@ export default function Guide() {
       {/* Demo Video Section */}
       <div className="mb-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border-2 border-purple-300 p-6">
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-4xl">🎬</span>
-          <h2 className="text-2xl font-bold text-gray-900">סרטו הדגמה - MyServices CRM בפעולה</h2>
+          <span className="text-4xl">📚</span>
+          <h2 className="text-2xl font-bold text-gray-900">איך להשתמש ב-MyServices CRM</h2>
         </div>
         
-        <div className="bg-black rounded-lg overflow-hidden shadow-lg mb-4" style={{ aspectRatio: "16 / 9" }}>
-          <video 
-            width="100%" 
-            height="100%" 
-            controls 
-            className="w-full h-full"
-            style={{ display: 'block' }}
-          >
-            <source src="/demo_video.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-
         <div className="space-y-3">
           <p className="text-gray-700 font-semibold">
-            ✅ צפה בסרטו הדגמה המלא שלנו כדי ללמוד איך לשתמש ב-MyServices CRM
+            ✅ בחר נושא מהטבלה למטה כדי ללמוד איך להשתמש בכל פיצ'ר
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
