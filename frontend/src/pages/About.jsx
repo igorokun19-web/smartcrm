@@ -24,24 +24,31 @@ export default function About() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto p-6" dir="rtl">
       {/* Header */}
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-3">🚀 MyServices CRM</h1>
-        <p className="text-xl text-gray-600">מערכת ניהול לידים חכמה לנותני שירות</p>
-        <p className="text-sm text-gray-500 mt-2">גרסה 1.0 | 2026</p>
+      <div className="text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl p-12">
+        <h1 className="text-5xl font-bold mb-3">🚀 MyServices CRM</h1>
+        <p className="text-2xl mb-2">מערכת ניהול לידים מהפכנית לנותני שירות</p>
+        <p className="text-lg opacity-90">פתרון בענן מקצועי להגברת מכירות וארגון לקוחות</p>
+        <p className="text-sm mt-4 opacity-75">גרסה 1.0 | 2026 | פתוח קוד</p>
       </div>
 
       {/* Created By */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-8">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-300 p-8 shadow-lg">
+        <div className="flex items-center gap-3 mb-6">
           <Building2 size={32} className="text-blue-600" />
-          <h2 className="text-2xl font-bold">👨‍💻 מי יצר את זה?</h2>
+          <h2 className="text-3xl font-bold">👨‍💼 מייסד ובונה הפרויקט</h2>
         </div>
         
         <div className="space-y-4">
-          <div>
-            <p className="text-sm text-gray-600 mb-1">מפתח ממנהל הפרויקט:</p>
-            <p className="text-lg font-bold">👤 Igor Okun</p>
-            <p className="text-sm text-gray-700 mt-1">יזום, מנהל ובונה MyServices CRM</p>
+          <div className="bg-white rounded-lg p-6 border-2 border-blue-200">
+            <p className="text-xs text-blue-600 font-bold mb-2">🏆 מנהל הפרויקט הראשי</p>
+            <p className="text-2xl font-bold text-blue-700">Igor Okun</p>
+            <p className="text-base text-gray-700 mt-2 font-semibold">יזום, מנהל ובונה MyServices CRM</p>
+            <p className="text-sm text-gray-600 mt-3">אחראי על חזון, פיתוח וניהול המערכת</p>
+            <div className="mt-4 flex gap-2 flex-wrap">
+              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">בנייה תוכן</span>
+              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">ניהול מערכת</span>
+              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">חזון ופיתוח</span>
+            </div>
           </div>
 
           <div className="border-t border-blue-200 pt-4">
