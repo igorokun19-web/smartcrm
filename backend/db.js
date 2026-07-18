@@ -62,6 +62,26 @@ function initDatabase() {
     console.log('✅ Default admin user created');
   }
 
+  // Create demo employee accounts
+  const employees = [
+    { username: 'david_sales', email: 'david@myservices.local', password: 'David@123', name: 'דוד כהן - מנהל מכירות' },
+    { username: 'sara_customer', email: 'sara@myservices.local', password: 'Sara@123', name: 'שרה לוי - שירות לקוח' },
+    { username: 'yair_manager', email: 'yair@myservices.local', password: 'Yair@123', name: 'יאיר ברק - מנהל פרויקט' }
+  ];
+
+  employees.forEach(emp => {
+    const existing = db.prepare('SELECT * FROM users WHERE username = ?').get(emp.username);
+    if (!existing) {
+      const hashedPassword = bcrypt.hashSync(emp.password, 10);
+      const stmt = db.prepare(`
+        INSERT INTO users (username, email, password_hash, name)
+        VALUES (?, ?, ?, ?)
+      `);
+      stmt.run(emp.username, emp.email, hashedPassword, emp.name);
+      console.log(`✅ Employee created: ${emp.name}`);
+    }
+  });
+
   console.log('✅ Database initialized');
 }
 
