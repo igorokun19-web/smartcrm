@@ -25,7 +25,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files (frontend) - MUST BE BEFORE API ROUTES
-app.use(express.static(path.join(__dirname, 'public')));
+console.log('🔍 Static files path:', path.join(__dirname, 'public'));
+app.use(express.static(path.join(__dirname, 'public'), {
+  dotfiles: 'allow',
+  index: 'index.html'
+}));
 
 // ============================================
 // API ROUTES
@@ -56,15 +60,18 @@ app.use((err, req, res, next) => {
 
 // 404 handler - serve index.html for SPA routes
 app.use((req, res) => {
+  console.log(`[404 Handler] ${req.method} ${req.path}`);
   // If it's an API request, return 404 JSON
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({
       success: false,
-      error: 'הנתיב לא נמצא'
+      error: 'הנתיה לא נמצא'
     });
   }
   // For non-API requests, serve index.html (for React Router)
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  console.log(`[SPA Fallback] Serving: ${indexPath}`);
+  res.sendFile(indexPath);
 });
 
 // ============================================
