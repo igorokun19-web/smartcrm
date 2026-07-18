@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+// Dynamic API URL - use current origin in production, localhost in dev
+const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV ? "http://localhost:3001" : window.location.origin);
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
