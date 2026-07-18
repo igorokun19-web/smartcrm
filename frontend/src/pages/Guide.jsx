@@ -495,6 +495,56 @@ export default function Guide() {
         <p className="text-lg text-gray-600">הסבר מפורט על כל הפיצ'רים ב-MyServices CRM</p>
       </div>
 
+      {/* Demo Video Section */}
+      <div className="mb-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border-2 border-purple-300 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-4xl">🎬</span>
+          <h2 className="text-2xl font-bold text-gray-900">סרטו הדגמה - MyServices CRM בפעולה</h2>
+        </div>
+        
+        <div className="bg-black rounded-lg overflow-hidden shadow-lg mb-4" style={{ aspectRatio: "16 / 9" }}>
+          <div className="w-full h-full flex items-center justify-center bg-gray-900">
+            <iframe
+              width="100%"
+              height="100%"
+              src="https://www.youtube.com/embed/UCWAppffFEXjPyUGHOE3kVdg?playlist=UCWAppffFEXjPyUGHOE3kVdg"
+              title="MyServices CRM Demo"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            ></iframe>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-gray-700 font-semibold">
+            ✅ צפה בסרטו הדגמה המלא שלנו כדי ללמוד איך לשתמש ב-MyServices CRM
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-white rounded-lg p-3 border border-purple-200">
+              <p className="font-bold text-sm mb-1">📊 נהל לידים</p>
+              <p className="text-xs text-gray-600">הוסף, עקוב וסגור עסקאות בקלות</p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-3 border border-blue-200">
+              <p className="font-bold text-sm mb-1">💼 ארגן לקוחות</p>
+              <p className="text-xs text-gray-600">שמור נתוני לקוח במקום אחד בטוח</p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-3 border border-green-200">
+              <p className="font-bold text-sm mb-1">💬 WhatsApp ישירה</p>
+              <p className="text-xs text-gray-600">שלח הודעות ללקוחות בלחיצה אחת</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-700 italic">
+            💡 <strong>עצה:</strong> אחרי שתצפה בסרטו, בחר נושא מטבלת התפריט למטה כדי ללמוד בפרטים
+          </p>
+        </div>
+      </div>
+
       {/* Quick Links */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
         {sections.map((section) => {
