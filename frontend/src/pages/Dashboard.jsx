@@ -97,6 +97,24 @@ export default function Dashboard() {
         <p className="text-neutral-500 mt-1">{t("dashboard.subtitle")}</p>
       </div>
 
+      {/* Hero Promo Video Section */}
+      <div className="relative w-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
+          <video 
+            width="100%" 
+            height="100%" 
+            controls 
+            className="w-full h-full object-cover"
+            style={{ display: 'block' }}
+            poster="/promo_video_landing.jpg"
+          >
+            <source src="/promo_video_landing.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none border-2 border-white/20 rounded-xl"></div>
+      </div>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard icon={Users} label={t("dashboard.totalLeads")} value={totalLeads} color="text-blue-600" />

@@ -78,6 +78,72 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
+// ============================================
+// VIDEO STREAMING ROUTE
+// ============================================
+const fs = require('fs');
+
+app.get(['/demo_video.mp4', '/demo_video_hebrew.mp4'], (req, res) => {
+  const fileName = req.path.substring(1); // Remove leading /
+  const filePath = path.join(__dirname, 'public', fileName);
+  
+  // Security check
+  if (!fs.existsSync(filePath)) {
+    console.log(`Video not found: ${filePath}`);
+    return res.status(404).json({ error: 'Video not found' });
+  }
+  
+  try {
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+    const rangeHeader = req.headers.range;
+    
+    // Set response headers
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    
+    if (rangeHeader) {
+      // Parse range request
+      const range = rangeHeader.replace(/bytes=/, '').split('-');
+      const start = parseInt(range[0], 10);
+      const end = range[1] ? parseInt(range[1], 10) : fileSize - 1;
+      
+      if (start > fileSize - 1 || end > fileSize - 1) {
+        res.status(416).set('Content-Range', `bytes */${fileSize}`).end();
+        return;
+      }
+      
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+      res.setHeader('Content-Length', end - start + 1);
+      
+      const stream = fs.createReadStream(filePath, { start, end });
+      stream.on('error', (err) => {
+        console.error('Stream error:', err);
+        if (!res.headersSent) {
+          res.status(500).end();
+        }
+      });
+      stream.pipe(res);
+    } else {
+      // Send entire file
+      res.setHeader('Content-Length', fileSize);
+      const stream = fs.createReadStream(filePath);
+      stream.on('error', (err) => {
+        console.error('Stream error:', err);
+        if (!res.headersSent) {
+          res.status(500).end();
+        }
+      });
+      stream.pipe(res);
+    }
+  } catch (err) {
+    console.error('Video error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Serve static files (frontend)
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath, {
