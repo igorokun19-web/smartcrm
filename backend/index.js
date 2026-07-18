@@ -24,6 +24,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================
+// ROOT ROUTE
+// ============================================
+
+app.get('/', (req, res) => {
+  res.json({ message: 'SmartCRM Backend is running', status: 'ok' });
+});
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 
