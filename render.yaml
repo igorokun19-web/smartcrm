@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: smartcrm-backend
+    runtime: node
+    region: ohio
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: JWT_SECRET
+        value: your-jwt-secret-key-change-this
+      - key: FRONTEND_URL
+        value: https://legendary-empanada-795e09.netlify.app
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_USER
+        value: your-email@gmail.com
+      - key: EMAIL_PASSWORD
+        value: your-app-password
