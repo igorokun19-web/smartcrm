@@ -5,16 +5,32 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { sendPasswordResetEmail } = require('../utils/email');
 const crypto = require('crypto');
+const validator = require('validator');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
 
 // Helper: Create JWT token
 function createToken(userId, rememberMe = false) {
   const expiresIn = rememberMe ? '30d' : '7d';
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn });
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn });
 }
 
 // Helper: Generate random token for password reset
 function generateResetToken() {
   return crypto.randomBytes(32).toString('hex');
+}
+
+// Helper: Validate input
+function validateUsername(username) {
+  return typeof username === 'string' && username.trim().length > 0 && username.length < 50;
+}
+
+function validatePassword(password) {
+  return typeof password === 'string' && password.length >= 6 && password.length < 100;
+}
+
+function validateEmail(email) {
+  return validator.isEmail(email);
 }
 
 // ============================================
@@ -25,15 +41,22 @@ router.post('/login', (req, res) => {
     const { username, password, rememberMe } = req.body;
 
     // Validation
-    if (!username || !password) {
+    if (!validateUsername(username)) {
       return res.status(400).json({
         success: false,
-        error: 'שם משתמש וסיסמה נדרשים'
+        error: 'שם משתמש לא חוקי'
+      });
+    }
+
+    if (!validatePassword(password)) {
+      return res.status(400).json({
+        success: false,
+        error: 'סיסמה לא חוקית'
       });
     }
 
     // Find user
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username.trim());
 
     if (!user) {
       return res.status(401).json({
@@ -64,7 +87,7 @@ router.post('/login', (req, res) => {
         INSERT INTO sessions (user_id, token, expires_at, device_name)
         VALUES (?, ?, ?, ?)
       `);
-      stmt.run(user.id, token, expiresAt.toISOString(), navigator?.userAgent || 'Unknown');
+      stmt.run(user.id, token, expiresAt.toISOString(), 'Mobile Device');
     }
 
     res.json({
@@ -78,7 +101,7 @@ router.post('/login', (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     res.status(500).json({
       success: false,
       error: 'שגיאה בהתחברות'
@@ -93,18 +116,18 @@ router.post('/validate-token', (req, res) => {
   try {
     const { token } = req.body;
 
-    if (!token) {
-      return res.status(401).json({ success: false });
+    if (!token || typeof token !== 'string') {
+      return res.status(401).json({ success: false, error: 'טוקן לא חוקי' });
     }
 
     // Verify JWT
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
 
     // Get user
     const user = db.prepare('SELECT id, username, name, email FROM users WHERE id = ?').get(decoded.userId);
 
     if (!user) {
-      return res.status(401).json({ success: false });
+      return res.status(401).json({ success: false, error: 'משתמש לא נמצא' });
     }
 
     res.json({
@@ -112,6 +135,7 @@ router.post('/validate-token', (req, res) => {
       user
     });
   } catch (error) {
+    console.error('⚠️  Token validation error:', error.message);
     res.status(401).json({
       success: false,
       error: 'טוקן לא חוקי'
@@ -126,15 +150,16 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
-    if (!email) {
+    // Validation
+    if (!email || !validateEmail(email)) {
       return res.status(400).json({
         success: false,
-        error: 'דוא״ל נדרש'
+        error: 'דוא״ל לא חוקי'
       });
     }
 
     // Find user by email
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase().trim());
 
     if (!user) {
       // Security: Don't reveal if email exists
@@ -165,7 +190,7 @@ router.post('/forgot-password', async (req, res) => {
       message: 'קישור איפוס סיסמה נשלח לדוא״ל שלך'
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error('❌ Forgot password error:', error);
     res.status(500).json({
       success: false,
       error: 'שגיאה בשליחת דוא״ל איפוס'
@@ -180,14 +205,15 @@ router.post('/reset-password', (req, res) => {
   try {
     const { token, newPassword } = req.body;
 
-    if (!token || !newPassword) {
+    // Validation
+    if (!token || typeof token !== 'string') {
       return res.status(400).json({
         success: false,
-        error: 'טוקן וסיסמה חדשה נדרשים'
+        error: 'טוקן לא חוקי'
       });
     }
 
-    if (newPassword.length < 6) {
+    if (!validatePassword(newPassword)) {
       return res.status(400).json({
         success: false,
         error: 'הסיסמה חייבת להיות לפחות 6 תווים'
@@ -227,7 +253,7 @@ router.post('/reset-password', (req, res) => {
       message: 'סיסמה שונתה בהצלחה'
     });
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('❌ Reset password error:', error);
     res.status(500).json({
       success: false,
       error: 'שגיאה בשינוי סיסמה'
