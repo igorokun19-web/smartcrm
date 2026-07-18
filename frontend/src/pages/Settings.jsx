@@ -178,7 +178,7 @@ export default function Settings() {
             <h3 className="font-semibold mb-2">🔐 API Key</h3>
             <input
               type="password"
-              value="sk_live_1234567890abcdefghijklmnop"
+              value="sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
               readOnly
               className="w-full px-3 py-2 border rounded-lg bg-white text-gray-600 text-sm"
             />
