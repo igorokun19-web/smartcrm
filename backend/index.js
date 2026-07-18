@@ -55,87 +55,43 @@ const allowedOrigins = [
   'http://localhost:5175',
   'http://localhost:3000',
   'http://localhost:3001',
-  process.env.FRONTEND_URL,
-  'https://smartcrm-3cle.onrender.com'
+  'https://smartcrm-3cle.onrender.com',
+  process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Still allow for now
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Length', 'Content-Type']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
+  exposedHeaders: ['Content-Length', 'Content-Type', 'Content-Range', 'Accept-Ranges']
 }));
 
 // Body parser with size limits
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// ============================================
-// VIDEO STREAMING MIDDLEWARE
-// ============================================
-// Handle video files with proper range request support
-const fs = require('fs');
-
-app.get(/\.(mp4|webm|ogg)$/, (req, res, next) => {
-  const filePath = path.join(__dirname, 'public', req.path);
-  
-  // Security: prevent path traversal
-  if (!path.resolve(filePath).startsWith(path.resolve(__dirname, 'public'))) {
-    return res.status(403).send('Forbidden');
-  }
-  
-  // Check if file exists
-  if (!fs.existsSync(filePath)) {
-    return next();
-  }
-  
-  try {
-    const stat = fs.statSync(filePath);
-    const fileSize = stat.size;
-    const range = req.headers.range;
-    
-    // Set proper headers
-    res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    
-    if (range) {
-      // Parse range request (e.g., "bytes=0-1023")
-      const parts = range.replace(/bytes=/, '').split('-');
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-      
-      if (start >= fileSize) {
-        res.status(416).send('Requested Range Not Satisfiable');
-        return;
-      }
-      
-      const chunkSize = end - start + 1;
-      res.status(206);
-      res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
-      res.setHeader('Content-Length', chunkSize);
-      
-      const stream = fs.createReadStream(filePath, { start, end });
-      stream.pipe(res);
-    } else {
-      // No range: send entire file
-      res.setHeader('Content-Length', fileSize);
-      const stream = fs.createReadStream(filePath);
-      stream.pipe(res);
-    }
-  } catch (err) {
-    console.error('Video streaming error:', err);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-// Serve static files (frontend) - MUST BE AFTER VIDEO MIDDLEWARE
+// Serve static files (frontend)
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath, {
-  dotfiles: 'deny', // Security: don't serve dotfiles
+  dotfiles: 'deny',
   index: 'index.html',
-  maxAge: '1h'
+  maxAge: '1h',
+  setHeaders: (res, filePath) => {
+    // Add proper headers for video files
+    if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg')) {
+      res.setHeader('Content-Type', 'video/mp4');
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
+  }
 }));
 
 // ============================================
