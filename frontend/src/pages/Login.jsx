@@ -173,20 +173,22 @@ export default function Login() {
               )}
 
               {/* Login Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-lg hover:shadow-xl"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center space-x-2 space-x-reverse">
-                    <span className="animate-spin">⏳</span>
-                    <span>טוען...</span>
-                  </span>
-                ) : (
-                  "התחברות"
-                )}
-              </button>
+              <div className="flex justify-center">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 px-12 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-lg hover:shadow-xl"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center space-x-2 space-x-reverse">
+                      <span className="animate-spin">⏳</span>
+                      <span>טוען...</span>
+                    </span>
+                  ) : (
+                    "התחברות"
+                  )}
+                </button>
+              </div>
             </form>
 
             {/* Login Link */}
@@ -204,13 +206,7 @@ export default function Login() {
 
 
 
-            {/* Footer */}
-            <div className="text-center">
-              <p className="text-xs text-gray-500 flex items-center justify-center space-x-1 space-x-reverse">
-                <span>🔒</span>
-                <span>{t("login.secureConnection")}</span>
-              </p>
-            </div>
+
           </div>
         </div>
       </div>
