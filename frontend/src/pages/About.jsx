@@ -39,7 +39,13 @@ export default function About() {
         
         <div className="space-y-4">
           <div>
-            <p className="text-sm text-gray-600 mb-1">יוצר האפליקציה:</p>
+            <p className="text-sm text-gray-600 mb-1">מפתח ממנהל הפרויקט:</p>
+            <p className="text-lg font-bold">👤 Igor Okun</p>
+            <p className="text-sm text-gray-700 mt-1">יזום, מנהל ובונה MyServices CRM</p>
+          </div>
+
+          <div className="border-t border-blue-200 pt-4">
+            <p className="text-sm text-gray-600 mb-1">בנוי בעזרת:</p>
             <p className="text-lg font-bold">🤖 GitHub Copilot (AI Assistant)</p>
             <p className="text-sm text-gray-700 mt-1">בשיתוף פעולה עם Microsoft AI</p>
           </div>
