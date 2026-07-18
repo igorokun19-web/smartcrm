@@ -288,4 +288,103 @@ router.post('/logout', (req, res) => {
   }
 });
 
+// ============================================
+// REGISTRATION - CREATE NEW USER
+// ============================================
+router.post('/register', (req, res) => {
+  try {
+    const { username, email, password, confirmPassword, name } = req.body;
+
+    // Validation
+    if (!validateUsername(username)) {
+      return res.status(400).json({
+        success: false,
+        error: 'שם משתמש לא חוקי (2-50 תווים)'
+      });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'דוא"ל לא חוקי'
+      });
+    }
+
+    if (!validatePassword(password)) {
+      return res.status(400).json({
+        success: false,
+        error: 'סיסמה חייבת להיות בין 6-100 תווים'
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'הסיסמאות אינן תואמות'
+      });
+    }
+
+    if (!name || name.trim().length === 0 || name.length > 100) {
+      return res.status(400).json({
+        success: false,
+        error: 'שם מלא נדרש'
+      });
+    }
+
+    // Check if username exists
+    const existingUsername = db.prepare('SELECT id FROM users WHERE username = ?').get(username.trim());
+    if (existingUsername) {
+      return res.status(400).json({
+        success: false,
+        error: 'שם משתמש זה כבר תפוס'
+      });
+    }
+
+    // Check if email exists
+    const existingEmail = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase().trim());
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        error: 'דוא"ל זה כבר רשום במערכת'
+      });
+    }
+
+    // Hash password
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    // Create user
+    const stmt = db.prepare(`
+      INSERT INTO users (username, email, password_hash, name)
+      VALUES (?, ?, ?, ?)
+    `);
+    const result = stmt.run(
+      username.trim(),
+      email.toLowerCase().trim(),
+      hashedPassword,
+      name.trim()
+    );
+
+    // Generate token
+    const token = createToken(result.lastInsertRowid, false);
+
+    res.status(201).json({
+      success: true,
+      message: 'משתמש נרשם בהצלחה',
+      token,
+      user: {
+        id: result.lastInsertRowid,
+        username: username.trim(),
+        name: name.trim(),
+        email: email.toLowerCase().trim()
+      }
+    });
+  } catch (error) {
+    console.error('❌ Registration error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'שגיאה בהרשמה'
+    });
+  }
+});
+
 module.exports = router;

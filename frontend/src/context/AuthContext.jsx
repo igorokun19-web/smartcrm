@@ -127,6 +127,50 @@ export function AuthProvider({ children }) {
   };
 
   // ========================================
+  // 2. REGISTER NEW USER
+  // ========================================
+  const register = async (username, email, password, confirmPassword, name) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          confirmPassword,
+          name,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "שגיאה בהרשמה");
+      }
+
+      // Save JWT token
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      setUser(data.user);
+      setIsAuthenticated(true);
+
+      return true;
+    } catch (err) {
+      setError(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========================================
   // 3. FORGOT PASSWORD
   // ========================================
   const forgotPassword = async (email) => {
@@ -198,6 +242,7 @@ export function AuthProvider({ children }) {
     error,
     login,
     logout,
+    register,
     forgotPassword,
     resetPassword,
   };

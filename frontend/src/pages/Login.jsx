@@ -189,6 +189,19 @@ export default function Login() {
               </button>
             </form>
 
+            {/* Login Link */}
+            <div className="text-center">
+              <p className="text-gray-600 text-sm">
+                אין לך חשבון עדיין?{" "}
+                <Link
+                  to="/register"
+                  className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline transition-colors"
+                >
+                  הירשם כאן
+                </Link>
+              </p>
+            </div>
+
             {/* Demo Credentials */}
             <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 space-y-2">
               <p className="text-xs font-semibold text-gray-700 text-center">
