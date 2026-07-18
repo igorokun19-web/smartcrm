@@ -24,21 +24,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (frontend)
+// Serve static files (frontend) - MUST BE BEFORE API ROUTES
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================
-// ROOT ROUTE
+// API ROUTES
 // ============================================
 
-app.get('/', (req, res) => {
-  res.json({ message: 'SmartCRM Backend is running', status: 'ok' });
-});
+app.use('/api/auth', authRoutes);
 
-// ============================================
-// HEALTH CHECK
-// ============================================
-
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -46,13 +41,6 @@ app.get('/api/health', (req, res) => {
     version: '1.0.0'
   });
 });
-
-// ============================================
-// ROUTES
-// ============================================
-
-// Authentication routes (Login, Forgot Password, Reset Password, etc.)
-app.use('/api/auth', authRoutes);
 
 // ============================================
 // ERROR HANDLING
