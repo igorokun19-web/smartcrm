@@ -28,8 +28,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      mediaSrc: ["'self'", 'https:'],
-      videoSrc: ["'self'", 'blob:', 'https:'],
+      mediaSrc: ["'self'", 'blob:', 'https:'],
       objectSrc: ["'self'"],
     }
   },
@@ -79,11 +78,11 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // ============================================
-// VIDEO STREAMING ROUTE
+// VIDEO STREAMING ROUTES
 // ============================================
 const fs = require('fs');
 
-app.get(['/demo_video.mp4', '/demo_video_hebrew.mp4'], (req, res) => {
+app.get(['/demo_video.mp4', '/demo_video_hebrew.mp4', '/promo_video_landing.mp4'], (req, res) => {
   const fileName = req.path.substring(1); // Remove leading /
   const filePath = path.join(__dirname, 'public', fileName);
   
