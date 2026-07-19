@@ -2,7 +2,6 @@ const API_URL = import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
 
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || '';
-const ENABLE_INTERNAL_ANALYTICS = import.meta.env.VITE_ENABLE_INTERNAL_ANALYTICS === 'true';
 const CLIENT_ID_KEY = 'analyticsClientId';
 const SESSION_ID_KEY = 'analyticsSessionId';
 const LAST_PAGE_KEY = 'analyticsLastPage';
@@ -135,16 +134,14 @@ export function trackEvent(eventName, metadata = {}, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  if (ENABLE_INTERNAL_ANALYTICS) {
-    fetch(`${API_URL}/api/analytics/events`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-      keepalive: true,
-    }).catch((error) => {
-      console.error('Analytics event failed:', error);
-    });
-  }
+  fetch(`${API_URL}/api/analytics/events`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch((error) => {
+    console.error('Analytics event failed:', error);
+  });
 
   if (GA_MEASUREMENT_ID && typeof window.gtag === 'function') {
     window.gtag('event', eventName, {
