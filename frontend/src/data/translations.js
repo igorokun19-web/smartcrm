@@ -19,6 +19,7 @@ export const translations = {
       services: "שירותים",
       invoices: "חשבוניות",
       reports: "דוחות",
+      visitors: "כניסות לאתר",
       guide: "מדריך",
       about: "אודות",
       settings: "הגדרות",

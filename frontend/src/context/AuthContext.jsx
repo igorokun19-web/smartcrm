@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
+import { setAnalyticsUser, trackEvent } from "../lib/analytics";
+
 const AuthContext = createContext();
 
 // Dynamic API URL - use current origin in production, localhost in dev
@@ -39,6 +41,7 @@ export function AuthProvider({ children }) {
             const data = await response.json();
             setUser(data.user);
             setIsAuthenticated(true);
+            setAnalyticsUser(data.user.id);
           } else {
             // Token expired or invalid
             logout();
@@ -90,10 +93,13 @@ export function AuthProvider({ children }) {
 
       setUser(data.user);
       setIsAuthenticated(true);
+      setAnalyticsUser(data.user.id);
+      trackEvent("login_success", { rememberMe, userId: data.user.id }, { path: "/login" });
 
       return true;
     } catch (err) {
       setError(err.message);
+      trackEvent("login_failed", { reason: err.message }, { path: "/login" });
       return false;
     } finally {
       setLoading(false);
@@ -105,6 +111,11 @@ export function AuthProvider({ children }) {
   // ========================================
   const logout = async () => {
     const token = localStorage.getItem("authToken");
+    const currentUserId = user?.id || null;
+
+    if (currentUserId) {
+      trackEvent("logout", { userId: currentUserId });
+    }
     
     try {
       // Notify backend
@@ -126,6 +137,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
+      setAnalyticsUser(null);
     }
   };
 
@@ -163,10 +175,13 @@ export function AuthProvider({ children }) {
 
       setUser(data.user);
       setIsAuthenticated(true);
+      setAnalyticsUser(data.user.id);
+      trackEvent("register_success", { userId: data.user.id }, { path: "/register" });
 
       return true;
     } catch (err) {
       setError(err.message);
+      trackEvent("register_failed", { reason: err.message }, { path: "/register" });
       return false;
     } finally {
       setLoading(false);
@@ -195,9 +210,12 @@ export function AuthProvider({ children }) {
         throw new Error(data.error || "שגיאה בשליחת דוא״ל");
       }
 
+      trackEvent("forgot_password_requested", { email });
+
       return { success: true, message: data.message };
     } catch (err) {
       setError(err.message);
+      trackEvent("forgot_password_failed", { reason: err.message });
       return { success: false, error: err.message };
     } finally {
       setLoading(false);
@@ -229,9 +247,12 @@ export function AuthProvider({ children }) {
         throw new Error(data.error || "שגיאה בשינוי סיסמה");
       }
 
+      trackEvent("reset_password_success", {});
+
       return { success: true, message: data.message };
     } catch (err) {
       setError(err.message);
+      trackEvent("reset_password_failed", { reason: err.message });
       return { success: false, error: err.message };
     } finally {
       setLoading(false);

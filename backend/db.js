@@ -49,6 +49,49 @@ function initDatabase() {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_name TEXT NOT NULL,
+      path TEXT,
+      title TEXT,
+      client_id TEXT,
+      session_id TEXT,
+      user_id INTEGER,
+      referrer TEXT,
+      utm_source TEXT,
+      utm_medium TEXT,
+      utm_campaign TEXT,
+      utm_term TEXT,
+      utm_content TEXT,
+      ip_hash TEXT,
+      user_agent TEXT,
+      metadata TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    )
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at
+    ON analytics_events(created_at)
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_event_name
+    ON analytics_events(event_name)
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_session_id
+    ON analytics_events(session_id)
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_client_id
+    ON analytics_events(client_id)
+  `);
+
   // Seed default admin user if doesn't exist
   const existingAdmin = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
   

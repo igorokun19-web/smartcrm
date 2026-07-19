@@ -16,6 +16,7 @@ export default function Sidebar() {
     { name: t("sidebar.services"), path: "/services", icon: "📦" },
     { name: t("sidebar.invoices"), path: "/invoices", icon: "💵" },
     { name: t("sidebar.reports"), path: "/reports", icon: "📈" },
+    { name: t("sidebar.visitors"), path: "/visitors", icon: "🌐" },
     { name: t("sidebar.guide"), path: "/guide", icon: "📖" },
     { name: t("sidebar.about"), path: "/about", icon: "ℹ️" },
     { name: t("sidebar.settings"), path: "/settings", icon: "⚙️" },

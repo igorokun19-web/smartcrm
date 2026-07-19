@@ -1,0 +1,37 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f3460;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main circle background -->
+  <circle cx="100" cy="100" r="95" fill="url(#grad1)" stroke="#ffffff" stroke-width="2"/>
+  
+  <!-- CRM Graph/Chart Icon -->
+  <!-- Left bar -->
+  <rect x="50" y="100" width="16" height="50" fill="url(#grad2)" rx="3"/>
+  <!-- Middle bar (tallest) -->
+  <rect x="75" y="75" width="16" height="75" fill="#60a5fa" rx="3"/>
+  <!-- Right bar -->
+  <rect x="100" y="90" width="16" height="60" fill="#93c5fd" rx="3"/>
+  
+  <!-- Upward trending arrow -->
+  <path d="M 130 130 L 145 115 L 140 115 L 140 95" stroke="#10b981" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Top text: Professional company -->
+  <text x="100" y="160" font-family="Arial, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#ffffff" letter-spacing="1">MyServices</text>
+  
+  <!-- Bottom text: CRM -->
+  <text x="100" y="180" font-family="Arial, sans-serif" font-size="9" font-weight="500" text-anchor="middle" fill="#93c5fd">CRM PRO</text>
+  
+  <!-- Decorative corner dots -->
+  <circle cx="25" cy="25" r="3" fill="#60a5fa" opacity="0.6"/>
+  <circle cx="175" cy="175" r="3" fill="#10b981" opacity="0.6"/>
+</svg>

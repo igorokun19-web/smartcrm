@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const authRoutes = require('./routes/auth');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -76,6 +77,17 @@ app.use(cors({
 // Body parser with size limits
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const level = res.statusCode >= 400 ? '⚠️ ' : '✓ ';
+    console.log(`${level}${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
+  });
+  next();
+});
 
 // ============================================
 // VIDEO STREAMING ROUTES
@@ -195,6 +207,7 @@ function authenticateToken(req, res, next) {
 // Auth routes with rate limiting on login
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth', authRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -209,17 +222,6 @@ app.get('/api/health', (req, res) => {
 // ============================================
 // ERROR HANDLING
 // ============================================
-
-// Request logging middleware
-app.use((req, res, next) => {
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    const level = res.statusCode >= 400 ? '⚠️ ' : '✓ ';
-    console.log(`${level}${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
-  });
-  next();
-});
 
 // Global error handler
 app.use((err, req, res, next) => {
