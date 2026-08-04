@@ -29,7 +29,7 @@ export default function Landing() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-700">SmartCRM</p>
-          <p className="mt-1 text-sm text-slate-600">עמוד שיווקי מהיר לפרסום בפייסבוק</p>
+          <p className="mt-1 text-sm text-slate-600">ניהול לידים חכם לעסקים קטנים</p>
         </div>
         <a href="/login" className="text-sm font-semibold text-slate-700 underline-offset-4 hover:underline">
           כניסה למערכת
@@ -41,7 +41,7 @@ export default function Landing() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm text-sky-800 shadow-sm ring-1 ring-sky-100">
               <MousePointerClick size={16} />
-              מתאים לפרסום מהיר ולבדיקת עניין מהפייסבוק
+              חינם לחלוטין — ללא כרטיס אשראי
             </div>
             <h1 className="mt-6 max-w-3xl text-4xl font-black leading-tight text-slate-950 md:text-6xl">
               מפסיקים לאבד לידים בין וואטסאפ, אקסל והודעות.
@@ -51,13 +51,12 @@ export default function Landing() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <CtaLink href={whatsappHref}>
+              <CtaLink href="/register">
+                התחל חינם ←
+              </CtaLink>
+              <CtaLink href={whatsappHref} secondary>
                 <MessageCircle size={18} />
                 בקשת הדגמה
-              </CtaLink>
-              <CtaLink href="#features" secondary>
-                לראות מה מקבלים
-                <ArrowLeft size={18} />
               </CtaLink>
             </div>
 

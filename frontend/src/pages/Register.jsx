@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useTranslation } from "../hooks/useTranslation";
 
 export default function Register() {
-  const { t } = useTranslation();
   const { register, loading, error } = useAuth();
   const navigate = useNavigate();
 
@@ -19,7 +17,6 @@ export default function Register() {
   const [localError, setLocalError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [focusedField, setFocusedField] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -130,7 +127,25 @@ export default function Register() {
 
         {/* Right side - Register form */}
         <div className="flex items-center justify-center">
-          <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 space-y-6 transform transition-all duration-500 hover:shadow-2xl">
+          <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl ring-1 ring-white/70 p-8 space-y-6 transform transition-all duration-500 hover:shadow-2xl">
+            {/* Auth mode switch */}
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-indigo-50 border border-indigo-100">
+              <Link
+                to="/login"
+                className="!text-center py-2.5 px-3 rounded-lg text-indigo-700 font-semibold hover:bg-white transition-colors"
+                style={{ textAlign: "center" }}
+              >
+                התחברות
+              </Link>
+              <Link
+                to="/register"
+                className="!text-center py-2.5 px-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-sm"
+                style={{ textAlign: "center" }}
+              >
+                הרשמה
+              </Link>
+            </div>
+
             {/* Header */}
             <div className="text-center space-y-2">
               <div className="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-4">
@@ -140,76 +155,77 @@ export default function Register() {
                 הרשמה
               </h1>
               <p className="text-gray-600 text-sm">הצטרף כעת והתחל לנהל את הלידים שלך</p>
+              <p className="text-indigo-600 text-xs font-semibold">✅ חינם לחלוטין — ללא כרטיס אשראי</p>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
               {/* Username */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="register-username" className="block text-sm font-semibold text-gray-700">
                   <span className="flex items-center space-x-2 space-x-reverse">
                     <span>👤</span>
                     <span>שם משתמש</span>
                   </span>
                 </label>
                 <input
+                  id="register-username"
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  onFocus={() => setFocusedField('username')}
-                  onBlur={() => setFocusedField(null)}
                   placeholder="בחר שם משתמש ייחודי"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+                  autoComplete="username"
                   disabled={loading}
                 />
               </div>
 
               {/* Name */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="register-name" className="block text-sm font-semibold text-gray-700">
                   <span className="flex items-center space-x-2 space-x-reverse">
                     <span>📝</span>
                     <span>שם מלא</span>
                   </span>
                 </label>
                 <input
+                  id="register-name"
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  onFocus={() => setFocusedField('name')}
-                  onBlur={() => setFocusedField(null)}
                   placeholder="שם מלא"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+                  autoComplete="name"
                   disabled={loading}
                 />
               </div>
 
               {/* Email */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="register-email" className="block text-sm font-semibold text-gray-700">
                   <span className="flex items-center space-x-2 space-x-reverse">
                     <span>📧</span>
                     <span>דוא״ל</span>
                   </span>
                 </label>
                 <input
+                  id="register-email"
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
                   placeholder="your@email.com"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+                  autoComplete="email"
                   disabled={loading}
                 />
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="register-password" className="block text-sm font-semibold text-gray-700">
                   <span className="flex items-center space-x-2 space-x-reverse">
                     <span>🔐</span>
                     <span>סיסמה</span>
@@ -217,20 +233,22 @@ export default function Register() {
                 </label>
                 <div className="relative">
                   <input
+                    id="register-password"
                     type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    onFocus={() => setFocusedField('password')}
-                    onBlur={() => setFocusedField(null)}
                     placeholder="לפחות 6 תווים"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+                    autoComplete="new-password"
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-indigo-600 transition-colors"
+                    aria-label={showPassword ? "הסתר סיסמה" : "הצג סיסמה"}
+                    title={showPassword ? "הסתר סיסמה" : "הצג סיסמה"}
                     disabled={loading}
                   >
                     {showPassword ? "👁️" : "👁️‍🗨️"}
@@ -240,7 +258,7 @@ export default function Register() {
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="register-confirm-password" className="block text-sm font-semibold text-gray-700">
                   <span className="flex items-center space-x-2 space-x-reverse">
                     <span>✔️</span>
                     <span>אימות סיסמה</span>
@@ -248,20 +266,22 @@ export default function Register() {
                 </label>
                 <div className="relative">
                   <input
+                    id="register-confirm-password"
                     type={showConfirm ? "text" : "password"}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    onFocus={() => setFocusedField('confirm')}
-                    onBlur={() => setFocusedField(null)}
                     placeholder="הזן את הסיסמה שוב"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+                    autoComplete="new-password"
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-indigo-600 transition-colors"
+                    aria-label={showConfirm ? "הסתר אימות סיסמה" : "הצג אימות סיסמה"}
+                    title={showConfirm ? "הסתר אימות סיסמה" : "הצג אימות סיסמה"}
                     disabled={loading}
                   >
                     {showConfirm ? "👁️" : "👁️‍🗨️"}
@@ -271,27 +291,30 @@ export default function Register() {
 
               {/* Error Message */}
               {localError && (
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg text-sm animate-pulse">
+                <div role="alert" aria-live="assertive" className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg text-sm animate-pulse">
                   <p className="font-semibold">⚠️ שגיאה</p>
                   <p>{localError}</p>
                 </div>
               )}
 
               {/* Register Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-lg hover:shadow-xl"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center space-x-2 space-x-reverse">
-                    <span className="animate-spin">⏳</span>
-                    <span>נרשם...</span>
-                  </span>
-                ) : (
-                  "הרשמה"
-                )}
-              </button>
+              <div className="flex justify-center">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="register-submit-btn w-full md:w-auto md:min-w-56 px-6 md:px-10 !text-center flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl border border-indigo-300/40 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-lg hover:shadow-xl"
+                  style={{ textAlign: "center", justifyContent: "center", marginInline: "auto" }}
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center space-x-2 space-x-reverse w-full text-center">
+                      <span className="animate-spin">⏳</span>
+                      <span>נרשם...</span>
+                    </span>
+                  ) : (
+                    <span className="block w-full text-center">הרשמה</span>
+                  )}
+                </button>
+              </div>
             </form>
 
             {/* Login Link */}
@@ -311,7 +334,7 @@ export default function Register() {
             <div className="text-center">
               <p className="text-xs text-gray-500 flex items-center justify-center space-x-1 space-x-reverse">
                 <span>🔒</span>
-                <span>כל הנתונים שלך מוצפנים וגם</span>
+                <span>כל הנתונים שלך מוצפנים ומאובטחים</span>
               </p>
             </div>
           </div>
