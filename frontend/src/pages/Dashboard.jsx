@@ -1,9 +1,8 @@
 import { useCrm } from "../context/CrmContext";
 import { useTranslation } from "../hooks/useTranslation";
+import { useNavigate } from "react-router-dom";
 import { Card, Badge, EmptyState } from "../components/UI";
 import {
-  BarChart,
-  Bar,
   LineChart,
   Line,
   PieChart,
@@ -13,15 +12,57 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, Users, CheckCircle, AlertCircle } from "lucide-react";
+import { TrendingUp, Users, CheckCircle, AlertCircle, PlusCircle, ArrowLeft } from "lucide-react";
+
+function WelcomeBanner({ onAddLead }) {
+  return (
+    <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white shadow-lg">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold mb-1">ברוך הבא! 👋 התחל עכשיו בשלושה צעדים</h2>
+          <div className="flex flex-col sm:flex-row gap-3 mt-3 text-sm text-indigo-100">
+            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">1</span> הוסף ליד ראשון</span>
+            <span className="hidden sm:block text-indigo-300">→</span>
+            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">2</span> עקוב אחרי הסטטוס</span>
+            <span className="hidden sm:block text-indigo-300">→</span>
+            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">3</span> ראה את הגרף עולה</span>
+          </div>
+        </div>
+        <button
+          onClick={onAddLead}
+          className="flex items-center gap-2 bg-white text-indigo-700 font-bold px-5 py-3 rounded-xl shadow hover:bg-indigo-50 transition whitespace-nowrap"
+        >
+          <PlusCircle size={18} />
+          הוסף ליד ראשון
+          <ArrowLeft size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 import { colors } from "../styles/theme";
+
+function KPICard({ icon: Icon, label, value, color }) {
+  return (
+    <Card hover className="relative overflow-hidden">
+      <div className="relative">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-neutral-600 text-sm font-medium">{label}</p>
+          <Icon className={`h-5 w-5 ${color}`} />
+        </div>
+        <p className="text-3xl font-bold text-neutral-900">{value}</p>
+      </div>
+    </Card>
+  );
+}
 
 export default function Dashboard() {
   const { leads } = useCrm();
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
   // Calculate KPIs
   const totalLeads = leads.length;
@@ -32,22 +73,12 @@ export default function Dashboard() {
   const quotedDeals = leads.filter((l) => l.status === "Quoted").length;
   const newLeads = leads.filter((l) => l.status === "New").length;
   const lostDeals = leads.filter((l) => l.status === "Lost").length;
-  const openTasks = allTasks.filter((t) => !t.completed).length;
   const completedTasks = allTasks.filter((t) => t.completed).length;
   const overdueTasks = allTasks.filter(
     (t) => !t.completed && t.dueDate && t.dueDate < today
   ).length;
 
   const closeRate = totalLeads > 0 ? Math.round((closedDeals / totalLeads) * 100) : 0;
-
-  // Pipeline Data for Charts
-  const pipelineData = [
-    { name: t("leads.new"), value: newLeads },
-    { name: t("leads.contacted"), value: leads.filter((l) => l.status === "Contacted").length },
-    { name: t("leads.quoted"), value: quotedDeals },
-    { name: t("leads.won"), value: closedDeals },
-    { name: t("leads.lost"), value: lostDeals },
-  ];
 
   // Lead creation trend (last 7 days)
   const last7Days = [...Array(7)].map((_, i) => {
@@ -77,20 +108,13 @@ export default function Dashboard() {
     ? Math.round((completedTasks / allTasks.length) * 100)
     : 0;
 
-  const KPICard = ({ icon: Icon, label, value, color }) => (
-    <Card hover className="relative overflow-hidden">
-      <div className="relative">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-neutral-600 text-sm font-medium">{label}</p>
-          <Icon className={`h-5 w-5 ${color}`} />
-        </div>
-        <p className="text-3xl font-bold text-neutral-900">{value}</p>
-      </div>
-    </Card>
-  );
-
   return (
     <div className="space-y-8 animate-fade-in">
+      {/* Welcome banner for new users */}
+      {leads.length === 0 && (
+        <WelcomeBanner onAddLead={() => navigate("/leads")} />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">{t("dashboard.title")}</h1>
@@ -229,6 +253,15 @@ export default function Dashboard() {
           <EmptyState
             title={t("dashboard.noLeads")}
             description={t("dashboard.startAddingLeads")}
+            action={
+              <button
+                onClick={() => navigate("/leads")}
+                className="flex items-center gap-2 bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition"
+              >
+                <PlusCircle size={16} />
+                הוסף ליד ראשון
+              </button>
+            }
           />
         ) : (
           <div className="space-y-3">
