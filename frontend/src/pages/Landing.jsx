@@ -1,8 +1,54 @@
+import { useState } from "react";
 import { ArrowLeft, BarChart3, CheckCircle2, LayoutDashboard, MessageCircle, MousePointerClick, ShieldCheck, Users } from "lucide-react";
 
 const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || "";
 const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
 const demoUrl = import.meta.env.VITE_BOOK_DEMO_URL || "/login";
+
+const API_BASE = import.meta.env.VITE_API_URL || "https://smartcrm-3cle.onrender.com";
+
+function EmailCapture() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | done | error
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus("loading");
+    try {
+      const res = await fetch(`${API_BASE}/api/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), source: "crm_landing" }),
+      });
+      setStatus(res.ok ? "done" : "error");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  if (status === "done") return <p className="mt-5 text-sm text-emerald-300 font-semibold">✅ נרשמת! נעדכן אותך בחדשות.</p>;
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-5 flex gap-2 max-w-sm">
+      <input
+        type="email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        placeholder="האימייל שלך לעדכונים"
+        className="flex-1 rounded-lg px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+        disabled={status === "loading"}
+      />
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-400 disabled:opacity-60 transition"
+      >
+        {status === "loading" ? "..." : "הרשמה"}
+      </button>
+    </form>
+  );
+}
 
 function CtaLink({ href, children, secondary = false }) {
   const baseClass = secondary
@@ -164,6 +210,7 @@ export default function Landing() {
               <p className="mt-4 text-base leading-8 text-slate-200">
                 שלחו הודעה, בקשו הדגמה, או התחילו משיחה קצרה. המטרה בשלב הזה היא לבדוק עניין מהר, בלי להעמיס מערכת מלאה ובלי להתחייב לשרת בתשלום.
               </p>
+              <EmailCapture />
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">

@@ -5,16 +5,37 @@ const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const db = require('./db');
-const authRoutes = require('./routes/auth');
-const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Verify critical environment variables
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  console.warn('⚠️  JWT_SECRET not set! Using temporary secret.');
+if (!process.env.JWT_SECRET) {
+  if (isProduction) {
+    throw new Error('JWT_SECRET is required in production');
+  }
+
+  process.env.JWT_SECRET = 'dev-only-jwt-secret-change-before-production';
+  console.warn('⚠️  JWT_SECRET not set. Using development-only fallback secret.');
+}
+
+const authRoutes = require('./routes/auth');
+const analyticsRoutes = require('./routes/analytics');
+const crmRoutes = require('./routes/crm');
+const billingRoutes = require('./routes/billing');
+const subscribeRoutes = require('./routes/subscribe');
+const { runBillingLifecycle } = require('./services/billingLifecycle');
+
+app.disable('x-powered-by');
+
+const trustProxyValue = process.env.TRUST_PROXY;
+if (trustProxyValue) {
+  const asNumber = Number(trustProxyValue);
+  app.set('trust proxy', Number.isInteger(asNumber) ? asNumber : trustProxyValue);
+} else if (isProduction) {
+  app.set('trust proxy', 1);
 }
 
 // ============================================
@@ -26,13 +47,15 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https:'],
       mediaSrc: ["'self'", 'blob:', 'https:'],
-      objectSrc: ["'self'"],
+      objectSrc: ["'none'"],
     }
   },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
   hsts: {
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
@@ -47,25 +70,48 @@ const authLimiter = rateLimit({
   message: 'יותר מדי ניסיונות התחברות. נסה שוב בעוד 15 דקות.',
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.ip
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
+  skipSuccessfulRequests: true,
+});
+
+const billingMutationLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  message: 'יותר מדי פעולות חיוב. נסה שוב בעוד מספר דקות.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(req.ip)
 });
 
 // CORS configuration
-const allowedOrigins = [
+const devOrigins = [
   'http://localhost:5175',
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://smartcrm-3cle.onrender.com',
-  process.env.FRONTEND_URL
-].filter(Boolean);
+  'https://smartcrm-3cle.onrender.com'
+];
+
+const envOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set(isProduction ? envOrigins : [...devOrigins, ...envOrigins]);
+if (isProduction && allowedOrigins.size === 0) {
+  throw new Error('CORS_ALLOWED_ORIGINS or FRONTEND_URL must be set in production');
+}
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow non-browser requests with no Origin header.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.has(origin)) {
       callback(null, true);
     } else {
-      callback(null, true); // Still allow for now
+      callback(null, false);
     }
   },
   credentials: true,
@@ -73,6 +119,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
   exposedHeaders: ['Content-Length', 'Content-Type', 'Content-Range', 'Accept-Ranges']
 }));
+
+// Stripe requires the raw request body for webhook signature verification.
+app.use('/api/billing/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
 
 // Body parser with size limits
 app.use(express.json({ limit: '1mb' }));
@@ -208,6 +257,12 @@ function authenticateToken(req, res, next) {
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/crm', crmRoutes);
+app.use('/api/billing/start-checkout', billingMutationLimiter);
+app.use('/api/billing/cancel', billingMutationLimiter);
+app.use('/api/billing/extend-trial', billingMutationLimiter);
+app.use('/api/billing', billingRoutes);
+app.use('/api/subscribe', subscribeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -218,6 +273,26 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Keep trial lifecycle up to date without manual intervention.
+const BILLING_LIFECYCLE_INTERVAL_MS = Number(process.env.BILLING_LIFECYCLE_INTERVAL_MS || 6 * 60 * 60 * 1000);
+try {
+  const startupLifecycleResult = runBillingLifecycle('startup');
+  console.log(`✓ Billing lifecycle startup scan: ${startupLifecycleResult.scanned} users, updated ${startupLifecycleResult.updated}`);
+} catch (error) {
+  console.error('⚠️  Billing lifecycle startup error:', error.message);
+}
+
+setInterval(() => {
+  try {
+    const result = runBillingLifecycle('interval');
+    if (result.updated > 0) {
+      console.log(`✓ Billing lifecycle interval update: ${result.updated} users changed`);
+    }
+  } catch (error) {
+    console.error('⚠️  Billing lifecycle interval error:', error.message);
+  }
+}, BILLING_LIFECYCLE_INTERVAL_MS);
 
 // ============================================
 // ERROR HANDLING
@@ -245,7 +320,7 @@ app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({
       success: false,
-      error: 'הנתיה לא נמצא'
+      error: 'הנתיב לא נמצא'
     });
   }
   // For non-API requests, serve index.html (for React Router)
