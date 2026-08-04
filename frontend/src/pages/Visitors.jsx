@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Users, Eye, Globe, LogIn, RefreshCw } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? "http://localhost:3001" : window.location.origin);
+  (import.meta.env.DEV ? "http://localhost:3001" : "https://smartcrm-3cle.onrender.com");
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 
@@ -24,7 +24,7 @@ export default function Visitors() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchSummary = async (selectedDays) => {
+  const fetchSummary = useCallback(async (selectedDays) => {
     setLoading(true);
     setError(null);
 
@@ -48,12 +48,15 @@ export default function Visitors() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchSummary(days);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days]);
+    const id = setTimeout(() => {
+      fetchSummary(days);
+    }, 0);
+
+    return () => clearTimeout(id);
+  }, [days, fetchSummary]);
 
   return (
     <div className="space-y-6">

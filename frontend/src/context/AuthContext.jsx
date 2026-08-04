@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
 
 import { setAnalyticsUser, trackEvent } from "../lib/analytics";
@@ -5,8 +6,8 @@ import { setAnalyticsUser, trackEvent } from "../lib/analytics";
 const AuthContext = createContext();
 
 // Dynamic API URL - use current origin in production, localhost in dev
-const API_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.DEV ? "http://localhost:3001" : window.location.origin);
+const API_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:3001" : "https://smartcrm-3cle.onrender.com");
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -20,11 +21,23 @@ export function AuthProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [billing, setBilling] = useState(null);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   // ========================================
   // VALIDATE TOKEN ON APP LOAD
   // ========================================
   useEffect(() => {
+    const clearSession = () => {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("rememberMe");
+      setUser(null);
+      setIsAuthenticated(false);
+      setError(null);
+      setAnalyticsUser(null);
+    };
+
     const validateToken = async () => {
       const token = localStorage.getItem("authToken");
       if (token && !user) {
@@ -44,17 +57,159 @@ export function AuthProvider({ children }) {
             setAnalyticsUser(data.user.id);
           } else {
             // Token expired or invalid
-            logout();
+            clearSession();
           }
         } catch (err) {
           console.error("Token validation error:", err);
-          logout();
+          clearSession();
         }
       }
     };
 
     validateToken();
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setBilling(null);
+      return;
+    }
+
+    refreshBillingStatus();
+  }, [isAuthenticated]);
+
+  const refreshBillingStatus = async () => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setBilling(null);
+      return null;
+    }
+
+    setBillingLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/billing/status`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setBilling(null);
+          return null;
+        }
+
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "שגיאה בשליפת סטטוס מנוי");
+      }
+
+      const data = await response.json();
+      setBilling(data.subscription || null);
+      return data.subscription || null;
+    } catch (err) {
+      console.error("Billing status error:", err.message);
+      return null;
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const extendTrial = async () => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      return { success: false, error: "טוקן חסר" };
+    }
+
+    setBillingLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/billing/extend-trial`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || "שגיאה בהארכת ניסיון" };
+      }
+
+      setBilling(data.subscription || null);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const cancelSubscription = async (reason = "") => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      return { success: false, error: "טוקן חסר" };
+    }
+
+    setBillingLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/billing/cancel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || "שגיאה בביטול מנוי" };
+      }
+
+      await refreshBillingStatus();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const startCheckout = async (plan) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      return { success: false, error: "טוקן חסר" };
+    }
+
+    setBillingLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/billing/start-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || "שגיאה בפתיחת תשלום" };
+      }
+
+      return {
+        success: true,
+        checkoutUrl: data.checkoutUrl,
+        sessionId: data.sessionId,
+      };
+    } catch (err) {
+      return { success: false, error: err.message };
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   // ========================================
   // 1. LOGIN WITH PASSWORD HASHING (Backend)
@@ -109,7 +264,7 @@ export function AuthProvider({ children }) {
   // ========================================
   // LOGOUT
   // ========================================
-  const logout = async () => {
+  async function logout() {
     const token = localStorage.getItem("authToken");
     const currentUserId = user?.id || null;
 
@@ -137,9 +292,10 @@ export function AuthProvider({ children }) {
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
+      setBilling(null);
       setAnalyticsUser(null);
     }
-  };
+  }
 
   // ========================================
   // 2. REGISTER NEW USER
@@ -264,11 +420,17 @@ export function AuthProvider({ children }) {
     user,
     loading,
     error,
+    billing,
+    billingLoading,
     login,
     logout,
     register,
     forgotPassword,
     resetPassword,
+    refreshBillingStatus,
+    extendTrial,
+    cancelSubscription,
+    startCheckout,
   };
 
   return (

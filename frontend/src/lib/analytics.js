@@ -1,5 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
+  (import.meta.env.DEV ? 'http://localhost:3001' : 'https://smartcrm-3cle.onrender.com');
 
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || '';
 const CLIENT_ID_KEY = 'analyticsClientId';

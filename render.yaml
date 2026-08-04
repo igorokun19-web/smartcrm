@@ -14,7 +14,7 @@ services:
       - key: JWT_SECRET
         value: your-jwt-secret-key-change-this
       - key: FRONTEND_URL
-        value: https://legendary-empanada-795e09.netlify.app
+        value: https://frontend-two-pearl-10.vercel.app
       - key: EMAIL_HOST
         value: smtp.gmail.com
       - key: EMAIL_USER

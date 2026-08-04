@@ -1,6 +1,13 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
 
 const STORAGE_KEY = "myservices-leads";
+const LEGACY_STORAGE_KEY = "myservices-leads";
+const API_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:3001" : "https://smartcrm-3cle.onrender.com");
+const REMOTE_SYNC_DISABLED_KEY = `crm-remote-sync-disabled:${API_URL}`;
+const CRM_REMOTE_SYNC_ENABLED = import.meta.env.VITE_CRM_REMOTE_SYNC === "true";
 
 const CrmContext = createContext(null);
 
@@ -180,16 +187,13 @@ function normalizeLead(lead) {
   };
 }
 
-function loadLeads() {
+function getScopedStorageKey(userId) {
+  return userId ? `${STORAGE_KEY}:user:${userId}` : `${STORAGE_KEY}:guest`;
+}
+
+function parseLeads(raw) {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-
-    if (!saved) {
-      return [];
-    }
-
-    const parsed = JSON.parse(saved);
-
+    const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) {
       return [];
     }
@@ -200,24 +204,215 @@ function loadLeads() {
   }
 }
 
+function loadLeads(storageKey) {
+  try {
+    const saved = localStorage.getItem(storageKey);
+
+    if (saved) {
+      return parseLeads(saved);
+    }
+
+    // One-time migration from the previous global key to the first scoped user key.
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!legacy) {
+      return [];
+    }
+
+    const migrated = parseLeads(legacy);
+    if (migrated.length === 0) {
+      return [];
+    }
+
+    localStorage.setItem(storageKey, JSON.stringify(migrated));
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    return migrated;
+  } catch {
+    return [];
+  }
+}
+
+function isRemoteSyncDisabled() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.localStorage.getItem(REMOTE_SYNC_DISABLED_KEY) === "1";
+}
+
+function setRemoteSyncDisabled(disabled) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (disabled) {
+    window.localStorage.setItem(REMOTE_SYNC_DISABLED_KEY, "1");
+    return;
+  }
+
+  window.localStorage.removeItem(REMOTE_SYNC_DISABLED_KEY);
+}
+
 export function CrmProvider({ children }) {
-  const [leads, setLeads] = useState(loadLeads);
+  const { isAuthenticated, user } = useAuth();
+  const scopedStorageKey = getScopedStorageKey(user?.id);
+  const [leads, setLeads] = useState(() => loadLeads(scopedStorageKey));
+  const [remoteWorkspaceReady, setRemoteWorkspaceReady] = useState(false);
+  const [remoteSyncEnabled, setRemoteSyncEnabled] = useState(
+    () => CRM_REMOTE_SYNC_ENABLED && !isRemoteSyncDisabled()
+  );
+  const [hydratedStorageKey, setHydratedStorageKey] = useState(scopedStorageKey);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
-  }, [leads]);
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setHydratedStorageKey(null);
+      setLeads(loadLeads(scopedStorageKey));
+      setRemoteWorkspaceReady(false);
+      setRemoteSyncEnabled(
+        CRM_REMOTE_SYNC_ENABLED && Boolean(isAuthenticated) && !isRemoteSyncDisabled()
+      );
+      setHydratedStorageKey(scopedStorageKey);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scopedStorageKey, isAuthenticated]);
+
+  useEffect(() => {
+    if (hydratedStorageKey !== scopedStorageKey) {
+      return;
+    }
+
+    localStorage.setItem(scopedStorageKey, JSON.stringify(leads));
+  }, [leads, scopedStorageKey, hydratedStorageKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadWorkspace() {
+      if (!isAuthenticated) {
+        setRemoteWorkspaceReady(false);
+        return;
+      }
+
+      if (!remoteSyncEnabled) {
+        setRemoteWorkspaceReady(true);
+        return;
+      }
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/crm/leads`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.status === 404) {
+          setRemoteSyncDisabled(true);
+          setRemoteSyncEnabled(false);
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`CRM read failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success || cancelled) {
+          return;
+        }
+
+        if (data.leads.length > 0) {
+          setLeads(data.leads.map(normalizeLead));
+        } else {
+          const localLeads = loadLeads(scopedStorageKey);
+          if (localLeads.length === 0) {
+            return;
+          }
+
+          const saveResponse = await fetch(`${API_URL}/api/crm/leads`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ leads: localLeads }),
+          });
+
+          if (saveResponse.status === 404) {
+            setRemoteSyncDisabled(true);
+            setRemoteSyncEnabled(false);
+          }
+        }
+      } catch (error) {
+        console.error("CRM workspace synchronization failed:", error);
+        setRemoteSyncDisabled(true);
+        setRemoteSyncEnabled(false);
+      } finally {
+        if (!cancelled) {
+          setRemoteWorkspaceReady(true);
+        }
+      }
+    }
+
+    loadWorkspace();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, scopedStorageKey, remoteSyncEnabled]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !remoteWorkspaceReady || !remoteSyncEnabled) {
+      return;
+    }
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      return;
+    }
+
+    fetch(`${API_URL}/api/crm/leads`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ leads }),
+    })
+      .then((response) => {
+        if (response.status === 404) {
+          setRemoteSyncDisabled(true);
+          setRemoteSyncEnabled(false);
+        }
+      })
+      .catch((error) => {
+        console.error("CRM workspace save failed:", error);
+        setRemoteSyncDisabled(true);
+        setRemoteSyncEnabled(false);
+      });
+  }, [isAuthenticated, leads, remoteWorkspaceReady, remoteSyncEnabled]);
 
   // Keep multiple tabs/windows in sync with each other.
   useEffect(() => {
     function handleStorage(event) {
-      if (event.key === STORAGE_KEY) {
-        setLeads(loadLeads());
+      if (event.key === scopedStorageKey) {
+        setLeads(loadLeads(scopedStorageKey));
       }
     }
 
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+  }, [scopedStorageKey]);
 
   const updateLead = useCallback((leadId, updater) => {
     setLeads((prev) =>
