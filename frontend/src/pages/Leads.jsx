@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Download, Edit2, Trash2, Plus, MessageCircle, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Edit2, Trash2, Plus, MessageCircle } from "lucide-react";
 import {
   useCrm,
   formatDate,
