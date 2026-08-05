@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { TrendingUp, ArrowRight, Clock, AlertCircle, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { useCrm, calculateLeadScore, getLeadQuality, getPipelineStats } from "../context/CrmContext";
-import { useTranslation } from "../hooks/useTranslation";
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 
-function PipelineStage({ status, label, color, leads, onLeadClick }) {
+function PipelineStage({ label, color, leads, onLeadClick, now }) {
   return (
-    <div className="bg-gray-50 rounded-lg overflow-hidden flex flex-col" style={{ minHeight: "600px" }}>
+    <div className="bg-gray-50 rounded-lg overflow-hidden flex flex-col" style={{ minHeight: "300px" }}>
       {/* Stage Header */}
       <div className={`${color} text-white p-4 flex items-center justify-between`}>
         <div>
@@ -27,7 +26,7 @@ function PipelineStage({ status, label, color, leads, onLeadClick }) {
           leads.map((lead) => {
             const score = calculateLeadScore(lead);
             const quality = getLeadQuality(score);
-            const daysOld = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / (24 * 60 * 60 * 1000));
+            const daysOld = Math.floor((now - new Date(lead.createdAt).getTime()) / (24 * 60 * 60 * 1000));
 
             return (
               <div
@@ -65,12 +64,12 @@ function PipelineStage({ status, label, color, leads, onLeadClick }) {
   );
 }
 
-function LeadDetailModal({ lead, onClose }) {
+function LeadDetailModal({ lead, onClose, now }) {
   if (!lead) return null;
 
   const score = calculateLeadScore(lead);
   const quality = getLeadQuality(score);
-  const daysOld = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / (24 * 60 * 60 * 1000));
+  const daysOld = Math.floor((now - new Date(lead.createdAt).getTime()) / (24 * 60 * 60 * 1000));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4 overflow-y-auto">
@@ -151,8 +150,8 @@ function LeadDetailModal({ lead, onClose }) {
             {score >= 30 && score < 50 && <li>• שלחו הצעת מחיר</li>}
             {score >= 50 && score < 75 && <li>• עקבו אחרי הצעת המחיר</li>}
             {score >= 75 && lead.status !== "Won" && <li>• סגרו את העסקה</li>}
-            {(lead.tasks?.length || 0) === 0 && <li>• צרו משימות ניעזור</li>}
-            {daysOld > 7 && lead.status === "New" && <li>• הלקוח לא פעיל - שקלו צעדי תזכור</li>}
+            {(lead.tasks?.length || 0) === 0 && <li>• צרו משימות עזר</li>}
+            {daysOld > 7 && lead.status === "New" && <li>• הלקוח לא פעיל - שקלו צעדי תזכורת</li>}
           </ul>
         </div>
 
@@ -187,6 +186,7 @@ function LeadDetailModal({ lead, onClose }) {
 export default function Pipeline() {
   const { leads } = useCrm();
   const [selectedLead, setSelectedLead] = useState(null);
+  const [now] = useState(() => Date.now());
 
   const { statuses: pipelineStatuses, totalValue, avgScore } = getPipelineStats(leads);
 
@@ -201,8 +201,6 @@ export default function Pipeline() {
 
   // Calculate conversion rates
   const conversionRate = leads.length > 0 ? Math.round((leadsGrouped.Won.length / leads.length) * 100) : 0;
-  const quoteConversion = leadsGrouped.Quoted.length > 0 ? Math.round((leadsGrouped.Won.length / leadsGrouped.Quoted.length) * 100) : 0;
-
   return (
     <div className="p-6 space-y-8" dir="rtl">
       {/* Header */}
@@ -261,45 +259,45 @@ export default function Pipeline() {
         <h2 className="text-2xl font-bold mb-4">🏛️ צינור המכירה</h2>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 pb-8">
           <PipelineStage
-            status="New"
             label="חדש"
-            color="bg-yellow-500"
+            color="bg-blue-600"
             leads={leadsGrouped.New}
             onLeadClick={setSelectedLead}
+            now={now}
           />
           <PipelineStage
-            status="Contacted"
             label="נוצר קשר"
-            color="bg-purple-500"
+            color="bg-purple-600"
             leads={leadsGrouped.Contacted}
             onLeadClick={setSelectedLead}
+            now={now}
           />
           <PipelineStage
-            status="Quoted"
             label="הצעת מחיר"
-            color="bg-blue-500"
+            color="bg-amber-600"
             leads={leadsGrouped.Quoted}
             onLeadClick={setSelectedLead}
+            now={now}
           />
           <PipelineStage
-            status="Won"
             label="נסגר בהצלחה"
-            color="bg-green-500"
+            color="bg-green-600"
             leads={leadsGrouped.Won}
             onLeadClick={setSelectedLead}
+            now={now}
           />
           <PipelineStage
-            status="Lost"
             label="אבוד"
-            color="bg-red-500"
+            color="bg-red-600"
             leads={leadsGrouped.Lost}
             onLeadClick={setSelectedLead}
+            now={now}
           />
         </div>
       </div>
 
       {/* Lead Detail Modal */}
-      <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} />
+      <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} now={now} />
     </div>
   );
 }

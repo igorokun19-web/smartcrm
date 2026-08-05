@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import TrialBanner from "./components/TrialBanner";
 import { CrmProvider } from "./context/CrmContext";
 import ToastProvider from "./components/Toast";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -19,6 +20,7 @@ import Tasks from "./pages/Tasks";
 import Pipeline from "./pages/Pipeline";
 import Reports from "./pages/Reports";
 import Visitors from "./pages/Visitors";
+import Operations from "./pages/Operations";
 import Services from "./pages/Services";
 import Invoices from "./pages/Invoices";
 import Settings from "./pages/Settings";
@@ -38,7 +40,8 @@ function AppContent() {
       <>
         {tracker}
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/home" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -53,14 +56,16 @@ function AppContent() {
   return (
     <>
       {tracker}
-      <div className="min-h-screen bg-slate-100 text-slate-900">
-        <div className="flex min-h-screen">
+      <div className="min-h-screen bg-slate-100 text-slate-900 overflow-x-hidden">
+        <div className="flex min-h-screen overflow-x-hidden">
           <Sidebar />
 
           <main className="flex-1 w-full">
             <Header />
 
             <div className="p-3 md:p-6 pb-20 md:pb-6">
+              <TrialBanner />
+
               <Routes>
                 <Route
                   path="/"
@@ -123,6 +128,14 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <Visitors />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/operations"
+                  element={
+                    <ProtectedRoute>
+                      <Operations />
                     </ProtectedRoute>
                   }
                 />
