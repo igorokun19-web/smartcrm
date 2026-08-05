@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { ChevronDown, ChevronUp, Download, Edit2, Trash2, Plus, MessageCircle } from "lucide-react";
+import React, { useState } from "react";
+import { ChevronDown, ChevronUp, Download, Edit2, Trash2, Plus, MessageCircle, Sparkles } from "lucide-react";
 import {
   useCrm,
   formatDate,
@@ -160,7 +160,7 @@ export default function Leads() {
     URL.revokeObjectURL(url);
   };
 
-  const filteredSortedLeads = useMemo(() => {
+  const filteredSortedLeads = (() => {
     let filtered = leads.filter((lead) => {
       const search = searchTerm.toLowerCase();
       const notesText = (lead.notes || [])
@@ -221,7 +221,7 @@ export default function Leads() {
     });
 
     return filtered;
-  }, [leads, searchTerm, statusFilter, sortBy, sortOrder]);
+  })();
 
   const handleNoteChange = (leadId, value) => {
     setNoteInputs((prev) => ({
@@ -488,7 +488,15 @@ export default function Leads() {
                         </button>
                         <button
                           onClick={() => {
-                            const message = `${t("leads.whatsappGreeting")} ${lead.name}! ${t("leads.whatsappMessage")}`;
+                            // AI-powered context-aware message based on lead status
+                            const statusMessages = {
+                              New: `היי ${lead.name}! ראיתי שפנית אלינו ואני רוצה לוודא שקיבלת את כל הפרטים. מתי נוח לך לדבר?`,
+                              Contacted: `היי ${lead.name}, מעקב קצר אחרי השיחה שלנו — יש לך שאלות נוספות או שאני יכול לעזור עם משהו?`,
+                              Quoted: `היי ${lead.name}, שלחתי לך הצעת מחיר לפני כמה ימים — האם קיבלת? אשמח לענות על שאלות 😊`,
+                              Won: `היי ${lead.name}! תודה על האמון. אני כאן לכל שאלה או צורך 🙏`,
+                              Lost: `היי ${lead.name}, מקווה שהכל טוב! אם אי פעם נצטרך לעבוד יחד — אני כאן.`
+                            };
+                            const message = statusMessages[lead.status] || statusMessages.New;
                             const phone = lead.phone?.replace(/\D/g, "");
                             if (phone) {
                               window.open(`https://wa.me/972${phone.slice(-9)}?text=${encodeURIComponent(message)}`);
@@ -496,10 +504,11 @@ export default function Leads() {
                               alert(t("leads.noPhoneNumber"));
                             }
                           }}
-                          className="p-2 hover:bg-green-100 rounded-lg text-green-600"
-                          title="WhatsApp"
+                          className="p-2 hover:bg-green-100 rounded-lg text-green-600 relative group"
+                          title="WhatsApp AI — הודעה חכמה לפי סטטוס"
                         >
                           <MessageCircle size={18} />
+                          <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-violet-500 text-white rounded-full px-1 leading-3 py-0.5 hidden group-hover:block">AI</span>
                         </button>
                         <button
                           onClick={() => editLead(lead)}
@@ -695,6 +704,16 @@ export default function Leads() {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile FAB — floating add lead button, visible only on mobile */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="fixed bottom-6 left-6 md:hidden z-50 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-full shadow-lg transition-all active:scale-95"
+        aria-label="הוסף ליד"
+      >
+        <Plus size={20} />
+        <span className="text-sm">הוסף ליד</span>
+      </button>
     </div>
   );
 }

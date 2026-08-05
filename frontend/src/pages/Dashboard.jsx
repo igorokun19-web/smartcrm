@@ -1,6 +1,7 @@
 import { useCrm } from "../context/CrmContext";
 import { useTranslation } from "../hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
+import AiInsights from "../components/AiInsights";
 import { Card, Badge, EmptyState } from "../components/UI";
 import {
   LineChart,
@@ -120,6 +121,9 @@ export default function Dashboard() {
         <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">{t("dashboard.title")}</h1>
         <p className="text-neutral-500 text-sm md:text-base mt-1">{t("dashboard.subtitle")}</p>
       </div>
+
+      {/* AI Insights */}
+      <AiInsights leads={leads} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
