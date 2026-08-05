@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background:#040810;
+    font-family:Arial,sans-serif;
+    overflow:hidden; color:white;
+  }
+  .bg {
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 60% 50% at 25% 50%, rgba(255,50,50,.12) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 75% 50%, rgba(0,180,80,.1) 0%, transparent 70%),
+      #040810;
+  }
+
+  /* TITLE */
+  .title {
+    position:absolute; top:3%; width:100%; text-align:center;
+    opacity:0;
+    animation:titleIn .5s ease .1s forwards;
+  }
+  @keyframes titleIn {
+    from{transform:translateY(-50px);opacity:0;} to{opacity:1;transform:none;}
+  }
+  .title-badge {
+    display:inline-block;
+    background:linear-gradient(135deg,#ff4444,#6600ff);
+    font-size:30px; font-weight:900; color:#fff;
+    padding:10px 40px; border-radius:100px;
+    box-shadow:0 6px 24px rgba(100,0,200,.3);
+    margin-bottom:14px;
+  }
+  .title h1 {
+    font-size:70px; font-weight:900; line-height:1.1;
+    background:linear-gradient(135deg,#fff,#ddd);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+
+  /* VERTICAL DIVIDER */
+  .divider-line {
+    position:absolute;
+    top:21%; bottom:4%;
+    left:50%; width:2px;
+    background:linear-gradient(180deg,transparent,rgba(255,255,255,.3) 20%,rgba(255,255,255,.3) 80%,transparent);
+    opacity:0;
+    animation:fadeIn .3s ease .8s forwards;
+  }
+  @keyframes fadeIn { to{opacity:1} }
+
+  .vs-pill {
+    position:absolute; top:38%; left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg,#ff4444,#6600ff);
+    width:64px; height:64px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; font-weight:900; color:#fff;
+    z-index:10;
+    opacity:0;
+    animation:vsIn .4s cubic-bezier(.175,.885,.32,1.275) 1s forwards;
+    box-shadow:0 4px 20px rgba(100,0,200,.5);
+  }
+  @keyframes vsIn {
+    from{transform:translateX(-50%) scale(0);opacity:0;}
+    to{transform:translateX(-50%) scale(1);opacity:1;}
+  }
+
+  /* PERSON COLUMNS */
+  .col { position:absolute; width:calc(50% - 50px); }
+  .col-left  { top:21%; left:20px; }
+  .col-right { top:21%; right:20px; }
+
+  /* Photo */
+  .photo-frame {
+    width:100%; height:280px;
+    border-radius:20px; overflow:hidden;
+    position:relative;
+    border:3px solid transparent;
+    opacity:0;
+  }
+  .photo-frame img {
+    width:100%; height:100%;
+    object-fit:cover; object-position:top;
+  }
+  .photo-overlay {
+    position:absolute; inset:0;
+    display:flex; align-items:flex-end;
+    padding:16px;
+  }
+  .photo-label {
+    background:rgba(0,0,0,.7);
+    backdrop-filter:blur(8px);
+    border-radius:10px;
+    padding:8px 14px;
+    font-size:20px; font-weight:700;
+    width:100%;
+  }
+  .photo-emotion {
+    position:absolute; top:12px; left:12px;
+    font-size:40px;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
+  }
+
+  .frame-bad  { border-color:rgba(255,60,60,.6); animation:frameIn .5s ease 1.2s forwards; }
+  .frame-good { border-color:rgba(0,200,80,.6);  animation:frameIn .5s ease 1.5s forwards; }
+  @keyframes frameIn {
+    from{transform:scale(.85);opacity:0;} to{opacity:1;transform:none;}
+  }
+
+  /* Metrics under photos */
+  .metrics-col {
+    margin-top:14px;
+    opacity:0;
+  }
+  .mc-bad  { animation:fadeUp .4s ease 2s forwards; }
+  .mc-good { animation:fadeUp .4s ease 2.3s forwards; }
+  @keyframes fadeUp {
+    from{transform:translateY(20px);opacity:0;} to{opacity:1;transform:none;}
+  }
+
+  .metric-row {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    margin-bottom:8px;
+    font-size:20px;
+  }
+  .mr-bad  { background:rgba(255,60,60,.1); border:1px solid rgba(255,60,60,.2); }
+  .mr-good { background:rgba(0,200,80,.1); border:1px solid rgba(0,200,80,.2); }
+  .mr-icon { font-size:24px; flex-shrink:0; }
+  .mr-text { color:rgba(255,255,255,.8); flex:1; }
+  .mr-val  { font-weight:700; font-size:24px; }
+  .val-bad  { color:#ff5555; }
+  .val-good { color:#00cc55; }
+
+  /* TRANSFORMATION ARROW */
+  .arrow-section {
+    position:absolute; top:71%;
+    width:100%; text-align:center;
+    opacity:0;
+    animation:arrowIn .5s ease 3.5s forwards;
+  }
+  @keyframes arrowIn {
+    from{transform:scale(.7);opacity:0;} to{opacity:1;transform:none;}
+  }
+  .arrow-text {
+    font-size:30px;
+    background:linear-gradient(135deg,#ffd700,#ff8c00);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    display:inline-flex; align-items:center; gap:12px;
+    font-weight:700;
+  }
+
+  /* QUOTE */
+  .quote {
+    position:absolute; top:78%;
+    left:30px; right:30px;
+    background:linear-gradient(135deg,#0a0520,#1a083a);
+    border:2px solid rgba(180,100,255,.5);
+    border-radius:20px; padding:26px 30px;
+    text-align:center;
+    opacity:0;
+    animation:quoteIn .5s cubic-bezier(.175,.885,.32,1.275) 4.2s forwards;
+    box-shadow:0 0 50px rgba(120,0,255,.2);
+  }
+  @keyframes quoteIn {
+    from{transform:scale(.85) rotate(-1deg);opacity:0;} to{transform:none;opacity:1;}
+  }
+  .quote-text {
+    font-size:34px; font-weight:700; line-height:1.4;
+    color:rgba(255,255,255,.9);
+  }
+  .quote-highlight {
+    font-size:46px;
+    background:linear-gradient(135deg,#bb44ff,#ff44aa);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    display:block; margin-top:6px;
+  }
+
+  /* CTA */
+  .cta {
+    position:absolute; bottom:3%;
+    width:100%; text-align:center;
+    opacity:0;
+    animation:ctaIn .4s ease 5.5s forwards;
+  }
+  @keyframes ctaIn { to{opacity:1} }
+  .cta-inner {
+    display:inline-block;
+    background:linear-gradient(135deg,#bb44ff,#6600ff);
+    font-size:38px; font-weight:900;
+    padding:20px 52px; border-radius:100px;
+    box-shadow:0 10px 40px rgba(100,0,255,.4);
+  }
+  .watermark {
+    position:absolute; bottom:.3%;
+    width:100%; text-align:center;
+    color:rgba(255,255,255,.2); font-size:20px;
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="title">
+  <div class="title-badge">אותו עסק — תוצאות שונות</div>
+  <h1>לפני AI<br>vs אחרי AI</h1>
+</div>
+
+<div class="divider-line"></div>
+<div class="vs-pill">VS</div>
+
+<!-- LEFT: BEFORE -->
+<div class="col col-left">
+  <div class="photo-frame frame-bad">
+    <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=500&h=320&fit=crop&crop=top&q=80"
+         alt="stressed worker"
+         onerror="this.parentNode.style.background='linear-gradient(135deg,#2d0808,#1a0505)';this.style.display='none';this.parentNode.innerHTML+='<div style=\'font-size:120px;text-align:center;padding:60px\'>😩</div>'">
+    <div class="photo-overlay">
+      <div class="photo-label" style="color:#ff8888">❌ לפני AI</div>
+    </div>
+    <div class="photo-emotion">😩</div>
+  </div>
+  <div class="metrics-col mc-bad">
+    <div class="metric-row mr-bad">
+      <div class="mr-icon">⏰</div>
+      <div class="mr-text">הצעת מחיר</div>
+      <div class="mr-val val-bad">60 דק׳</div>
+    </div>
+    <div class="metric-row mr-bad">
+      <div class="mr-icon">💸</div>
+      <div class="mr-text">לקוח בורח</div>
+      <div class="mr-val val-bad">1 מ-3</div>
+    </div>
+    <div class="metric-row mr-bad">
+      <div class="mr-icon">😴</div>
+      <div class="mr-text">פולו-אפ</div>
+      <div class="mr-val val-bad">לא קורה</div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT: AFTER -->
+<div class="col col-right">
+  <div class="photo-frame frame-good">
+    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=320&fit=crop&crop=top&q=80"
+         alt="happy businessman"
+         onerror="this.parentNode.style.background='linear-gradient(135deg,#082d10,#051a08)';this.style.display='none';this.parentNode.innerHTML+='<div style=\'font-size:120px;text-align:center;padding:60px\'>😊</div>'">
+    <div class="photo-overlay">
+      <div class="photo-label" style="color:#88ff88">✅ אחרי AI</div>
+    </div>
+    <div class="photo-emotion">🚀</div>
+  </div>
+  <div class="metrics-col mc-good">
+    <div class="metric-row mr-good">
+      <div class="mr-icon">⚡</div>
+      <div class="mr-text">הצעת מחיר</div>
+      <div class="mr-val val-good">30 שנ׳</div>
+    </div>
+    <div class="metric-row mr-good">
+      <div class="mr-icon">💰</div>
+      <div class="mr-text">לקוח נשאר</div>
+      <div class="mr-val val-good">+80%</div>
+    </div>
+    <div class="metric-row mr-good">
+      <div class="mr-icon">🤖</div>
+      <div class="mr-text">פולו-אפ</div>
+      <div class="mr-val val-good">אוטומטי</div>
+    </div>
+  </div>
+</div>
+
+<!-- ARROW -->
+<div class="arrow-section">
+  <div class="arrow-text">
+    <span>60 דקות</span>
+    <span style="font-size:40px">→</span>
+    <span>30 שניות</span>
+    <span style="font-size:40px">→</span>
+    <span>+30% הכנסה</span>
+  </div>
+</div>
+
+<!-- QUOTE -->
+<div class="quote">
+  <div class="quote-text">זה לא קסם. זה</div>
+  <span class="quote-highlight">ChatGPT בחינם</span>
+  <div class="quote-text" style="font-size:28px;color:rgba(255,255,255,.6)">כלי שכולם יכולים להשתמש בו — כולל אתה</div>
+</div>
+
+<div class="cta">
+  <div class="cta-inner">שמרו 📌 + עקבו</div>
+</div>
+<div class="watermark">@okun_igal</div>
+</body>
+</html>

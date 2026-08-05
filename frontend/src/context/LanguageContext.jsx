@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
 import { translations } from "../data/translations";
 
@@ -11,8 +12,8 @@ export function LanguageProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem("language", language);
-    // שנה את כיוון הטקסט בעברית
     document.documentElement.dir = language === "he" ? "rtl" : "ltr";
+    document.documentElement.lang = language;
   }, [language]);
 
   const t = (key) => {

@@ -1,9 +1,6 @@
 // Service Worker for PWA
-const CACHE_NAME = 'smartcrm-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-];
+const CACHE_NAME = 'smartcrm-v3';
+const urlsToCache = ['/'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -11,6 +8,7 @@ self.addEventListener('install', event => {
       return cache.addAll(urlsToCache);
     })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
@@ -25,14 +23,40 @@ self.addEventListener('activate', event => {
       );
     })
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  const isNavigation = event.request.mode === 'navigate';
+  const isHtmlRequest = event.request.headers.get('accept')?.includes('text/html');
+
+  if (isNavigation || isHtmlRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then(networkResponse => {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+          return networkResponse;
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          return cached || caches.match('/index.html');
+        })
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    }).catch(() => {
-      return caches.match('/index.html');
-    })
+    fetch(event.request)
+      .then(networkResponse => {
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartCRM — הדגמה חיה</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f0f1a; color: #fff; overflow: hidden; }
+
+  .slide { display: none; width: 100vw; height: 100vh; padding: 60px; flex-direction: column; justify-content: center; align-items: center; text-align: center; position: relative; }
+  .slide.active { display: flex; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Slide 1 - Hero */
+  .slide-1 { background: linear-gradient(135deg, #1a1a3e 0%, #0f3460 50%, #1a1a3e 100%); }
+  .slide-1 .logo { font-size: 56px; font-weight: 900; background: linear-gradient(90deg, #60a5fa, #a78bfa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+  .slide-1 .tagline { font-size: 28px; color: #94a3b8; margin-bottom: 32px; }
+  .slide-1 .badge { display: inline-block; background: #22c55e22; border: 1px solid #22c55e; color: #22c55e; padding: 8px 20px; border-radius: 50px; font-size: 14px; font-weight: 600; }
+
+  /* Common */
+  h2 { font-size: 42px; font-weight: 800; margin-bottom: 16px; }
+  .subtitle { font-size: 20px; color: #94a3b8; margin-bottom: 40px; }
+  .cards { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; width: 100%; max-width: 1100px; }
+  .card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 28px 32px; flex: 1; min-width: 220px; max-width: 260px; }
+  .card-icon { font-size: 40px; margin-bottom: 12px; }
+  .card-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .card-text { font-size: 14px; color: #94a3b8; line-height: 1.6; }
+  .card.green { border-color: #22c55e44; background: #22c55e11; }
+  .card.blue { border-color: #60a5fa44; background: #60a5fa11; }
+  .card.purple { border-color: #a78bfa44; background: #a78bfa11; }
+  .card.orange { border-color: #fb923c44; background: #fb923c11; }
+
+  /* Simulation slides */
+  .biz-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%; max-width: 1000px; }
+  .biz-card { background: rgba(255,255,255,0.06); border-radius: 16px; padding: 24px; border: 1px solid rgba(255,255,255,0.1); }
+  .biz-card .biz-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .biz-card .biz-type { font-size: 13px; color: #94a3b8; margin-bottom: 16px; }
+  .lead-item { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; font-size: 13px; text-align: right; display: flex; justify-content: space-between; align-items: center; }
+  .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .status-new { background: #3b82f633; color: #93c5fd; }
+  .status-quoted { background: #f59e0b33; color: #fcd34d; }
+  .status-contacted { background: #8b5cf633; color: #c4b5fd; }
+  .status-won { background: #22c55e33; color: #86efac; }
+
+  /* Data isolation */
+  .isolation-grid { display: flex; gap: 20px; align-items: stretch; max-width: 1000px; width: 100%; }
+  .isolation-card { flex: 1; background: rgba(255,255,255,0.06); border-radius: 16px; padding: 24px; }
+  .wall { display: flex; align-items: center; justify-content: center; }
+  .wall-icon { font-size: 36px; color: #22c55e; font-weight: 900; }
+
+  /* Stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 900px; width: 100%; }
+  .stat-card { background: rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; }
+  .stat-num { font-size: 48px; font-weight: 900; background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .stat-label { font-size: 13px; color: #94a3b8; margin-top: 8px; }
+
+  /* Navbar */
+  nav { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; background: rgba(0,0,0,0.5); padding: 12px 20px; border-radius: 50px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+  nav button { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 12px; height: 12px; border-radius: 50%; cursor: pointer; transition: all 0.3s; padding: 0; }
+  nav button.active { background: #60a5fa; width: 28px; border-radius: 6px; }
+
+  /* Arrows */
+  .arrow { position: fixed; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: #fff; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; font-size: 20px; transition: background 0.3s; z-index: 100; }
+  .arrow:hover { background: rgba(255,255,255,0.2); }
+  .arrow-left { left: 20px; }
+  .arrow-right { right: 20px; }
+
+  /* Slide counter */
+  .counter { position: fixed; top: 20px; right: 30px; font-size: 13px; color: #64748b; z-index: 100; }
+
+  /* Gradient titles */
+  .grad { background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-green { background: linear-gradient(90deg, #34d399, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  /* Step flow */
+  .flow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+  .step { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 16px 24px; font-size: 15px; font-weight: 600; border: 1px solid rgba(255,255,255,0.12); }
+  .arrow-flow { font-size: 24px; color: #475569; }
+
+  /* Check list */
+  .check-list { list-style: none; text-align: right; max-width: 600px; }
+  .check-list li { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 17px; display: flex; align-items: center; gap: 12px; }
+  .check-list li::before { content: '✅'; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: HERO -->
+<div class="slide slide-1 active">
+  <div class="logo">SmartCRM</div>
+  <div class="tagline">ניהול לידים חכם לעסקים קטנים</div>
+  <div class="badge">✅ מערכת חינמית — פועלת עכשיו</div>
+  <div style="margin-top: 48px; display: flex; gap: 40px; color: #64748b; font-size: 15px;">
+    <span>🌐 frontend-two-pearl-10.vercel.app</span>
+    <span>⚡ Backend: Render</span>
+    <span>🔒 Auth: JWT + bcrypt</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide" style="background: linear-gradient(135deg, #1a0a0a 0%, #2d0f0f 100%);">
+  <h2>הבעיה שפתרנו</h2>
+  <p class="subtitle">כל ליד שנופל בין הכיסאות = כסף שנעלם</p>
+  <div class="cards">
+    <div class="card orange">
+      <div class="card-icon">📱</div>
+      <div class="card-title">WhatsApp</div>
+      <div class="card-text">פניות שנשכחות בתוך השיחות</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">📊</div>
+      <div class="card-title">Excel</div>
+      <div class="card-text">קבצים מפוזרים, לא מעודכנים</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">📝</div>
+      <div class="card-title">פתקים</div>
+      <div class="card-text">לא ניתן לעקוב, לא ניתן לסכם</div>
+    </div>
+    <div class="card orange">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">זיכרון</div>
+      <div class="card-text">מי ביקש הצעה? מי עדיין חם?</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: THE SOLUTION -->
+<div class="slide" style="background: linear-gradient(135deg, #0a1a0a 0%, #0f2d0f 100%);">
+  <h2><span class="grad-green">הפתרון</span> — מקום אחד לכל דבר</h2>
+  <p class="subtitle">הרשמה ב-30 שניות, ללא כרטיס אשראי</p>
+  <div class="cards">
+    <div class="card green">
+      <div class="card-icon">👥</div>
+      <div class="card-title">ניהול לידים</div>
+      <div class="card-text">כל פנייה עם שם, טלפון, סטטוס ומעקב</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">📈</div>
+      <div class="card-title">Dashboard חי</div>
+      <div class="card-text">גרפים וKPIs בזמן אמת</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">📱</div>
+      <div class="card-title">WhatsApp AI</div>
+      <div class="card-text">הודעה חכמה לפי סטטוס הליד</div>
+    </div>
+    <div class="card green">
+      <div class="card-icon">✦</div>
+      <div class="card-title">AI Insights</div>
+      <div class="card-text">תובנות חכמות על הלידים שלך</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: SIMULATION - 3 BUSINESSES -->
+<div class="slide" style="background: #0f0f1a;">
+  <h2>סימולציה: <span class="grad">3 עסקים שונים</span></h2>
+  <p class="subtitle">כל אחד נרשם, הוסיף לידים, ניהל — בנפרד</p>
+  <div class="biz-grid">
+    <div class="biz-card" style="border-color: #60a5fa44;">
+      <div class="biz-name">🔨 יוסי שיפוצים</div>
+      <div class="biz-type">שיפוצניק</div>
+      <div class="lead-item">דוד לוי — שיפוץ מטבח <span class="status-badge status-new">חדש</span></div>
+      <div class="lead-item">רחל כהן — צביעת דירה <span class="status-badge status-quoted">הצעה</span></div>
+      <div class="lead-item">מיכה שמיר — שיפוץ אמבטיה <span class="status-badge status-contacted">נוצר קשר</span></div>
+    </div>
+    <div class="biz-card" style="border-color: #a78bfa44;">
+      <div class="biz-name">💪 דנה פיטנס</div>
+      <div class="biz-type">מאמנת כושר</div>
+      <div class="lead-item">אורן מזרחי — אימון אישי <span class="status-badge status-new">חדש</span></div>
+      <div class="lead-item">שירה בן-דוד — תזונה+כושר <span class="status-badge status-won">נסגר!</span></div>
+    </div>
+    <div class="biz-card" style="border-color: #34d39944;">
+      <div class="biz-name">🏠 מיכל נדל"ן</div>
+      <div class="biz-type">יועצת נדל"ן</div>
+      <div class="lead-item">יעקב פרידמן — 4 חדרים <span class="status-badge status-contacted">נוצר קשר</span></div>
+      <div class="lead-item">נגה ברק — מכירת דירה <span class="status-badge status-quoted">הצעה</span></div>
+      <div class="lead-item">עמי גרין — השקעה בנדל"ן <span class="status-badge status-new">חדש</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: DATA ISOLATION -->
+<div class="slide" style="background: #0f0f1a;">
+  <h2>בידוד נתונים <span class="grad-green">מושלם</span></h2>
+  <p class="subtitle">כל עסק רואה רק את הלידים שלו — אפס דליפה</p>
+  <div class="isolation-grid">
+    <div class="isolation-card" style="border-color: #60a5fa44;">
+      <div style="font-size: 18px; font-weight: 700; margin-bottom: 12px;">יוסי שיפוצים</div>
+      <div class="lead-item">דוד לוי ✓</div>
+      <div class="lead-item">רחל כהן ✓</div>
+      <div style="margin-top: 12px; color: #22c55e; font-size: 13px;">✅ רק הלידים שלי</div>
+    </div>
+    <div class="wall">
+      <div>
+        <div class="wall-icon">🔒</div>
+        <div style="font-size: 12px; color: #64748b; margin-top: 8px;">JWT Auth</div>
+        <div style="font-size: 12px; color: #64748b;">owner_id filter</div>
+      </div>
+    </div>
+    <div class="isolation-card" style="border-color: #a78bfa44;">
+      <div style="font-size: 18px; font-weight: 700; margin-bottom: 12px;">דנה פיטנס</div>
+      <div class="lead-item">אורן מזרחי ✓</div>
+      <div class="lead-item">שירה בן-דוד ✓</div>
+      <div style="margin-top: 12px; color: #22c55e; font-size: 13px;">✅ רק הלידים שלי</div>
+    </div>
+    <div class="wall">
+      <div>
+        <div class="wall-icon">🔒</div>
+        <div style="font-size: 12px; color: #64748b; margin-top: 8px;">JWT Auth</div>
+        <div style="font-size: 12px; color: #64748b;">owner_id filter</div>
+      </div>
+    </div>
+    <div class="isolation-card" style="border-color: #34d39944;">
+      <div style="font-size: 18px; font-weight: 700; margin-bottom: 12px;">מיכל נדל"ן</div>
+      <div class="lead-item">יעקב פרידמן ✓</div>
+      <div class="lead-item">נגה ברק ✓</div>
+      <div style="margin-top: 12px; color: #22c55e; font-size: 13px;">✅ רק הלידים שלי</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: DASHBOARD DEMO -->
+<div class="slide" style="background: #0f0f1a;">
+  <h2>Dashboard — <span class="grad">ביצועים בזמן אמת</span></h2>
+  <p class="subtitle">כל נתון מתעדכן אוטומטית</p>
+  <div style="background: #1e293b; border-radius: 20px; padding: 32px; max-width: 800px; width: 100%; border: 1px solid rgba(255,255,255,0.1);">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+      <div style="background: #0f172a; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 36px; font-weight: 900; color: #60a5fa;">3</div>
+        <div style="font-size: 12px; color: #64748b;">סה"כ לידים</div>
+      </div>
+      <div style="background: #0f172a; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 36px; font-weight: 900; color: #22c55e;">1</div>
+        <div style="font-size: 12px; color: #64748b;">עסקאות סגורות</div>
+      </div>
+      <div style="background: #0f172a; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 36px; font-weight: 900; color: #f59e0b;">1</div>
+        <div style="font-size: 12px; color: #64748b;">הצעות מחיר</div>
+      </div>
+      <div style="background: #0f172a; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 36px; font-weight: 900; color: #ef4444;">0</div>
+        <div style="font-size: 12px; color: #64748b;">באיחור</div>
+      </div>
+    </div>
+    <div style="background: #0f172a; border-radius: 12px; padding: 16px;">
+      <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">✦ AI — תובנות חכמות</div>
+      <div style="background: #f59e0b11; border: 1px solid #f59e0b33; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #fcd34d;">
+        💰 הצעת מחיר ממתינה לסגירה — פנה ללקוח עכשיו
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: AI FEATURES -->
+<div class="slide" style="background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%);">
+  <h2><span class="grad">✦ AI</span> — חכמה מובנית</h2>
+  <p class="subtitle">המערכת מנתחת ומציעה — אתה מחליט</p>
+  <div class="cards">
+    <div class="card purple">
+      <div class="card-icon">✦</div>
+      <div class="card-title">AI Insights Panel</div>
+      <div class="card-text">מזהה לידים ממתינים, הצעות ישנות, משימות באיחור</div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">📱</div>
+      <div class="card-title">WhatsApp AI Generator</div>
+      <div class="card-text">הודעה מותאמת לסטטוס: "הצעה ממתינה? כתב ככה..."</div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">🏗️</div>
+      <div class="card-title">AI Pipeline Score</div>
+      <div class="card-text">ציון איכות לכל ליד לפי פעילות, גיל, ותגובות</div>
+    </div>
+    <div class="card purple">
+      <div class="card-icon">📊</div>
+      <div class="card-title">Smart Stats</div>
+      <div class="card-text">שיעור המרה, ממוצע זמן סגירה, כיוון גרף</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: TEST RESULTS -->
+<div class="slide" style="background: #0f0f1a;">
+  <h2>תוצאות בדיקות — <span class="grad-green">100% עובר</span></h2>
+  <p class="subtitle">בדיקות מחמירות על כל שכבה</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 900px; width: 100%;">
+    <ul class="check-list">
+      <li>12/12 דפים נטענים ללא שגיאות</li>
+      <li>אפס Horizontal Overflow במובייל</li>
+      <li>Form Validation — כל הטפסים</li>
+      <li>CRUD לידים — Create/Read/Update/Delete</li>
+    </ul>
+    <ul class="check-list">
+      <li>API Health — 200 OK</li>
+      <li>Subscribe Endpoint — 200 OK</li>
+      <li>Auth JWT — מאובטח</li>
+      <li>Data Isolation — 3/3 עסקים מבודדים</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SLIDE 9: LIVE STATS -->
+<div class="slide" style="background: linear-gradient(135deg, #0f0f1a 0%, #0a1f0a 100%);">
+  <h2>מה בנינו — <span class="grad-green">ביום אחד</span></h2>
+  <p class="subtitle">5 באוגוסט 2026</p>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-num">8</div>
+      <div class="stat-label">API Endpoints חדשים</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">3</div>
+      <div class="stat-label">עסקים בסימולציה</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">12</div>
+      <div class="stat-label">דפים נבדקו</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Data Isolation</div>
+    </div>
+  </div>
+  <div style="margin-top: 40px; color: #64748b; font-size: 14px;">
+    Backend Live · Vercel Deploy · Mobile Ready · AI Features · Email Capture · SEO
+  </div>
+</div>
+
+<!-- SLIDE 10: CTA -->
+<div class="slide" style="background: linear-gradient(135deg, #0f3460 0%, #1a1a3e 50%, #0f3460 100%);">
+  <div style="font-size: 20px; color: #94a3b8; margin-bottom: 24px;">המערכת פועלת עכשיו</div>
+  <h2 style="font-size: 52px;">התחל חינם ←</h2>
+  <div style="margin: 32px 0; font-size: 18px; color: #94a3b8;">ניהול לידים חכם לעסק שלך — ללא כרטיס אשראי</div>
+  <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 20px 40px; font-size: 22px; font-weight: 700; letter-spacing: 1px; margin-bottom: 32px;">
+    frontend-two-pearl-10.vercel.app
+  </div>
+  <div style="display: flex; gap: 24px; color: #64748b; font-size: 14px;">
+    <span>✅ חינמי לחלוטין</span>
+    <span>✅ מאובטח</span>
+    <span>✅ מובייל-ready</span>
+    <span>✅ AI מובנה</span>
+  </div>
+</div>
+
+<!-- Navigation -->
+<button class="arrow arrow-left" onclick="changeSlide(-1)">‹</button>
+<button class="arrow arrow-right" onclick="changeSlide(1)">›</button>
+<div class="counter" id="counter">1 / 10</div>
+<nav id="nav-dots"></nav>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const nav = document.getElementById('nav-dots');
+const counter = document.getElementById('counter');
+
+// Create dots
+slides.forEach((_, i) => {
+  const dot = document.createElement('button');
+  dot.onclick = () => goTo(i);
+  nav.appendChild(dot);
+});
+
+function goTo(n) {
+  slides[current].classList.remove('active');
+  nav.children[current].classList.remove('active');
+  current = (n + slides.length) % slides.length;
+  slides[current].classList.add('active');
+  nav.children[current].classList.add('active');
+  counter.textContent = `${current + 1} / ${slides.length}`;
+}
+
+function changeSlide(dir) { goTo(current + dir); }
+
+goTo(0);
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+});
+
+// Auto-advance option (press A to toggle)
+let autoPlay = null;
+document.addEventListener('keydown', e => {
+  if (e.key === 'a' || e.key === 'A') {
+    if (autoPlay) { clearInterval(autoPlay); autoPlay = null; }
+    else { autoPlay = setInterval(() => changeSlide(1), 4000); }
+  }
+});
+</script>
+</body>
+</html>

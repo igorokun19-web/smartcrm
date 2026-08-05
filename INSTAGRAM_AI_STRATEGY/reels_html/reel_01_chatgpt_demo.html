@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px; height: 1920px;
+    background: #060612;
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+    color: white;
+  }
+
+  /* ── ANIMATED GRADIENT BG ── */
+  .bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #0a0a1a 0%, #0d0525 40%, #050d1a 100%);
+    animation: bgPulse 3s ease-in-out infinite alternate;
+  }
+  @keyframes bgPulse {
+    from { filter: brightness(1); }
+    to   { filter: brightness(1.15); }
+  }
+
+  /* ── PARTICLE DOTS ── */
+  .particles { position: absolute; inset: 0; overflow: hidden; }
+  .dot {
+    position: absolute;
+    border-radius: 50%;
+    animation: float linear infinite;
+  }
+  @keyframes float {
+    from { transform: translateY(100vh) scale(0); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    to   { transform: translateY(-100px) scale(1); opacity: 0; }
+  }
+
+  /* ── PHASE 1: HOOK (0-2s) ── */
+  .hook {
+    position: absolute;
+    top: 12%;
+    width: 100%;
+    text-align: center;
+    opacity: 0;
+    animation: hookAnim 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s forwards;
+  }
+  @keyframes hookAnim {
+    from { transform: scale(3) rotate(-5deg); opacity: 0; filter: blur(20px); }
+    to   { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0); }
+  }
+  .hook h1 {
+    font-size: 88px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ff4444, #ff8c00, #ffd700);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+    text-shadow: none;
+    filter: drop-shadow(0 0 30px rgba(255,100,0,0.5));
+  }
+
+  /* ── CHAT MOCKUP ── */
+  .chat-container {
+    position: absolute;
+    top: 22%;
+    left: 40px; right: 40px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 32px;
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    animation: slideUp 0.7s ease 1.5s forwards;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(80px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .chat-logo {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #10a37f, #0d8a6b);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    font-weight: 900; color: white;
+  }
+  .chat-title { font-size: 30px; font-weight: 700; color: #fff; }
+  .chat-sub   { font-size: 20px; color: rgba(255,255,255,0.5); }
+
+  /* USER BUBBLE */
+  .msg-user {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 1px solid rgba(100,100,255,0.3);
+    border-radius: 16px 16px 4px 16px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    font-size: 26px;
+    line-height: 1.5;
+    opacity: 0;
+    animation: fadeIn 0.4s ease 2.2s forwards;
+    color: rgba(255,255,255,0.9);
+  }
+  .msg-label { font-size: 18px; color: rgba(255,255,255,0.4); margin-bottom: 6px; }
+
+  /* AI BUBBLE */
+  .msg-ai {
+    background: linear-gradient(135deg, #0d1a0f, #0a1f12);
+    border: 1px solid rgba(16,163,127,0.4);
+    border-radius: 16px 16px 16px 4px;
+    padding: 20px 24px;
+    font-size: 24px;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fadeIn 0.4s ease 2.8s forwards;
+  }
+  .msg-ai-label { color: #10a37f; font-size: 18px; margin-bottom: 8px; font-weight: 700; }
+  .msg-ai-text  { color: rgba(255,255,255,0.88); }
+  .highlight { color: #ffd700; font-weight: 700; }
+  .green     { color: #10a37f; font-weight: 700; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* CURSOR BLINK */
+  .cursor {
+    display: inline-block;
+    width: 3px; height: 26px;
+    background: #10a37f;
+    margin-right: 4px;
+    animation: blink 0.8s step-end infinite 3.5s;
+    vertical-align: text-bottom;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* TIMER BADGE */
+  .timer-badge {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff4500, #ff8c00);
+    color: white;
+    font-size: 26px;
+    font-weight: 900;
+    padding: 12px 36px;
+    border-radius: 100px;
+    white-space: nowrap;
+    opacity: 0;
+    animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275) 4.2s forwards;
+    box-shadow: 0 8px 32px rgba(255,100,0,0.5);
+  }
+  @keyframes popIn {
+    from { transform: translateX(-50%) scale(0.5); opacity: 0; }
+    to   { transform: translateX(-50%) scale(1); opacity: 1; }
+  }
+
+  /* CTA */
+  .cta {
+    position: absolute;
+    bottom: 8%;
+    width: 100%;
+    text-align: center;
+    opacity: 0;
+    animation: ctaSlide 0.6s ease 5.5s forwards;
+  }
+  @keyframes ctaSlide {
+    from { transform: translateY(60px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  .cta-box {
+    display: inline-block;
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #000;
+    font-size: 44px;
+    font-weight: 900;
+    padding: 24px 60px;
+    border-radius: 100px;
+    box-shadow: 0 12px 40px rgba(255,180,0,0.4);
+  }
+
+  /* WATERMARK */
+  .watermark {
+    position: absolute;
+    bottom: 2%;
+    width: 100%;
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    font-size: 26px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <!-- Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Hook -->
+  <div class="hook">
+    <h1>ChatGPT כתב<br>הצעת מחיר<br>ב-8 שניות</h1>
+  </div>
+
+  <!-- Chat Demo -->
+  <div class="chat-container" id="chat">
+    <div class="chat-header">
+      <div class="chat-logo">G</div>
+      <div>
+        <div class="chat-title">ChatGPT</div>
+        <div class="chat-sub">AI Assistant</div>
+      </div>
+    </div>
+
+    <div class="msg-user">
+      <div class="msg-label">👤 חשמלאי:</div>
+      כתוב הצעת מחיר מקצועית<br>
+      להחלפת לוח חשמל. עבודה<br>
+      800₪, חומרים 350₪.
+    </div>
+
+    <div class="msg-ai">
+      <div class="msg-ai-label">🤖 ChatGPT:</div>
+      <div class="msg-ai-text">
+        <span class="highlight">הצעת מחיר — שרותי חשמל</span><br><br>
+        עבודה: <span class="green">800 ₪</span><br>
+        חומרים: <span class="green">350 ₪</span><br>
+        <strong>סה"כ: <span class="highlight">1,150 ₪</span></strong><br><br>
+        אחריות: 12 חודשים ✓<br>
+        זמינות: תוך 48 שעות ✓<br>
+        <span class="cursor"></span>
+      </div>
+    </div>
+
+    <div class="timer-badge">⚡ 8 שניות בלבד!</div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <div class="cta-box">עקבו לעוד טיפים ⬇️</div>
+  </div>
+
+  <div class="watermark">@okun_igal</div>
+
+<script>
+  // Generate particles
+  const container = document.getElementById('particles');
+  const colors = ['#ff4444','#ffd700','#10a37f','#4488ff','#ff8c00'];
+  for (let i = 0; i < 30; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    const size = Math.random() * 6 + 2;
+    dot.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${Math.random()*6+4}s;
+      animation-delay:${Math.random()*4}s;
+      opacity:0.4;
+    `;
+    container.appendChild(dot);
+  }
+</script>
+</body>
+</html>

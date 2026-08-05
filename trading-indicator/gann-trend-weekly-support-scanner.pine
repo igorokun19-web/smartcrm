@@ -1,0 +1,291 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © smartcrm-trading-tools
+//
+// ============================================================================
+// Gann Trend + Weekly Support Scanner  (Strategy, screener-compatible)
+// ============================================================================
+// WHAT THIS DOES
+//   1. Confirms a STRONG primary uptrend using two independent filters that
+//      must BOTH agree: (a) moving-average stack (50>100>200, price>MA50)
+//      and (b) structural price action (higher highs AND higher lows on
+//      swing pivots).
+//   2. Confirms a STRONG weekly support zone: a weekly pivot-low level that
+//      price has "touched" (come within a tolerance %) at least N times in
+//      the lookback window, and price is currently sitting near it.
+//   3. Optionally overlays Gann-style time-cycle projections (calendar-day
+//      counts from the last major swing pivot: 30/45/60/90/120/144/180/
+//      270/360 days) as vertical lines, and flags whether "today" falls
+//      inside a tolerance window around one of those projected dates.
+//   4. Optionally flags proximity to round psychological price levels.
+//   5. Combines all of the above into ONE signal that is both:
+//        - plotted (so it can be scanned across the whole market with
+//          TradingView's Pine Screener), and
+//        - traded (strategy.entry/exit with ATR-based stop + R:R target),
+//          so you can backtest it in the Strategy Tester.
+//
+// IMPORTANT / HONESTY NOTE ON GANN TIME CYCLES
+//   There is no rigorous, peer-reviewed statistical proof that any specific
+//   Gann day-count (90/120/144/180/270/360 etc.) reliably predicts reversals.
+//   These numbers are simply the ones most commonly cited across Gann
+//   literature and trading communities (calendar quarter/half/full-year
+//   counts, plus 144 as a Gann/Fibonacci hybrid). Treat the Gann window as a
+//   supplementary timing filter / confluence factor, not a standalone edge.
+//   Always validate with the Strategy Tester on YOUR instruments before
+//   risking real capital.
+//
+// HOW TO SCAN THE WHOLE MARKET
+//   Add this script to a chart, then open the Pine Screener panel in
+//   TradingView, select this script under "My scripts", pick the symbol
+//   list/watchlist you want to scan (or "All symbols"), and sort/filter by
+//   the "Scan Signal" plot (1 = setup found, 0 = no setup).
+//
+// DISCLAIMER: For educational purposes only. Not financial advice.
+// ============================================================================
+
+//@version=5
+strategy("Gann Trend + Weekly Support Scanner", overlay=true, initial_capital=10000,
+     default_qty_type=strategy.percent_of_equity, default_qty_value=10,
+     commission_type=strategy.commission.percent, commission_value=0.05,
+     calc_on_every_tick=false)
+
+// ---------------------------------------------------------------------------
+// INPUTS
+// ---------------------------------------------------------------------------
+maFastLen  = input.int(50,  "MA Fast",  group="Trend")
+maMidLen   = input.int(100, "MA Mid",   group="Trend")
+maSlowLen  = input.int(200, "MA Slow",  group="Trend")
+swingLeft  = input.int(5,   "Swing Pivot Left Bars (Price Action)",  group="Trend")
+swingRight = input.int(5,   "Swing Pivot Right Bars (Price Action)", group="Trend")
+
+pivotLeftW     = input.int(3,   "Weekly Pivot Left Bars",  group="Weekly Support")
+pivotRightW    = input.int(3,   "Weekly Pivot Right Bars", group="Weekly Support")
+touchTolPct    = input.float(1.0, "Touch Tolerance %", group="Weekly Support")
+minTouches     = input.int(2,   "Min Touches for 'Strong' Support", group="Weekly Support")
+lookbackWeeks  = input.int(104, "Weeks Lookback for Touch Count (104 = 2y)", group="Weekly Support")
+nearSupportPct = input.float(2.5, "Max % Above Support to Count as 'At Support'", group="Weekly Support")
+recentTouchBars = input.int(10, "Bars Lookback to Confirm an Actual Recent Touch", group="Weekly Support")
+
+gannPivotLeft     = input.int(20,   "Major Pivot Left Bars (for Gann)",  group="Gann Time Cycles")
+gannPivotRight    = input.int(20,   "Major Pivot Right Bars (for Gann)", group="Gann Time Cycles")
+gannToleranceDays = input.int(2,    "Gann Date Window Tolerance (days)", group="Gann Time Cycles")
+showGannLines     = input.bool(true, "Draw Gann Cycle Lines", group="Gann Time Cycles")
+
+usePsychLevels    = input.bool(true, "Show Psychological Round-Number Levels", group="Psychological Levels")
+psychTolPct       = input.float(1.0, "Psychological Level Tolerance %", group="Psychological Levels")
+
+weeklyTrendMALen  = input.int(30, "Weekly Trend MA Length (Stage-2 style)", group="Weekly Trend Filter")
+requireWeeklyTrend = input.bool(true, "Require Rising Weekly MA + Close Above It", group="Weekly Trend Filter")
+
+volSpikeMult         = input.float(1.5, "Volume Spike Multiple vs 20w Avg", group="Institutional Entry")
+wickRatioMult         = input.float(2.0, "Min Lower-Wick / Body Ratio (Rejection Candle)", group="Institutional Entry")
+
+minConfluenceRequired = input.int(1, "Min Confluence Factors Required (of 4: Institutional/Trigger/Gann/Psych)", group="Signal Sensitivity")
+
+slAtrMult = input.float(1.5, "Stop Loss ATR Multiple (below support)", group="Risk Management")
+rrRatio   = input.float(2.0, "Reward:Risk Ratio", group="Risk Management")
+atrLen    = input.int(14,  "ATR Length", group="Risk Management")
+
+// ---------------------------------------------------------------------------
+// 1) TREND: MA stack AND structural higher-highs / higher-lows
+// ---------------------------------------------------------------------------
+ma50  = ta.sma(close, maFastLen)
+ma100 = ta.sma(close, maMidLen)
+ma200 = ta.sma(close, maSlowLen)
+
+maAligned = ma50 > ma100 and ma100 > ma200 and close > ma50
+
+ph = ta.pivothigh(high, swingLeft, swingRight)
+pl = ta.pivotlow(low, swingLeft, swingRight)
+
+var float lastPH = na
+var float prevPH = na
+var float lastPL = na
+var float prevPL = na
+
+if not na(ph)
+    prevPH := lastPH
+    lastPH := ph
+if not na(pl)
+    prevPL := lastPL
+    lastPL := pl
+
+higherHighs = not na(lastPH) and not na(prevPH) and lastPH > prevPH
+higherLows  = not na(lastPL) and not na(prevPL) and lastPL > prevPL
+priceActionUptrend = higherHighs and higherLows
+
+// Weekly Stage-2 style filter: rising weekly MA with close above it (how institutions define a real primary trend)
+weeklyTrend() =>
+    wma = ta.sma(close, weeklyTrendMALen)
+    [wma > wma[1], close > wma]
+
+[wmaSlopeUp, aboveWeeklyMa] = request.security(syminfo.tickerid, "W", weeklyTrend(), lookahead=barmerge.lookahead_off)
+weeklyTrendUp = wmaSlopeUp and aboveWeeklyMa
+
+strongUptrend = maAligned and priceActionUptrend and (not requireWeeklyTrend or weeklyTrendUp)
+
+plot(ma50,  "MA Fast", color=color.new(color.blue, 0))
+plot(ma100, "MA Mid",  color=color.new(color.orange, 0))
+plot(ma200, "MA Slow", color=color.new(color.red, 0))
+
+// ---------------------------------------------------------------------------
+// 2) WEEKLY SUPPORT: pivot low + touch count, evaluated on the weekly TF
+// ---------------------------------------------------------------------------
+// All touch-count / volume / candle stats use the last CLOSED weekly bar ([1]) so signals don't repaint mid-week
+weeklyPivotAndTouches() =>
+    wpl = ta.pivotlow(low, pivotLeftW, pivotRightW)
+    var float level = na
+    if not na(wpl)
+        level := wpl
+    touches = 0
+    if not na(level)
+        for i = 1 to math.min(lookbackWeeks, bar_index) - 1
+            if math.abs(low[i] - level) / level * 100 <= touchTolPct
+                touches += 1
+    avgVol    = ta.sma(volume, 20)[1]
+    volSpike  = volume[1] > avgVol * volSpikeMult
+    o = open[1]
+    c = close[1]
+    h = high[1]
+    l = low[1]
+    body      = math.abs(c - o)
+    lowerWick = math.min(c, o) - l
+    rejection = (h - l) > 0 and lowerWick >= body * wickRatioMult and c > o
+    [level, touches, volSpike, rejection]
+
+[weeklySupportLevel, weeklyTouches, weeklyVolSpike, weeklyRejection] = request.security(syminfo.tickerid, "W", weeklyPivotAndTouches(), lookahead=barmerge.lookahead_off)
+
+strongWeeklySupport    = not na(weeklySupportLevel) and weeklyTouches >= minTouches and weeklySupportLevel < close
+distFromSupportPct     = strongWeeklySupport ? (close - weeklySupportLevel) / weeklySupportLevel * 100 : na
+// require the recent low to have actually tested the level (not just be nearby) before calling it "at support"
+recentLow              = ta.lowest(low, recentTouchBars)
+touchedRecently         = strongWeeklySupport and (recentLow - weeklySupportLevel) / weeklySupportLevel * 100 <= touchTolPct
+atSupport              = strongWeeklySupport and touchedRecently and distFromSupportPct <= nearSupportPct and distFromSupportPct >= -touchTolPct
+// "Institutional footprint": climax volume or a rejection wick on the closed weekly bar at/near support
+institutionalFootprint = weeklyVolSpike or weeklyRejection
+
+plot(strongWeeklySupport ? weeklySupportLevel : na, "Weekly Support Level",
+     color=color.new(color.teal, 0), style=plot.style_linebr, linewidth=2)
+
+// ---------------------------------------------------------------------------
+// 3) GANN TIME CYCLES: project calendar-day counts from last major pivot
+// ---------------------------------------------------------------------------
+majorPH = ta.pivothigh(high, gannPivotLeft, gannPivotRight)
+majorPL = ta.pivotlow(low, gannPivotLeft, gannPivotRight)
+
+var int lastMajorPivotBarTime = na
+isNewMajorPivot = not na(majorPH) or not na(majorPL)
+
+if not na(majorPH)
+    lastMajorPivotBarTime := time[gannPivotRight]
+if not na(majorPL)
+    lastMajorPivotBarTime := time[gannPivotRight]
+
+var int[] gannDays = array.from(30, 45, 60, 90, 120, 144, 180, 270, 360)
+var line[] gannLines = array.new_line()
+
+msPerDay = 86400000
+
+if showGannLines and isNewMajorPivot and not na(lastMajorPivotBarTime)
+    if array.size(gannLines) > 0
+        for ln in gannLines
+            line.delete(ln)
+        array.clear(gannLines)
+    for d in gannDays
+        targetTime = lastMajorPivotBarTime + d * msPerDay
+        newLine = line.new(x1=targetTime, y1=low, x2=targetTime, y2=high,
+             xloc=xloc.bar_time, extend=extend.both,
+             color=color.new(color.purple, 40), style=line.style_dotted)
+        array.push(gannLines, newLine)
+
+inGannWindow = false
+nearestGannTime = int(na)
+nearestGannDiff = int(na)
+if not na(lastMajorPivotBarTime)
+    for d in gannDays
+        targetTime = lastMajorPivotBarTime + d * msPerDay
+        diff = math.abs(time - targetTime)
+        if na(nearestGannDiff) or diff < nearestGannDiff
+            nearestGannDiff := diff
+            nearestGannTime := targetTime
+        if diff <= gannToleranceDays * msPerDay
+            inGannWindow := true
+
+gannDateStr = na(nearestGannTime) ? "-" : str.format_time(nearestGannTime, "yyyy-MM-dd")
+
+// ---------------------------------------------------------------------------
+// 4) PSYCHOLOGICAL ROUND-NUMBER LEVELS
+// ---------------------------------------------------------------------------
+psychMagnitude   = math.pow(10, math.floor(math.log10(close)))
+psychStep        = psychMagnitude / 2
+nearestPsychLvl  = math.round(close / psychStep) * psychStep
+psychDistPct     = math.abs(close - nearestPsychLvl) / close * 100
+nearPsychLevel   = usePsychLevels and psychDistPct <= psychTolPct
+
+// ---------------------------------------------------------------------------
+// 5) ENTRY TRIGGER: a one-shot bar that pinpoints the exact turn, not just the zone
+// ---------------------------------------------------------------------------
+triggerRsiLen   = input.int(14, "RSI Length", group="Entry Trigger")
+triggerRsiLevel = input.int(40, "RSI Recovery Level (cross above)", group="Entry Trigger")
+triggerLookbackBars = input.int(3, "Trigger Lookback Window (bars)", group="Entry Trigger")
+
+triggerRsi = ta.rsi(close, triggerRsiLen)
+
+rsiRecoveryUp        = ta.crossover(triggerRsi, triggerRsiLevel)
+recentRsiRecovery    = ta.barssince(rsiRecoveryUp) <= triggerLookbackBars
+bullishCloseStrength = (high - low) > 0 and close > open and (close - low) >= (high - low) * 0.5
+higherCloseDay       = close > close[1]
+// widened to an OR + lookback window (instead of one exact bar) so real setups aren't missed
+entryTrigger = recentRsiRecovery or (bullishCloseStrength and higherCloseDay)
+
+// ---------------------------------------------------------------------------
+// 6) COMPOSITE SIGNAL (core thesis mandatory, extra factors scored as confluence)
+// ---------------------------------------------------------------------------
+confluenceCount = (institutionalFootprint ? 1 : 0) + (entryTrigger ? 1 : 0) + (inGannWindow ? 1 : 0) + (nearPsychLevel ? 1 : 0)
+
+longCondition = strongUptrend and atSupport and confluenceCount >= minConfluenceRequired
+
+plot(longCondition ? 1 : 0, "Scan Signal (1=Setup Found)", display=display.data_window)
+plotshape(longCondition, "Entry Signal", shape.triangleup, location.belowbar,
+     color=color.new(color.lime, 0), size=size.small)
+bgcolor(longCondition ? color.new(color.lime, 90) : na)
+
+alertcondition(longCondition, "Strong Trend + Weekly Support Setup",
+     "{{ticker}}: strong trend + strong weekly support" +
+     " (add Gann/psychological filters as needed)")
+
+// ---------------------------------------------------------------------------
+// 7) STRATEGY ENTRY / EXIT (backtestable)
+// ---------------------------------------------------------------------------
+trendBreak = ta.crossunder(ma50, ma100)
+
+if longCondition and strategy.position_size == 0
+    atrVal   = ta.atr(atrLen)
+    stopPx   = weeklySupportLevel - atrVal * slAtrMult
+    riskPx   = close - stopPx
+    targetPx = close + riskPx * rrRatio
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Exit", from_entry="Long", stop=stopPx, limit=targetPx)
+
+if trendBreak
+    strategy.close("Long", comment="Trend Break")
+
+// ---------------------------------------------------------------------------
+// 8) FORWARD GANN DATES TABLE (all projected cycle dates from the last major pivot)
+// ---------------------------------------------------------------------------
+// The top status table was removed by request - all metrics above are still
+// computed and drive longCondition/alerts/strategy, just no longer displayed.
+var table gannTable = table.new(position.bottom_right, 3, 10, border_width=1)
+if barstate.islast
+    table.cell(gannTable, 0, 0, "Gann Cycle (days)", bgcolor=color.gray, text_color=color.white)
+    table.cell(gannTable, 1, 0, "Projected Date", bgcolor=color.gray, text_color=color.white)
+    table.cell(gannTable, 2, 0, "Days Remaining", bgcolor=color.gray, text_color=color.white)
+    if not na(lastMajorPivotBarTime)
+        for idx = 0 to array.size(gannDays) - 1
+            d = array.get(gannDays, idx)
+            targetTime = lastMajorPivotBarTime + d * msPerDay
+            daysRemaining = int(math.round((targetTime - time) / msPerDay))
+            isUpcoming = daysRemaining >= 0
+            table.cell(gannTable, 0, idx + 1, str.tostring(d))
+            table.cell(gannTable, 1, idx + 1, str.format_time(targetTime, "yyyy-MM-dd"))
+            table.cell(gannTable, 2, idx + 1, isUpcoming ? str.tostring(daysRemaining) : "Passed",
+                 text_color = isUpcoming ? color.purple : color.gray)

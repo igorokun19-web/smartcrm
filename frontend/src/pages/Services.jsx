@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Plus, Trash2, Edit2, TrendingUp, Package } from "lucide-react";
+import { Plus, Trash2, Edit2, Package } from "lucide-react";
 import { useCrm } from "../context/CrmContext";
-import { useTranslation } from "../hooks/useTranslation";
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 const tableClass = "w-full border-collapse";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, BarChart3, TrendingUp, PieChart as PieChartIcon } from "lucide-react";
+import { Download } from "lucide-react";
 import { useCrm, calculateLeadScore, formatDate } from "../context/CrmContext";
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
@@ -71,7 +71,6 @@ export default function Reports() {
   const totalLeads = leads.length;
   const wonDeals = leads.filter((l) => l.status === "Won").length;
   const quotedDeals = leads.filter((l) => l.status === "Quoted").length;
-  const contactedLeads = leads.filter((l) => l.status === "Contacted").length;
   const newLeads = leads.filter((l) => l.status === "New").length;
   const lostLeads = leads.filter((l) => l.status === "Lost").length;
 
@@ -104,7 +103,7 @@ export default function Reports() {
         { label: "עסקאות סגורות", value: wonDeals, color: "green" },
         { label: "הצעות מחיר", value: quotedDeals, color: "blue" },
         { label: "ממתינות ליצירת קשר", value: newLeads, color: "yellow" },
-        { label: "עסקאות שאבודו", value: lostLeads, color: "red" },
+        { label: "עסקאות שאבדו", value: lostLeads, color: "red" },
       ],
     },
     activity: {
@@ -210,7 +209,7 @@ export default function Reports() {
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-gray-700">
-            💡 <strong>טיפ:</strong> ייצא כל פעם שאתה רוצה לגבוב או לשתף את הנתונים שלך עם כלים אחרים
+            💡 <strong>טיפ:</strong> ייצא בכל פעם שאתה רוצה לגבות או לשתף את הנתונים שלך עם כלים אחרים
           </p>
         </div>
       </div>

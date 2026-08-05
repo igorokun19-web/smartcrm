@@ -51,7 +51,7 @@ export default function ResetPassword() {
             סיסמה שונתה בהצלחה!
           </h1>
           <p className="text-gray-600 mb-6">
-            יתוכל להתחבר עם הסיסמה החדשה שלך בקרוב.
+            תוכל להתחבר עם הסיסמה החדשה שלך בקרוב.
           </p>
         </div>
       </div>
@@ -69,43 +69,47 @@ export default function ResetPassword() {
           <p className="text-gray-600 text-sm">הזן סיסמה חדשה לחשבונך</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="reset-new-password" className="block text-sm font-medium text-gray-700 mb-1">
               סיסמה חדשה
             </label>
             <input
+              id="reset-new-password"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="לפחות 6 תווים"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              autoComplete="new-password"
               disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
               אשר סיסמה
             </label>
             <input
+              id="reset-confirm-password"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="הזן את הסיסמה שוב"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              autoComplete="new-password"
               disabled={loading}
             />
           </div>
 
           {localError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div role="alert" aria-live="assertive" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {localError}
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div role="alert" aria-live="assertive" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -132,7 +136,7 @@ export default function ResetPassword() {
         </div>
 
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 text-xs text-gray-600 text-center">
-          <p>🔒 הסיסמה שלך מוצפנת ודו-חד משמית</p>
+          <p>🔒 הסיסמה שלך מוצפנת וחד-כיוונית</p>
         </div>
       </div>
     </div>

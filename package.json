@@ -1,0 +1,31 @@
+{
+  "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "playwright": "^1.62.1"
+  },
+  "name": "smartcrm",
+  "version": "1.0.0",
+  "description": "![Status](https://img.shields.io/badge/Status-🟢%20Live-brightgreen)\r ![Version](https://img.shields.io/badge/Version-2.0.0-blue)\r ![License](https://img.shields.io/badge/License-MIT-green)\r ![Language](https://img.shields.io/badge/Language-Hebrew%20RTL-blue)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.62.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/igorokun19-web/smartcrm.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/igorokun19-web/smartcrm/issues"
+  },
+  "homepage": "https://github.com/igorokun19-web/smartcrm#readme"
+}

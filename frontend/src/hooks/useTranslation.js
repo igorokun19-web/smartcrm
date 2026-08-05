@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
 
 /**
@@ -7,14 +8,11 @@ import { useLanguage } from "../context/LanguageContext";
 export function useTranslation() {
   const { language, setLanguage, t } = useLanguage();
 
-  // עדכן את dir כשמשתנה השפה
-  const updatePageDirection = () => {
-    document.documentElement.dir = language === "he" ? "rtl" : "ltr";
-  };
-
-  if (typeof document !== "undefined") {
-    document.documentElement.dir = language === "he" ? "rtl" : "ltr";
-  }
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.dir = language === "he" ? "rtl" : "ltr";
+    }
+  }, [language]);
 
   return { t, language, setLanguage };
 }
@@ -22,7 +20,7 @@ export function useTranslation() {
 /**
  * Object שמכיל את כל התרגומים הדינאמיים עבור values שמשתנים
  */
-export const getTranslatedValues = (t, language) => ({
+export const getTranslatedValues = (t) => ({
   statuses: {
     New: t("leads.new"),
     Contacted: t("leads.contacted"),

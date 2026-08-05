@@ -1,26 +1,32 @@
 import { Building2, Heart, Zap, Users, Award, Mail, Phone, MapPin, FileText } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+
+const defaultCompanyInfo = {
+  name: "MyServices CRM",
+  email: "info@myservices.com",
+  phone: "050-123-4567",
+  address: "תל אביב, ישראל"
+};
 
 export default function About() {
-  const [companyInfo, setCompanyInfo] = useState({
-    name: "MyServices CRM",
-    email: "info@myservices.com",
-    phone: "050-123-4567",
-    address: "תל אביב, ישראל"
-  });
-
-  useEffect(() => {
+  const [companyInfo] = useState(() => {
     const saved = localStorage.getItem("companyInfo");
-    if (saved) {
-      const data = JSON.parse(saved);
-      setCompanyInfo({
-        name: data.name || "MyServices CRM",
-        email: data.email || "info@myservices.com",
-        phone: data.phone || "050-123-4567",
-        address: data.address || "תל אביב, ישראל"
-      });
+    if (!saved) {
+      return defaultCompanyInfo;
     }
-  }, []);
+
+    try {
+      const data = JSON.parse(saved);
+      return {
+        name: data.name || defaultCompanyInfo.name,
+        email: data.email || defaultCompanyInfo.email,
+        phone: data.phone || defaultCompanyInfo.phone,
+        address: data.address || defaultCompanyInfo.address,
+      };
+    } catch {
+      return defaultCompanyInfo;
+    }
+  });
   return (
     <div className="space-y-8 max-w-5xl mx-auto p-6" dir="rtl">
       {/* Header */}

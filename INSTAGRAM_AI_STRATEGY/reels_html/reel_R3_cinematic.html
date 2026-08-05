@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background:#040614;
+    font-family:Arial,sans-serif;
+    overflow:hidden; color:white;
+  }
+
+  /* CINEMATIC BG */
+  .bg {
+    position:absolute; inset:0;
+    background:linear-gradient(180deg,#040614 0%,#080320 50%,#020310 100%);
+  }
+  .star {
+    position:absolute; border-radius:50%;
+    background:#fff; animation:twinkle linear infinite;
+  }
+  @keyframes twinkle {
+    0%,100%{opacity:.1;transform:scale(1);}
+    50%{opacity:.6;transform:scale(1.5);}
+  }
+
+  /* HERO SECTION */
+  .hero {
+    position:absolute; top:0; left:0; right:0; height:55%;
+    overflow:hidden;
+  }
+  .hero-photo {
+    width:100%; height:100%;
+    object-fit:cover; object-position:top;
+    filter:brightness(.65) saturate(1.2);
+    opacity:0;
+    animation:heroIn 1.2s ease .2s forwards;
+  }
+  @keyframes heroIn {
+    from{opacity:0;transform:scale(1.08);}
+    to{opacity:1;transform:scale(1);}
+  }
+  .hero-gradient {
+    position:absolute; bottom:0; left:0; right:0; height:60%;
+    background:linear-gradient(0deg,#040614 0%,transparent 100%);
+  }
+  /* Emotion badge on photo */
+  .hero-emotion {
+    position:absolute; top:30px; right:30px;
+    background:rgba(0,0,0,.5);
+    backdrop-filter:blur(10px);
+    border-radius:16px; padding:14px 20px;
+    font-size:24px; color:rgba(255,255,255,.9);
+    border:1px solid rgba(255,255,255,.2);
+    opacity:0;
+    animation:badgeIn .5s ease 1.5s forwards;
+  }
+  @keyframes badgeIn {
+    from{transform:translateX(30px);opacity:0;} to{opacity:1;transform:none;}
+  }
+  .hero-name {
+    position:absolute; bottom:40px; right:30px;
+    opacity:0;
+    animation:nameIn .5s ease 1.2s forwards;
+  }
+  @keyframes nameIn {
+    from{transform:translateY(20px);opacity:0;} to{opacity:1;transform:none;}
+  }
+  .hero-name-text {
+    font-size:52px; font-weight:900;
+    text-shadow:0 2px 10px rgba(0,0,0,.8);
+  }
+  .hero-job-text {
+    font-size:28px; color:rgba(255,255,255,.7);
+    text-shadow:0 2px 6px rgba(0,0,0,.8);
+  }
+
+  /* STORY TIMELINE */
+  .timeline {
+    position:absolute; top:53%;
+    left:30px; right:30px;
+    opacity:0;
+    animation:timelineIn .5s ease 2s forwards;
+  }
+  @keyframes timelineIn {
+    from{transform:translateY(30px);opacity:0;} to{opacity:1;transform:none;}
+  }
+
+  .tl-item {
+    display:flex; gap:20px; margin-bottom:0;
+    opacity:0;
+    position:relative;
+  }
+  .ti-1 { animation:tiIn .4s ease 2.4s forwards; }
+  .ti-2 { animation:tiIn .4s ease 3.0s forwards; }
+  .ti-3 { animation:tiIn .4s ease 3.6s forwards; }
+  @keyframes tiIn {
+    from{transform:translateX(-30px);opacity:0;} to{opacity:1;transform:none;}
+  }
+
+  /* Vertical line between items */
+  .tl-item:not(:last-child)::after {
+    content:'';
+    position:absolute;
+    left:22px; top:48px; bottom:-14px;
+    width:2px;
+    background:rgba(255,255,255,.15);
+  }
+
+  .ti-dot {
+    width:44px; height:44px; border-radius:50%;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; font-weight:900;
+    margin-top:4px;
+  }
+  .dot-1 { background:linear-gradient(135deg,#ff4444,#cc0000); }
+  .dot-2 { background:linear-gradient(135deg,#ff8c00,#ff4500); }
+  .dot-3 { background:linear-gradient(135deg,#00cc55,#007733); }
+
+  .ti-content {
+    flex:1; padding:16px 20px;
+    background:rgba(255,255,255,.04);
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.07);
+    margin-bottom:14px;
+  }
+  .ti-title { font-size:26px; font-weight:700; margin-bottom:4px; }
+  .ti-desc  { font-size:20px; color:rgba(255,255,255,.65); line-height:1.4; }
+  .ti-emoji { font-size:22px; float:left; margin-top:4px; }
+
+  /* AI SOLUTION BOX */
+  .ai-box {
+    position:absolute; top:85%;
+    left:30px; right:30px;
+    background:linear-gradient(135deg,rgba(16,163,127,.15),rgba(0,100,60,.1));
+    border:2px solid rgba(16,163,127,.5);
+    border-radius:22px; padding:26px 28px;
+    opacity:0;
+    animation:aiBoxIn .5s cubic-bezier(.175,.885,.32,1.275) 4.5s forwards;
+    box-shadow:0 0 50px rgba(16,163,127,.15);
+    display:flex; gap:20px; align-items:center;
+  }
+  @keyframes aiBoxIn {
+    from{transform:scale(.85);opacity:0;} to{transform:none;opacity:1;}
+  }
+  .ai-photo {
+    width:110px; height:110px;
+    border-radius:50%; overflow:hidden;
+    border:3px solid #10a37f;
+    flex-shrink:0;
+  }
+  .ai-photo img { width:100%; height:100%; object-fit:cover; }
+  .ai-content { flex:1; }
+  .ai-title { font-size:26px; font-weight:700; color:#10a37f; margin-bottom:6px; }
+  .ai-desc  { font-size:21px; color:rgba(255,255,255,.75); line-height:1.4; }
+
+  .cta {
+    position:absolute; bottom:2%;
+    width:100%; text-align:center;
+    opacity:0;
+    animation:ctaIn .4s ease 5.8s forwards;
+  }
+  @keyframes ctaIn { to{opacity:1} }
+  .cta-inner {
+    display:inline-block;
+    background:linear-gradient(135deg,#ffd700,#ff8c00);
+    color:#000; font-size:38px; font-weight:900;
+    padding:18px 50px; border-radius:100px;
+    box-shadow:0 10px 40px rgba(255,180,0,.4);
+  }
+  .watermark {
+    position:absolute; bottom:.2%;
+    width:100%; text-align:center;
+    color:rgba(255,255,255,.2); font-size:20px;
+  }
+</style>
+</head>
+<body>
+<div class="bg">
+  <!-- Stars -->
+  <script>
+    // Will generate stars via CSS
+  </script>
+</div>
+
+<!-- HERO PHOTO -->
+<div class="hero">
+  <img class="hero-photo"
+       src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1080&h=1100&fit=crop&crop=top&q=85"
+       alt="plumber at work"
+       onerror="this.style.display='none';this.parentNode.style.background='linear-gradient(135deg,#0a1a30,#051020)';">
+  <div class="hero-gradient"></div>
+  <div class="hero-emotion">😤 "עוד לקוח שלא ענה לי..."</div>
+  <div class="hero-name">
+    <div class="hero-name-text">יוסי — אינסטלטור</div>
+    <div class="hero-job-text">🔧 15 שנות ניסיון</div>
+  </div>
+</div>
+
+<!-- TIMELINE -->
+<div class="timeline">
+  <div class="tl-item ti-1">
+    <div class="ti-dot dot-1">1</div>
+    <div class="ti-content">
+      <div class="ti-title" style="color:#ff6655">
+        לקוח כתב בוואטסאפ <span class="ti-emoji">📱</span>
+      </div>
+      <div class="ti-desc">שאל מחיר לתיקון דחוף. 8 בערב.<br>יוסי עדיין בעבודה, לא ראה.</div>
+    </div>
+  </div>
+
+  <div class="tl-item ti-2">
+    <div class="ti-dot dot-2">2</div>
+    <div class="ti-content">
+      <div class="ti-title" style="color:#ff9944">
+        10 דקות אחר כך <span class="ti-emoji">🔍</span>
+      </div>
+      <div class="ti-desc">הלך לגוגל, מצא 3 אינסטלטורים.<br>הזמין את מי שענה ראשון.</div>
+    </div>
+  </div>
+
+  <div class="tl-item ti-3">
+    <div class="ti-dot dot-3">✓</div>
+    <div class="ti-content">
+      <div class="ti-title" style="color:#00cc55">
+        הפתרון — 3 דקות <span class="ti-emoji">🤖</span>
+      </div>
+      <div class="ti-desc">WhatsApp Business — תשובה<br>אוטומטית. לקוח מקבל מענה מיד.</div>
+    </div>
+  </div>
+</div>
+
+<!-- AI SOLUTION -->
+<div class="ai-box">
+  <div class="ai-photo">
+    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop&crop=face&q=80"
+         alt="happy plumber"
+         onerror="this.style.display='none';this.parentNode.innerHTML='<div style=\'font-size:60px;text-align:center;padding:20px\'>😊</div>'">
+  </div>
+  <div class="ai-content">
+    <div class="ai-title">😊 יוסי אחרי ההגדרה:</div>
+    <div class="ai-desc">
+      "כבר 3 חודשים. אף לקוח<br>
+      לא בורח יותר מחוסר מענה"<br>
+      <strong style="color:#ffd700">→ +40% שיפור בסגירת עסקאות</strong>
+    </div>
+  </div>
+</div>
+
+<div class="cta">
+  <div class="cta-inner">שמרו 📌 חשוב מאוד!</div>
+</div>
+<div class="watermark">@okun_igal</div>
+</body>
+</html>

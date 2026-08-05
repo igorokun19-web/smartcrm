@@ -5,7 +5,7 @@ const db = require('../db');
 
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 const MAX_METADATA_LENGTH = 4000;
 
 function getOptionalUserId(req) {

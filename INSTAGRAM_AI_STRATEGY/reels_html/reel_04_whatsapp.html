@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background:#030a06;
+    font-family:Arial,sans-serif;
+    overflow:hidden; color:white;
+  }
+
+  .bg {
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(0,255,120,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 10% 80%, rgba(255,200,0,0.1) 0%, transparent 40%),
+      radial-gradient(circle at 90% 60%, rgba(0,150,255,0.08) 0%, transparent 40%),
+      #030a06;
+    animation:breathe 4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { filter:brightness(1); }
+    50% { filter:brightness(1.08); }
+  }
+
+  /* WhatsApp branding colors */
+  .wa-gradient { background: linear-gradient(135deg,#25d366,#128c7e); }
+
+  /* HOOK */
+  .hook {
+    position:absolute; top:5%; width:100%; text-align:center;
+    opacity:0;
+    animation:dropIn 0.5s cubic-bezier(.34,1.56,.64,1) 0.1s forwards;
+  }
+  @keyframes dropIn {
+    from { transform:translateY(-100px) rotate(-5deg); opacity:0; }
+    to   { transform:none; opacity:1; }
+  }
+
+  .wa-badge {
+    display:inline-flex; align-items:center; gap:16px;
+    background:linear-gradient(135deg,#25d366,#128c7e);
+    padding:16px 40px; border-radius:100px;
+    font-size:38px; font-weight:900;
+    box-shadow:0 8px 40px rgba(37,211,102,0.4);
+  }
+  .hook h1 {
+    font-size:68px; font-weight:900; margin-top:16px;
+    background:linear-gradient(135deg,#fff,#aaa);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    line-height:1.15;
+  }
+
+  /* PHONE MOCKUP */
+  .phone {
+    position:absolute;
+    top:23%;
+    left:50%; transform:translateX(-50%);
+    width:580px;
+    background:#1a1a2e;
+    border-radius:44px;
+    border:3px solid rgba(255,255,255,0.1);
+    overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,0.8);
+    opacity:0;
+    animation:phoneReveal 0.7s cubic-bezier(.175,.885,.32,1.275) 0.8s forwards;
+  }
+  @keyframes phoneReveal {
+    from { transform:translateX(-50%) scale(0.6) translateY(80px); opacity:0; }
+    to   { transform:translateX(-50%) scale(1) translateY(0); opacity:1; }
+  }
+
+  /* WA HEADER */
+  .wa-header {
+    background:linear-gradient(135deg,#075e54,#128c7e);
+    padding:20px 24px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .wa-avatar {
+    width:50px; height:50px; border-radius:50%;
+    background:linear-gradient(135deg,#25d366,#128c7e);
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:900;
+  }
+  .wa-name { font-size:24px; font-weight:700; }
+  .wa-status { font-size:18px; color:rgba(255,255,255,0.7); }
+
+  /* MESSAGES */
+  .wa-body { padding:20px 16px; background:#0d0d0d; min-height:400px; }
+  
+  .msg-wrap {
+    margin-bottom:12px;
+    opacity:0;
+  }
+  .msg-right { text-align:left; }
+  .msg-left  { text-align:right; }
+
+  .bubble {
+    display:inline-block;
+    max-width:85%;
+    padding:14px 18px;
+    border-radius:16px;
+    font-size:22px;
+    line-height:1.5;
+  }
+  .bubble-out {
+    background:linear-gradient(135deg,#005c4b,#0a6650);
+    border-radius:16px 16px 4px 16px;
+  }
+  .bubble-in {
+    background:linear-gradient(135deg,#1e1e2e,#252535);
+    border-radius:16px 16px 16px 4px;
+    color:rgba(255,255,255,0.9);
+  }
+  .msg-time { font-size:16px; color:rgba(255,255,255,0.4); margin-top:4px; }
+  .tick { color:#25d366; }
+
+  /* AUTO REPLY */
+  .auto-tag {
+    display:inline-block;
+    background:rgba(37,211,102,0.15);
+    border:1px solid rgba(37,211,102,0.4);
+    border-radius:8px;
+    padding:3px 10px;
+    font-size:18px; color:#25d366;
+    margin-bottom:6px;
+  }
+
+  /* Animation delays for messages */
+  .msg-1 { animation:msgPop 0.4s ease 1.6s forwards; }
+  .msg-2 { animation:msgPop 0.4s ease 2.3s forwards; }
+  .msg-3 { animation:msgPop 0.4s ease 3.4s forwards; }
+  @keyframes msgPop {
+    from { transform:translateY(20px) scale(0.9); opacity:0; }
+    to   { transform:none; opacity:1; }
+  }
+
+  /* RESULT */
+  .result {
+    position:absolute;
+    top:76%;
+    left:30px; right:30px;
+    background:linear-gradient(135deg,#001a0a,#003015);
+    border:2px solid rgba(37,211,102,0.5);
+    border-radius:20px;
+    padding:28px;
+    text-align:center;
+    opacity:0;
+    animation:resultSlide 0.5s ease 4.5s forwards;
+    box-shadow:0 0 50px rgba(37,211,102,0.15);
+  }
+  @keyframes resultSlide {
+    from{transform:translateY(30px);opacity:0}
+    to{opacity:1;transform:none}
+  }
+  .result-icon { font-size:52px; }
+  .result-text {
+    font-size:34px; font-weight:700; margin-top:10px;
+    color:rgba(255,255,255,0.9);
+  }
+  .result-sub { font-size:26px; color:#25d366; margin-top:6px; }
+
+  /* CTA */
+  .cta {
+    position:absolute; bottom:4%; width:100%; text-align:center;
+    opacity:0;
+    animation:ctaIn 0.5s ease 5.8s forwards;
+  }
+  @keyframes ctaIn {
+    from{transform:scale(0.8);opacity:0} to{opacity:1;transform:none}
+  }
+  .cta-inner {
+    display:inline-block;
+    background:linear-gradient(135deg,#25d366,#128c7e);
+    color:#000; font-size:38px; font-weight:900;
+    padding:20px 56px; border-radius:100px;
+    box-shadow:0 10px 40px rgba(37,211,102,0.4);
+  }
+  .watermark {
+    position:absolute; bottom:1%;
+    width:100%; text-align:center;
+    color:rgba(255,255,255,0.2); font-size:22px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <div class="hook">
+    <div class="wa-badge">📱 WhatsApp Business</div>
+    <h1>לקוח שלח בשעה 2 לילה<br>הוא קיבל תשובה מיד</h1>
+  </div>
+
+  <!-- Phone -->
+  <div class="phone">
+    <div class="wa-header">
+      <div class="wa-avatar">א</div>
+      <div>
+        <div class="wa-name">עסק של אמיר</div>
+        <div class="wa-status">🤖 תשובה אוטומטית</div>
+      </div>
+    </div>
+    <div class="wa-body">
+
+      <!-- Customer message -->
+      <div class="msg-wrap msg-right msg-1">
+        <div class="bubble bubble-in">
+          שלום, אני מחפש חשמלאי<br>
+          לתיקון דחוף. כמה עולה?
+        </div>
+        <div class="msg-time" style="text-align:left">01:47 ✓✓</div>
+      </div>
+
+      <!-- Manual reply (slow) -->
+      <div class="msg-wrap msg-left msg-2">
+        <div class="bubble bubble-out">
+          <div class="auto-tag">🤖 תשובה אוטומטית</div><br>
+          שלום! קיבלתי את פנייתך 🙏<br>
+          אחזור אליך עד 7:00 לתיאום.<br>
+          מחירים: <strong>150-200₪/שעה</strong>
+        </div>
+        <div class="msg-time">01:47 <span class="tick">✓✓</span></div>
+      </div>
+
+      <!-- Follow up -->
+      <div class="msg-wrap msg-right msg-3">
+        <div class="bubble bubble-in">
+          מעולה! אחכה לך 👍
+        </div>
+        <div class="msg-time" style="text-align:left">01:48 ✓✓</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result">
+    <div class="result-icon">💰</div>
+    <div class="result-text">לקוח לא ברח למתחרה</div>
+    <div class="result-sub">כי קיבל תשובה תוך 30 שניות</div>
+  </div>
+
+  <div class="cta">
+    <div class="cta-inner">3 דקות הגדרה — חינם ✅</div>
+  </div>
+
+  <div class="watermark">@okun_igal</div>
+</body>
+</html>

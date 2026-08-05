@@ -38,9 +38,9 @@ body {
 }
 
 /* RTL Support */
-[dir="rtl"] button,
-[dir="rtl"] a {
-  text-align: right;
+[dir="rtl"] .register-submit-btn {
+  text-align: center !important;
+  justify-content: center !important;
 }
 
 /* Animations */

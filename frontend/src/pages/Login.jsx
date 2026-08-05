@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../hooks/useTranslation";
@@ -60,7 +60,7 @@ export default function Login() {
           <div className="space-y-4">
             {[
               { icon: "✨", title: "ניהול מקצועי", desc: "ארגון מלא של כל הלידים" },
-              { icon: "📊", title: "ניתוח כלים", desc: "דוחות ונתונים בזמן אמת" },
+              { icon: "📊", title: "ניתוח נתונים", desc: "דוחות ונתונים בזמן אמת" },
               { icon: "🔒", title: "מאובטח לחלוטין", desc: "הצפנה מלאה של כל הנתונים" }
             ].map((item, idx) => (
               <div key={idx} className="flex items-start space-x-4 group">
@@ -78,7 +78,23 @@ export default function Login() {
 
         {/* Right side - Login form */}
         <div className="flex items-center justify-center">
-          <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 space-y-6 transform transition-all duration-500 hover:shadow-2xl">
+          <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl ring-1 ring-white/70 p-8 space-y-6 transform transition-all duration-500 hover:shadow-2xl">
+            {/* Auth mode switch */}
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-indigo-50 border border-indigo-100">
+              <Link
+                to="/login"
+                className="!text-center py-2.5 px-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-sm"
+              >
+                התחברות
+              </Link>
+              <Link
+                to="/register"
+                className="!text-center py-2.5 px-3 rounded-lg text-indigo-700 font-semibold hover:bg-white transition-colors"
+              >
+                הרשמה
+              </Link>
+            </div>
+
             {/* Header */}
             <div className="text-center space-y-2">
               <div className="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-4">
@@ -91,10 +107,10 @@ export default function Login() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
               {/* Username Input */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="login-username" className="block text-sm font-semibold text-gray-700">
                   <span className="flex items-center space-x-2 space-x-reverse">
                     <span>👤</span>
                     <span>{t("login.username")}</span>
@@ -102,6 +118,7 @@ export default function Login() {
                 </label>
                 <div className={`relative transition-all duration-300 ${focusedField === 'username' ? 'scale-105' : ''}`}>
                   <input
+                    id="login-username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -109,6 +126,7 @@ export default function Login() {
                     onBlur={() => setFocusedField(null)}
                     placeholder={t("login.usernamePlaceholder")}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+                    autoComplete="username"
                     disabled={loading}
                   />
                 </div>
@@ -116,7 +134,7 @@ export default function Login() {
 
               {/* Password Input */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="login-password" className="block text-sm font-semibold text-gray-700">
                   <span className="flex items-center space-x-2 space-x-reverse">
                     <span>🔐</span>
                     <span>{t("login.password")}</span>
@@ -124,6 +142,7 @@ export default function Login() {
                 </label>
                 <div className={`relative transition-all duration-300 ${focusedField === 'password' ? 'scale-105' : ''}`}>
                   <input
+                    id="login-password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -131,12 +150,15 @@ export default function Login() {
                     onBlur={() => setFocusedField(null)}
                     placeholder={t("login.passwordPlaceholder")}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+                    autoComplete="current-password"
                     disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-indigo-600 transition-colors"
+                    aria-label={showPassword ? "הסתר סיסמה" : "הצג סיסמה"}
+                    title={showPassword ? "הסתר סיסמה" : "הצג סיסמה"}
                     disabled={loading}
                   >
                     {showPassword ? "👁️" : "👁️‍🗨️"}
@@ -148,6 +170,7 @@ export default function Login() {
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center space-x-2 space-x-reverse cursor-pointer group">
                   <input
+                    id="remember-me"
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
@@ -166,7 +189,7 @@ export default function Login() {
 
               {/* Error Message */}
               {localError && (
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg text-sm animate-pulse">
+                <div role="alert" aria-live="assertive" className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg text-sm animate-pulse">
                   <p className="font-semibold">⚠️ שגיאה</p>
                   <p>{localError}</p>
                 </div>
@@ -177,7 +200,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 px-12 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-lg hover:shadow-xl"
+                  className="w-full sm:w-auto sm:min-w-56 !text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 px-12 rounded-xl border border-indigo-300/40 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 shadow-lg hover:shadow-xl"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center space-x-2 space-x-reverse">

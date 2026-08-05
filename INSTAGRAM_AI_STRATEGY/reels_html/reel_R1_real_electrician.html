@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background:#06060f;
+    font-family:Arial,sans-serif;
+    overflow:hidden; color:white;
+  }
+
+  /* ── ANIMATED MESH BACKGROUND ── */
+  .bg {
+    position:absolute; inset:0;
+    background:#06060f;
+  }
+  .mesh-1 {
+    position:absolute;
+    width:700px; height:700px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,100,0,.2) 0%, transparent 70%);
+    top:-100px; left:-200px;
+    animation:meshFloat1 8s ease-in-out infinite;
+  }
+  .mesh-2 {
+    position:absolute;
+    width:600px; height:600px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(16,163,127,.15) 0%, transparent 70%);
+    bottom:200px; right:-150px;
+    animation:meshFloat2 10s ease-in-out infinite;
+  }
+  @keyframes meshFloat1 { 0%,100%{transform:translate(0,0);} 50%{transform:translate(80px,60px);} }
+  @keyframes meshFloat2 { 0%,100%{transform:translate(0,0);} 50%{transform:translate(-60px,-80px);} }
+
+  /* ── HOOK ── */
+  .hook {
+    position:absolute; top:3%; width:100%; text-align:center;
+    opacity:0;
+    animation:hookIn .5s cubic-bezier(.175,.885,.32,1.275) .1s forwards;
+  }
+  @keyframes hookIn {
+    from{transform:scale(2) rotate(-3deg);opacity:0;filter:blur(10px);}
+    to{transform:none;opacity:1;filter:blur(0);}
+  }
+  .hook-badge {
+    display:inline-block;
+    background:linear-gradient(135deg,#ff4500,#ff8c00);
+    font-size:36px; font-weight:900;
+    padding:12px 44px; border-radius:100px;
+    box-shadow:0 8px 30px rgba(255,80,0,.4);
+    margin-bottom:14px;
+  }
+  .hook h1 {
+    font-size:76px; font-weight:900; line-height:1.05;
+    background:linear-gradient(135deg,#fff,#e0e0e0);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+
+  /* ── PERSON CARD ── */
+  .person-card {
+    position:absolute;
+    top:21%;
+    left:30px; right:30px;
+    background:rgba(255,255,255,.04);
+    border-radius:28px;
+    padding:30px;
+    border:1px solid rgba(255,255,255,.08);
+    backdrop-filter:blur(8px);
+    display:flex;
+    gap:28px;
+    align-items:center;
+    opacity:0;
+    animation:cardIn .6s ease .8s forwards;
+  }
+  @keyframes cardIn {
+    from{transform:translateX(-60px);opacity:0;} to{opacity:1;transform:none;}
+  }
+
+  /* PERSON PHOTO */
+  .person-photo {
+    width:180px; height:180px;
+    border-radius:50%;
+    overflow:hidden;
+    flex-shrink:0;
+    border:4px solid rgba(255,150,0,.6);
+    box-shadow:0 0 40px rgba(255,100,0,.3);
+    position:relative;
+  }
+  .person-photo img {
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+  /* Emotion overlay */
+  .emotion-badge {
+    position:absolute;
+    bottom:-5px; right:-5px;
+    width:56px; height:56px;
+    border-radius:50%;
+    background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);
+  }
+
+  .person-info { flex:1; }
+  .person-name  { font-size:32px; font-weight:700; }
+  .person-job   { font-size:22px; color:rgba(255,255,255,.6); margin:4px 0 10px; }
+  .speech-text  {
+    font-size:24px; line-height:1.5;
+    color:rgba(255,255,255,.85);
+    background:rgba(255,255,255,.06);
+    border-right:4px solid #ff6b00;
+    padding:12px 16px;
+    border-radius:0 12px 12px 0;
+  }
+
+  /* ── CHATGPT DEMO BOX ── */
+  .demo-box {
+    position:absolute;
+    top:48%;
+    left:30px; right:30px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:24px;
+    overflow:hidden;
+    opacity:0;
+    animation:demoIn .6s ease 1.5s forwards;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  @keyframes demoIn {
+    from{transform:translateY(50px) scale(.95);opacity:0;} to{opacity:1;transform:none;}
+  }
+
+  .demo-header {
+    background:linear-gradient(135deg,#10a37f,#0d6e59);
+    padding:20px 26px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .gpt-dot { width:14px; height:14px; border-radius:50%; }
+  .d-red { background:#ff5f57; }
+  .d-yellow { background:#febc2e; }
+  .d-green { background:#28c840; }
+  .gpt-icon {
+    width:44px; height:44px; border-radius:10px;
+    background:rgba(255,255,255,.2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; font-weight:900; color:#fff;
+    margin-right:auto;
+  }
+  .demo-title { font-size:24px; font-weight:700; }
+
+  .demo-input {
+    padding:20px 26px;
+    background:rgba(0,0,0,.2);
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .input-label { font-size:16px; color:rgba(255,255,255,.4); margin-bottom:8px; }
+  .input-text  { font-size:22px; color:rgba(255,255,255,.85); line-height:1.4; }
+
+  .demo-output {
+    padding:20px 26px;
+  }
+  .output-label { font-size:16px; color:#10a37f; font-weight:700; margin-bottom:10px; }
+  .output-text  {
+    font-size:21px;
+    line-height:1.8;
+    color:rgba(255,255,255,.85);
+    opacity:0;
+    animation:typeIn .5s ease 2.5s forwards;
+  }
+  @keyframes typeIn {
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:none;}
+  }
+  .highlight { color:#ffd700; font-weight:700; }
+  .green { color:#10a37f; font-weight:700; }
+
+  /* CURSOR */
+  .cursor {
+    display:inline-block; width:2px; height:20px;
+    background:#10a37f; margin-right:3px;
+    animation:blink .7s step-end infinite 3.2s;
+    vertical-align:middle;
+  }
+  @keyframes blink { 50%{opacity:0} }
+
+  /* ── TIMER ── */
+  .timer {
+    position:absolute; bottom:-20px; right:30px;
+    background:linear-gradient(135deg,#ff4500,#ff8c00);
+    padding:10px 30px; border-radius:100px;
+    font-size:26px; font-weight:900;
+    opacity:0;
+    animation:timerIn .4s cubic-bezier(.175,.885,.32,1.275) 3.5s forwards;
+    box-shadow:0 6px 24px rgba(255,80,0,.4);
+  }
+  @keyframes timerIn {
+    from{transform:scale(.5) translateY(20px);opacity:0;}
+    to{transform:none;opacity:1;}
+  }
+
+  /* ── RESULT PERSON (after state) ── */
+  .result-person {
+    position:absolute;
+    top:83%;
+    left:30px; right:30px;
+    display:flex; gap:20px; align-items:center;
+    background:linear-gradient(135deg,rgba(16,163,127,.1),rgba(0,100,60,.1));
+    border:2px solid rgba(16,163,127,.4);
+    border-radius:24px;
+    padding:24px;
+    opacity:0;
+    animation:resultIn .5s cubic-bezier(.175,.885,.32,1.275) 4.5s forwards;
+    box-shadow:0 0 50px rgba(16,163,127,.15);
+  }
+  @keyframes resultIn {
+    from{transform:scale(.85);opacity:0;} to{opacity:1;transform:none;}
+  }
+  .result-photo {
+    width:120px; height:120px;
+    border-radius:50%; overflow:hidden;
+    border:3px solid #10a37f;
+    flex-shrink:0;
+    box-shadow:0 0 30px rgba(16,163,127,.4);
+  }
+  .result-photo img { width:100%; height:100%; object-fit:cover; }
+  .result-text-wrap { flex:1; }
+  .result-title { font-size:28px; font-weight:700; color:#10a37f; }
+  .result-desc  { font-size:22px; color:rgba(255,255,255,.75); margin-top:6px; line-height:1.4; }
+
+  /* ── CTA ── */
+  .cta {
+    position:absolute; bottom:3%;
+    width:100%; text-align:center;
+    opacity:0;
+    animation:ctaIn .4s ease 5.8s forwards;
+  }
+  @keyframes ctaIn { to{opacity:1} }
+  .cta-inner {
+    display:inline-block;
+    background:linear-gradient(135deg,#ffd700,#ff8c00);
+    color:#000; font-size:40px; font-weight:900;
+    padding:20px 56px; border-radius:100px;
+    box-shadow:0 10px 40px rgba(255,180,0,.4);
+  }
+  .watermark {
+    position:absolute; bottom:.5%;
+    width:100%; text-align:center;
+    color:rgba(255,255,255,.2); font-size:22px;
+  }
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="mesh-1"></div>
+  <div class="mesh-2"></div>
+</div>
+
+<!-- HOOK -->
+<div class="hook">
+  <div class="hook-badge">⚡ חשמלאי + ChatGPT</div>
+  <h1>הצעת מחיר<br>ב-8 שניות</h1>
+</div>
+
+<!-- PERSON CARD: BEFORE -->
+<div class="person-card">
+  <div class="person-photo">
+    <img src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=400&h=400&fit=crop&crop=face" 
+         alt="electrician"
+         onerror="this.style.display='none'; this.parentNode.style.background='linear-gradient(135deg,#f5a623,#e8941a)'; this.parentNode.innerHTML += '<div style=\'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:72px\'>👷</div>'">
+    <div class="emotion-badge">😓</div>
+  </div>
+  <div class="person-info">
+    <div class="person-name">דני — חשמלאי</div>
+    <div class="person-job">🔧 10 שנות ניסיון</div>
+    <div class="speech-text">
+      "שעה כותב הצעת מחיר<br>
+      ולא יודע אם הלקוח<br>
+      יקבל אותה בכלל..."
+    </div>
+  </div>
+</div>
+
+<!-- CHATGPT DEMO -->
+<div class="demo-box">
+  <div class="demo-header">
+    <div class="gpt-dot d-red"></div>
+    <div class="gpt-dot d-yellow"></div>
+    <div class="gpt-dot d-green"></div>
+    <div class="demo-title">ChatGPT</div>
+    <div class="gpt-icon">G</div>
+  </div>
+  <div class="demo-input">
+    <div class="input-label">👤 דני כתב:</div>
+    <div class="input-text">
+      כתוב הצעת מחיר להחלפת לוח חשמל.<br>
+      עבודה 800₪, חומרים 350₪. עברית, מקצועי.
+    </div>
+  </div>
+  <div class="demo-output">
+    <div class="output-label">🤖 ChatGPT ענה:</div>
+    <div class="output-text">
+      <span class="highlight">הצעת מחיר — שירותי חשמל</span><br>
+      ─────────────────────<br>
+      עבודה: <span class="green">800 ₪</span><br>
+      חומרים: <span class="green">350 ₪</span><br>
+      <strong>סה"כ: <span class="highlight">1,150 ₪ + מע"מ</span></strong><br>
+      ✓ אחריות מלאה 12 חודשים<br>
+      ✓ זמינות תוך 48 שעות<span class="cursor"></span>
+    </div>
+    <div class="timer">⚡ 8 שניות!</div>
+  </div>
+</div>
+
+<!-- RESULT: HAPPY PERSON -->
+<div class="result-person">
+  <div class="result-photo">
+    <img src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=200&h=200&fit=crop&crop=face&sat=-20&brightness=1.1"
+         alt="happy electrician"
+         onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'font-size:80px;text-align:center;padding:20px\'>😊</div>'">
+  </div>
+  <div class="result-text-wrap">
+    <div class="result-title">🎉 דני עכשיו:</div>
+    <div class="result-desc">
+      8 שניות הצעת מחיר<br>
+      חסך שעה ביום — כל יום<br>
+      <strong style="color:#ffd700">= 20 שעות חופשיות בחודש</strong>
+    </div>
+  </div>
+</div>
+
+<div class="cta">
+  <div class="cta-inner">עקבו לעוד טיפים ⬇️</div>
+</div>
+<div class="watermark">@okun_igal</div>
+</body>
+</html>

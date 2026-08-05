@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Download, Eye, Trash2, Edit2, DollarSign, Calendar, MessageCircle } from "lucide-react";
+import { Plus, Download, Trash2, Edit2, DollarSign, MessageCircle } from "lucide-react";
 import { useCrm, formatDate } from "../context/CrmContext";
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
@@ -28,7 +28,7 @@ export default function Invoices() {
     draft: { label: "טיוטה", color: "gray", icon: "📝" },
     sent: { label: "שנשלח", color: "blue", icon: "✉️" },
     paid: { label: "שולם", color: "green", icon: "✅" },
-    overdue: { label: "逾期", color: "red", icon: "⚠️" },
+    overdue: { label: "באיחור", color: "red", icon: "⚠️" },
   };
 
   const handleSave = () => {

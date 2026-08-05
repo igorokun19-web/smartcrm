@@ -51,13 +51,15 @@ export function useLocalStorage(key, initialValue) {
  * usePrevious - Get previous value
  */
 export function usePrevious(value) {
-  const ref = useRef();
+  const ref = useRef(value);
+  const [previous, setPrevious] = useState(value);
 
   useEffect(() => {
+    setPrevious(ref.current);
     ref.current = value;
   }, [value]);
 
-  return ref.current;
+  return previous;
 }
 
 /**
@@ -86,7 +88,10 @@ export function useAsync(asyncFunction, immediate = true) {
 
   useEffect(() => {
     if (immediate) {
-      execute();
+      const id = setTimeout(() => {
+        execute();
+      }, 0);
+      return () => clearTimeout(id);
     }
   }, [execute, immediate]);
 
@@ -97,18 +102,18 @@ export function useAsync(asyncFunction, immediate = true) {
  * useMediaQuery - Check media query
  */
 export function useMediaQuery(query) {
-  const [matches, setMatches] = useState(false);
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(query).matches;
+  });
 
   useEffect(() => {
     const media = window.matchMedia(query);
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
 
     const listener = () => setMatches(media.matches);
     media.addEventListener("change", listener);
     return () => media.removeEventListener("change", listener);
-  }, [matches, query]);
+  }, [query]);
 
   return matches;
 }

@@ -7,7 +7,8 @@ const { sendPasswordResetEmail } = require('../utils/email');
 const crypto = require('crypto');
 const validator = require('validator');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+const DEFAULT_BILLING_DESCRIPTOR = process.env.BILLING_DESCRIPTOR || 'RYNEX';
 
 // Helper: Create JWT token
 function createToken(userId, rememberMe = false) {
@@ -353,15 +354,29 @@ router.post('/register', (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, 10);
 
     // Create user
+    const trialStartAt = new Date().toISOString();
+    const trialEndAt = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString();
+
     const stmt = db.prepare(`
-      INSERT INTO users (username, email, password_hash, name)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO users (
+        username, email, password_hash, name,
+        plan, subscription_status, trial_started_at, trial_ends_at,
+        trial_extension_days, billing_descriptor, language_preference
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const result = stmt.run(
       username.trim(),
       email.toLowerCase().trim(),
       hashedPassword,
-      name.trim()
+      name.trim(),
+      'free_trial',
+      'trialing',
+      trialStartAt,
+      trialEndAt,
+      14,
+      DEFAULT_BILLING_DESCRIPTOR,
+      'he'
     );
 
     // Generate token

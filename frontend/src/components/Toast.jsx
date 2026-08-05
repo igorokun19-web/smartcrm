@@ -1,4 +1,4 @@
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 
 /**
  * Toast Notification System
@@ -50,58 +50,5 @@ export function ToastProvider() {
     />
   );
 }
-
-/**
- * Toast notification helpers
- */
-export const notify = {
-  success: (message, options = {}) => {
-    toast.success(message, {
-      ...options,
-      icon: "✅",
-    });
-  },
-
-  error: (message, options = {}) => {
-    toast.error(message, {
-      ...options,
-      icon: "❌",
-    });
-  },
-
-  info: (message, options = {}) => {
-    toast(message, {
-      icon: "ℹ️",
-      ...options,
-    });
-  },
-
-  warning: (message, options = {}) => {
-    toast(message, {
-      icon: "⚠️",
-      ...options,
-    });
-  },
-
-  loading: (message) => {
-    return toast.loading(message);
-  },
-
-  promise: (promise, messages) => {
-    return toast.promise(promise, {
-      loading: messages.loading || "Loading...",
-      success: messages.success || "Success!",
-      error: messages.error || "Error occurred",
-    });
-  },
-
-  dismiss: (toastId) => {
-    if (toastId) {
-      toast.dismiss(toastId);
-    } else {
-      toast.dismiss();
-    }
-  },
-};
 
 export default ToastProvider;

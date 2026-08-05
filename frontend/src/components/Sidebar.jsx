@@ -17,6 +17,7 @@ export default function Sidebar() {
     { name: t("sidebar.invoices"), path: "/invoices", icon: "💵" },
     { name: t("sidebar.reports"), path: "/reports", icon: "📈" },
     { name: t("sidebar.visitors"), path: "/visitors", icon: "🌐" },
+    { name: t("sidebar.operations"), path: "/operations", icon: "🔎" },
     { name: t("sidebar.guide"), path: "/guide", icon: "📖" },
     { name: t("sidebar.about"), path: "/about", icon: "ℹ️" },
     { name: t("sidebar.settings"), path: "/settings", icon: "⚙️" },
@@ -30,6 +31,9 @@ export default function Sidebar() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed top-4 right-4 z-50 md:hidden bg-blue-600 text-white p-2 rounded-lg"
+        aria-label={isOpen ? "סגור תפריט" : "פתח תפריט"}
+        aria-expanded={isOpen}
+        aria-controls="main-sidebar"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -44,6 +48,7 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside 
+        id="main-sidebar"
         className={`fixed md:static md:translate-x-0 top-0 right-0 w-64 min-h-screen bg-slate-900 text-white p-6 z-40 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"
         }`}
@@ -53,6 +58,7 @@ export default function Sidebar() {
         <button
           onClick={closeSidebar}
           className="md:hidden absolute top-4 right-4 text-white"
+          aria-label="סגור תפריט"
         >
           <X size={24} />
         </button>
@@ -66,7 +72,7 @@ export default function Sidebar() {
           </p>
         </div>
 
-        <nav className="space-y-2">
+        <nav className="space-y-2" aria-label="ניווט ראשי">
           {menuItems.map((item) => (
             <NavLink
               key={item.path}

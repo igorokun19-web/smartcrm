@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Calendar, AlertCircle, Clock, CheckCircle2, X, Edit3, Trash2 } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, Edit3, Trash2 } from "lucide-react";
 import { useCrm, getPriorityLabel } from "../context/CrmContext";
 
 const kpiCard =
   "rounded-xl border p-4 bg-white shadow-sm";
 
-function KanbanColumn({ title, icon, color, tasks, onComplete, onReopen, onDelete, onEdit, taskCount, bgColor }) {
+function KanbanColumn({ title, icon, tasks, onComplete, onReopen, onDelete, onEdit, taskCount, bgColor }) {
   return (
     <div className="flex flex-col bg-gray-50 rounded-lg overflow-hidden" style={{ minHeight: "600px" }}>
       {/* Column Header */}
@@ -202,12 +202,6 @@ export default function Tasks() {
     (task) => !task.completed
   );
 
-  const highPriorityTasks = allTasks.filter(
-    (task) =>
-      !task.completed &&
-      (task.priority || "Medium") === "High"
-  );
-
   const completeTask = (taskId, leadId) => {
     toggleTask(leadId, taskId);
   };
@@ -294,7 +288,7 @@ export default function Tasks() {
         <div className={`${kpiCard} bg-green-50`}>
           <p className="text-sm text-gray-600 mb-1">✅ הושלם</p>
           <p className="text-3xl font-bold text-green-600">{completedTasks.length}</p>
-          <p className="text-xs text-gray-500 mt-2">מיסתוריות</p>
+          <p className="text-xs text-gray-500 mt-2">עד כה</p>
         </div>
       </div>
 

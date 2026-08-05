@@ -1,3 +1,4 @@
+import { useId } from "react";
 import clsx from "clsx";
 import { components } from "../../styles/theme";
 
@@ -66,7 +67,8 @@ export function Input({
   className,
   ...props
 }) {
-  const inputId = props.id || `input-${Math.random()}`;
+  const generatedId = useId();
+  const inputId = props.id || generatedId;
 
   return (
     <div className="w-full">
@@ -117,7 +119,8 @@ export function Select({
   className,
   ...props
 }) {
-  const selectId = props.id || `select-${Math.random()}`;
+  const generatedId = useId();
+  const selectId = props.id || generatedId;
 
   return (
     <div className="w-full">
@@ -228,7 +231,7 @@ export function Modal({
 /**
  * Table Component
  */
-export function Table({ headers, rows, className }) {
+export function Table({ headers, rows }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-neutral-200">
       <table className="w-full">

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background:#06060f;
+    font-family:Arial,sans-serif;
+    overflow:hidden; color:white;
+  }
+
+  .bg {
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 60% 40% at 30% 70%, rgba(255,100,0,.18) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 80% 20%, rgba(16,163,127,.12) 0%, transparent 70%),
+      #06060f;
+    animation:bgPulse 5s ease-in-out infinite alternate;
+  }
+  @keyframes bgPulse { to { filter:brightness(1.1); } }
+
+  /* ── HOOK ── */
+  .hook {
+    position:absolute; top:4%; width:100%; text-align:center;
+    opacity:0;
+    animation:hookZoom .5s cubic-bezier(.175,.885,.32,1.275) .1s forwards;
+  }
+  @keyframes hookZoom {
+    from { transform:scale(2.5); opacity:0; filter:blur(12px); }
+    to   { transform:scale(1); opacity:1; filter:blur(0); }
+  }
+  .hook h1 {
+    font-size:80px; font-weight:900; line-height:1.05;
+    background:linear-gradient(135deg,#ff6b00,#ffd700);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 25px rgba(255,150,0,.5));
+  }
+
+  /* ── PERSON + CHAT SCENE ── */
+  .scene {
+    position:absolute;
+    top:20%; left:0; right:0;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    gap:0;
+    opacity:0;
+    animation:sceneIn .7s ease .8s forwards;
+  }
+  @keyframes sceneIn {
+    from { transform:translateY(60px); opacity:0; }
+    to   { opacity:1; transform:none; }
+  }
+
+  /* SVG person */
+  .person-wrap {
+    display:flex; flex-direction:column; align-items:center;
+    margin-top:30px;
+  }
+  .speech-bubble {
+    background:#1a1a2e;
+    border:2px solid rgba(255,100,0,.4);
+    border-radius:20px 20px 20px 4px;
+    padding:14px 20px;
+    font-size:22px;
+    color:rgba(255,255,255,.8);
+    margin-bottom:12px;
+    max-width:240px;
+    text-align:center;
+    opacity:0;
+    animation:bubbleIn .4s ease 1.4s forwards;
+    position:relative;
+  }
+  @keyframes bubbleIn {
+    from{transform:scale(.6) translateY(20px);opacity:0}
+    to{transform:none;opacity:1}
+  }
+
+  /* ── CHAT MOCKUP ── */
+  .chat-box {
+    width:580px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:24px;
+    padding:24px;
+    backdrop-filter:blur(8px);
+    opacity:0;
+    animation:chatIn .6s ease 1.2s forwards;
+  }
+  @keyframes chatIn {
+    from{transform:translateX(50px);opacity:0} to{opacity:1;transform:none}
+  }
+
+  .chat-header {
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:20px; padding-bottom:16px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .gpt-icon {
+    width:48px; height:48px; border-radius:10px;
+    background:linear-gradient(135deg,#10a37f,#0d6e59);
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; font-weight:900; color:#fff;
+  }
+  .gpt-name { font-size:26px; font-weight:700; }
+  .gpt-badge {
+    font-size:16px; color:#10a37f;
+    background:rgba(16,163,127,.15);
+    padding:3px 10px; border-radius:100px;
+    display:inline-block;
+  }
+
+  .msg-user {
+    background:rgba(100,100,255,.1);
+    border-radius:12px 12px 4px 12px;
+    padding:16px 20px;
+    font-size:22px; color:rgba(255,255,255,.85);
+    margin-bottom:16px;
+    opacity:0;
+    animation:msgIn .4s ease 2s forwards;
+  }
+  @keyframes msgIn {
+    from{transform:translateY(20px);opacity:0} to{opacity:1;transform:none}
+  }
+
+  .msg-ai {
+    background:linear-gradient(135deg,rgba(16,163,127,.1),rgba(0,100,70,.1));
+    border:1px solid rgba(16,163,127,.3);
+    border-radius:12px 12px 12px 4px;
+    padding:16px 20px;
+    font-size:21px;
+    opacity:0;
+    animation:msgIn .4s ease 2.8s forwards;
+  }
+  .ai-name { color:#10a37f; font-size:16px; font-weight:700; margin-bottom:8px; }
+  .ai-body { color:rgba(255,255,255,.85); line-height:1.7; }
+  .gold { color:#ffd700; font-weight:700; }
+  .green { color:#10a37f; font-weight:700; }
+
+  .cursor {
+    display:inline-block; width:2px; height:20px;
+    background:#10a37f; margin-right:3px;
+    animation:blink .8s step-end infinite 3.5s;
+    vertical-align:middle;
+  }
+  @keyframes blink { 50%{opacity:0} }
+
+  /* ── TIMER BADGE ── */
+  .timer {
+    position:absolute; bottom:-30px; left:50%;
+    transform:translateX(-50%);
+    background:linear-gradient(135deg,#ff4500,#ff8c00);
+    padding:12px 36px; border-radius:100px;
+    font-size:28px; font-weight:900;
+    white-space:nowrap;
+    opacity:0;
+    animation:popIn .5s cubic-bezier(.175,.885,.32,1.275) 4.2s forwards;
+    box-shadow:0 8px 30px rgba(255,100,0,.5);
+  }
+  @keyframes popIn {
+    from{transform:translateX(-50%) scale(.5);opacity:0}
+    to{transform:translateX(-50%) scale(1);opacity:1}
+  }
+
+  /* ── RESULT ROW ── */
+  .result-row {
+    position:absolute; top:82%;
+    left:30px; right:30px;
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+    opacity:0;
+    animation:resultIn .5s ease 5s forwards;
+  }
+  @keyframes resultIn {
+    from{transform:translateY(30px);opacity:0} to{opacity:1;transform:none}
+  }
+  .result-card {
+    background:rgba(255,255,255,.04);
+    border-radius:16px; padding:20px 12px;
+    text-align:center;
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .result-icon { font-size:36px; }
+  .result-num {
+    font-size:44px; font-weight:900;
+    background:linear-gradient(135deg,#ffd700,#ff8c00);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .result-label { font-size:18px; color:rgba(255,255,255,.55); margin-top:4px; }
+
+  /* ── CTA ── */
+  .cta {
+    position:absolute; bottom:3%;
+    width:100%; text-align:center;
+    opacity:0;
+    animation:ctaIn .5s ease 6s forwards;
+  }
+  @keyframes ctaIn { from{opacity:0;transform:scale(.9)} to{opacity:1;transform:none} }
+  .cta-inner {
+    display:inline-block;
+    background:linear-gradient(135deg,#ffd700,#ff8c00);
+    color:#000; font-size:40px; font-weight:900;
+    padding:20px 56px; border-radius:100px;
+    box-shadow:0 10px 40px rgba(255,180,0,.4);
+  }
+  .watermark {
+    position:absolute; bottom:.5%;
+    width:100%; text-align:center;
+    color:rgba(255,255,255,.2); font-size:22px;
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="hook">
+  <h1>חשמלאי שחסך<br>שעה ביום — כל יום<br>עם כלי חינמי</h1>
+</div>
+
+<div class="scene">
+  <!-- Person: Electrician -->
+  <div class="person-wrap">
+    <div class="speech-bubble">כמה זמן<br>לוקח הצעת<br>מחיר...? 😓</div>
+    <!-- SVG Electrician -->
+    <svg width="180" height="320" viewBox="0 0 180 320" fill="none">
+      <!-- Body/uniform - yellow -->
+      <ellipse cx="90" cy="200" rx="52" ry="72" fill="#f5a623"/>
+      <!-- Safety vest stripes -->
+      <rect x="70" y="160" width="40" height="8" rx="4" fill="#fff" opacity=".6"/>
+      <rect x="70" y="180" width="40" height="8" rx="4" fill="#fff" opacity=".6"/>
+      <!-- Collar -->
+      <path d="M72 152 Q90 170 108 152" stroke="#e8941a" stroke-width="3" fill="none"/>
+      <!-- Head -->
+      <ellipse cx="90" cy="108" rx="38" ry="42" fill="#f0c090"/>
+      <!-- Hard hat -->
+      <ellipse cx="90" cy="76" rx="42" ry="22" fill="#ffd700"/>
+      <rect x="50" y="76" width="80" height="14" rx="7" fill="#ffd700"/>
+      <ellipse cx="90" cy="76" rx="42" ry="10" fill="#e8c000"/>
+      <!-- Hat brim -->
+      <rect x="44" y="84" width="92" height="8" rx="4" fill="#e8c000"/>
+      <!-- Eyes -->
+      <circle cx="78" cy="110" r="5" fill="#4a3020"/>
+      <circle cx="102" cy="110" r="5" fill="#4a3020"/>
+      <circle cx="79" cy="109" r="2" fill="#fff"/>
+      <circle cx="103" cy="109" r="2" fill="#fff"/>
+      <!-- Smile -->
+      <path d="M79 122 Q90 132 101 122" stroke="#4a3020" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <!-- Arms -->
+      <path d="M38 165 Q20 190 30 215" stroke="#f5a623" stroke-width="22" stroke-linecap="round" fill="none"/>
+      <path d="M142 165 Q160 190 150 215" stroke="#f5a623" stroke-width="22" stroke-linecap="round" fill="none"/>
+      <!-- Left hand: holding phone -->
+      <rect x="12" y="208" width="28" height="48" rx="6" fill="#2a2a3e"/>
+      <rect x="15" y="212" width="22" height="38" rx="4" fill="#4488ff"/>
+      <!-- Right hand -->
+      <ellipse cx="152" cy="218" rx="16" ry="14" fill="#f0c090"/>
+      <!-- Legs -->
+      <rect x="70" y="265" width="22" height="52" rx="10" fill="#3a3a5c"/>
+      <rect x="96" y="265" width="22" height="52" rx="10" fill="#3a3a5c"/>
+      <!-- Boots -->
+      <rect x="65" y="308" width="32" height="14" rx="7" fill="#2a2020"/>
+      <rect x="91" y="308" width="32" height="14" rx="7" fill="#2a2020"/>
+      <!-- Toolbelt -->
+      <rect x="55" y="238" width="70" height="12" rx="6" fill="#8B4513"/>
+      <circle cx="90" cy="244" r="6" fill="#ffd700"/>
+    </svg>
+  </div>
+
+  <!-- Chat -->
+  <div style="flex:1;padding-right:16px;position:relative;">
+    <div class="chat-box">
+      <div class="chat-header">
+        <div class="gpt-icon">G</div>
+        <div>
+          <div class="gpt-name">ChatGPT</div>
+          <div class="gpt-badge">🤖 AI Assistant</div>
+        </div>
+      </div>
+      <div class="msg-user">
+        <div style="font-size:16px;color:rgba(255,255,255,.4);margin-bottom:6px">👤 דני החשמלאי:</div>
+        כתוב הצעת מחיר להחלפת<br>
+        לוח חשמל. עבודה 800₪,<br>
+        חומרים 350₪.
+      </div>
+      <div class="msg-ai">
+        <div class="ai-name">🤖 ChatGPT:</div>
+        <div class="ai-body">
+          <span class="gold">הצעת מחיר — שרותי חשמל</span><br>
+          ────────────────<br>
+          עבודה: <span class="green">800 ₪</span><br>
+          חומרים: <span class="green">350 ₪</span><br>
+          <strong>סה"כ: <span class="gold">1,150 ₪</span></strong><br>
+          אחריות 12 חודשים ✓<br>
+          זמינות 48 שעות ✓<span class="cursor"></span>
+        </div>
+      </div>
+    </div>
+    <div class="timer">⚡ 8 שניות בלבד!</div>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="result-row">
+  <div class="result-card">
+    <div class="result-icon">⏱️</div>
+    <div class="result-num">8<span style="font-size:26px">ש׳</span></div>
+    <div class="result-label">הצעת מחיר<br>מוכנה</div>
+  </div>
+  <div class="result-card">
+    <div class="result-icon">💰</div>
+    <div class="result-num">0₪</div>
+    <div class="result-label">עלות<br>חינם לגמרי</div>
+  </div>
+  <div class="result-card">
+    <div class="result-icon">📈</div>
+    <div class="result-num">+30%</div>
+    <div class="result-label">יותר עסקאות<br>נסגרות</div>
+  </div>
+</div>
+
+<div class="cta">
+  <div class="cta-inner">עקבו לעוד טיפים ⬇️</div>
+</div>
+<div class="watermark">@okun_igal</div>
+</body>
+</html>

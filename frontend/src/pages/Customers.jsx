@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { TrendingUp, Users, Award, AlertCircle, BarChart3, Heart, Calendar, Activity, Zap, DollarSign, ChevronDown, ChevronUp, MessageCircle } from "lucide-react";
+import { TrendingUp, Users, Heart, DollarSign, ChevronDown, MessageCircle } from "lucide-react";
 import { useCrm, formatDate } from "../context/CrmContext";
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 const badgeStyle = "inline-flex items-center gap-1 rounded-full text-xs font-semibold px-3 py-1";
 
 // Customer segment determination
-function getCustomerSegment(lead) {
+function getCustomerSegment(lead, now) {
   if (lead.status === "Won") return "VIP";
   if (lead.status === "Quoted" && lead.activity?.length > 3) return "Active";
   if ((lead.status === "New" || lead.status === "Contacted") && lead.activity?.length < 2) return "AtRisk";
-  if (lead.createdAt && (Date.now() - new Date(lead.createdAt).getTime()) > 30 * 24 * 60 * 60 * 1000 && lead.status === "New") return "Inactive";
+  if (lead.createdAt && (now - new Date(lead.createdAt).getTime()) > 30 * 24 * 60 * 60 * 1000 && lead.status === "New") return "Inactive";
   return "Active";
 }
 
@@ -28,10 +28,10 @@ function estimateLifetimeValue(lead) {
   return Math.round((baseValue * (statusMultiplier[lead.status] || 1)) + interactionBonus);
 }
 
-function CustomerCard({ customer, onExpand }) {
-  const segment = getCustomerSegment(customer);
+function CustomerCard({ customer, onExpand, now }) {
+  const segment = getCustomerSegment(customer, now);
   const ltv = estimateLifetimeValue(customer);
-  const daysSinceCreated = Math.floor((Date.now() - new Date(customer.createdAt).getTime()) / (24 * 60 * 60 * 1000));
+  const daysSinceCreated = Math.floor((now - new Date(customer.createdAt).getTime()) / (24 * 60 * 60 * 1000));
 
   const segmentColors = {
     VIP: "bg-purple-100 text-purple-700",
@@ -124,12 +124,11 @@ function CustomerCard({ customer, onExpand }) {
   );
 }
 
-function CustomerDetailModal({ customer, onClose }) {
+function CustomerDetailModal({ customer, onClose, now }) {
   if (!customer) return null;
 
-  const segment = getCustomerSegment(customer);
   const ltv = estimateLifetimeValue(customer);
-  const daysSinceCreated = Math.floor((Date.now() - new Date(customer.createdAt).getTime()) / (24 * 60 * 60 * 1000));
+  const daysSinceCreated = Math.floor((now - new Date(customer.createdAt).getTime()) / (24 * 60 * 60 * 1000));
 
   const statusColors = {
     Won: "bg-green-500",
@@ -264,6 +263,7 @@ function CustomerDetailModal({ customer, onClose }) {
 
 export default function Customers() {
   const { leads } = useCrm();
+  const [now] = useState(() => Date.now());
   const [search, setSearch] = useState("");
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -279,7 +279,7 @@ export default function Customers() {
       customer.name?.toLowerCase().includes(search.toLowerCase()) ||
       customer.phone?.includes(search);
 
-    const segment = getCustomerSegment(customer);
+    const segment = getCustomerSegment(customer, now);
     const matchesSegment = segmentFilter === "all" || segment === segmentFilter;
     const matchesStatus = statusFilter === "all" || customer.status === statusFilter;
 
@@ -302,22 +302,16 @@ export default function Customers() {
 
   // Calculate metrics
   const totalCustomers = customers.length;
-  const vipCount = customers.filter((c) => getCustomerSegment(c) === "VIP").length;
-  const activeCount = customers.filter((c) => getCustomerSegment(c) === "Active").length;
-  const atRiskCount = customers.filter((c) => getCustomerSegment(c) === "AtRisk").length;
-  const inactiveCount = customers.filter((c) => getCustomerSegment(c) === "Inactive").length;
+  const vipCount = customers.filter((c) => getCustomerSegment(c, now) === "VIP").length;
+  const activeCount = customers.filter((c) => getCustomerSegment(c, now) === "Active").length;
+  const atRiskCount = customers.filter((c) => getCustomerSegment(c, now) === "AtRisk").length;
+  const inactiveCount = customers.filter((c) => getCustomerSegment(c, now) === "Inactive").length;
 
   const totalLTV = customers.reduce((sum, c) => sum + estimateLifetimeValue(c), 0);
   const avgLTV = totalCustomers > 0 ? Math.round(totalLTV / totalCustomers) : 0;
 
   const wonCount = customers.filter((c) => c.status === "Won").length;
   const conversionRate = totalCustomers > 0 ? Math.round((wonCount / totalCustomers) * 100) : 0;
-
-  const totalInteractions = customers.reduce(
-    (sum, c) => sum + (c.tasks?.length || 0) + (c.notes?.length || 0) + (c.activity?.length || 0),
-    0
-  );
-  const avgInteractions = totalCustomers > 0 ? Math.round(totalInteractions / totalCustomers) : 0;
 
   return (
     <div className="p-6 space-y-8" dir="rtl">
@@ -463,6 +457,7 @@ export default function Customers() {
               key={customer.id}
               customer={customer}
               onExpand={setExpandedCustomer}
+              now={now}
             />
           ))}
         </div>
@@ -472,6 +467,7 @@ export default function Customers() {
       <CustomerDetailModal
         customer={expandedCustomer}
         onClose={() => setExpandedCustomer(null)}
+        now={now}
       />
     </div>
   );

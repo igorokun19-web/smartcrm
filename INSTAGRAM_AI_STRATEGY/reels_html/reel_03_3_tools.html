@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background:#030510;
+    font-family:Arial,sans-serif;
+    overflow:hidden; color:white;
+  }
+
+  /* ANIMATED BG */
+  .bg {
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,100,0,0.2) 0%, transparent 45%),
+      radial-gradient(circle at 85% 60%, rgba(255,200,0,0.15) 0%, transparent 45%),
+      radial-gradient(circle at 50% 100%, rgba(100,0,255,0.1) 0%, transparent 50%),
+      #030510;
+    animation:bgRotate 8s linear infinite;
+  }
+  @keyframes bgRotate {
+    0%   { filter:hue-rotate(0deg) brightness(1); }
+    50%  { filter:hue-rotate(30deg) brightness(1.1); }
+    100% { filter:hue-rotate(0deg) brightness(1); }
+  }
+
+  /* HOOK */
+  .hook {
+    position:absolute;
+    top:5%; width:100%;
+    text-align:center;
+    opacity:0;
+    animation:crashIn 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s forwards;
+  }
+  @keyframes crashIn {
+    from { transform:scaleX(0.1) scaleY(3); opacity:0; filter:blur(20px); }
+    to   { transform:scale(1); opacity:1; filter:blur(0); }
+  }
+  .hook h1 {
+    font-size:78px; font-weight:900; line-height:1.1;
+    background:linear-gradient(135deg,#ff6b00,#ffd700,#ff4500);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 20px rgba(255,150,0,0.6));
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    position:absolute;
+    top:21%; left:30px; right:30px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
+    gap:20px;
+    opacity:0;
+    animation:fadeUp 0.5s ease 0.8s forwards;
+  }
+  @keyframes fadeUp { from{transform:translateY(40px);opacity:0} to{opacity:1;transform:none} }
+
+  .stat-card {
+    border-radius:20px;
+    padding:30px 20px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .stat-card::before {
+    content:'';
+    position:absolute; inset:0;
+    border-radius:20px;
+    background:inherit;
+    filter:blur(0);
+    transition:filter 0.3s;
+  }
+
+  .card-1 {
+    background:linear-gradient(135deg,#1a0600,#2d0f00);
+    border-color:rgba(255,120,0,0.4);
+    animation:cardPop 0.5s cubic-bezier(.175,.885,.32,1.275) 1.2s both;
+  }
+  .card-2 {
+    background:linear-gradient(135deg,#00060f,#001a30);
+    border-color:rgba(0,150,255,0.4);
+    animation:cardPop 0.5s cubic-bezier(.175,.885,.32,1.275) 1.5s both;
+  }
+  .card-3 {
+    background:linear-gradient(135deg,#060014,#120028);
+    border-color:rgba(150,0,255,0.4);
+    animation:cardPop 0.5s cubic-bezier(.175,.885,.32,1.275) 1.8s both;
+  }
+  .card-4 {
+    background:linear-gradient(135deg,#001400,#002800);
+    border-color:rgba(0,200,80,0.4);
+    animation:cardPop 0.5s cubic-bezier(.175,.885,.32,1.275) 2.1s both;
+  }
+  @keyframes cardPop {
+    from { transform:scale(0.6) rotate(-10deg); opacity:0; }
+    to   { transform:scale(1) rotate(0deg); opacity:1; }
+  }
+
+  .stat-number {
+    font-size:64px; font-weight:900;
+    line-height:1;
+  }
+  .c1-num { color:#ff8c00; }
+  .c2-num { color:#4488ff; }
+  .c3-num { color:#bb44ff; }
+  .c4-num { color:#00cc55; }
+
+  .stat-label {
+    font-size:22px; color:rgba(255,255,255,0.65);
+    margin-top:8px; line-height:1.3;
+  }
+  .stat-emoji { font-size:36px; margin-bottom:8px; }
+
+  /* GLOW RINGS */
+  .card-1::after { content:''; position:absolute; inset:-1px; border-radius:21px;
+    background:transparent; border:2px solid rgba(255,120,0,0);
+    animation:glowRing 2s ease-in-out 2s infinite alternate; }
+  @keyframes glowRing {
+    from { box-shadow:0 0 0 rgba(255,120,0,0); }
+    to   { box-shadow:0 0 30px rgba(255,120,0,0.3); }
+  }
+
+  /* BIG REVEAL */
+  .big-reveal {
+    position:absolute;
+    top:67%;
+    left:30px; right:30px;
+    background:linear-gradient(135deg,#0f0020,#200040);
+    border:2px solid rgba(180,80,255,0.6);
+    border-radius:24px;
+    padding:36px;
+    text-align:center;
+    opacity:0;
+    animation:revealSlam 0.5s cubic-bezier(.175,.885,.32,1.275) 3s forwards;
+    box-shadow:0 0 80px rgba(120,0,255,0.25);
+  }
+  @keyframes revealSlam {
+    from { transform:perspective(500px) rotateX(-45deg) scale(0.5); opacity:0; }
+    to   { transform:perspective(500px) rotateX(0deg) scale(1); opacity:1; }
+  }
+  .reveal-text {
+    font-size:38px; font-weight:900; line-height:1.4;
+    color:rgba(255,255,255,0.9);
+  }
+  .reveal-highlight {
+    font-size:52px;
+    background:linear-gradient(135deg,#ffd700,#ff8c00);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    display:block; margin:10px 0;
+  }
+
+  /* CTA */
+  .cta {
+    position:absolute; bottom:5%;
+    width:100%; text-align:center;
+    opacity:0;
+    animation:ctaAnim 0.5s ease 4.5s forwards;
+  }
+  @keyframes ctaAnim {
+    from{transform:translateY(40px) scale(0.9);opacity:0}
+    to{transform:none;opacity:1}
+  }
+  .cta-inner {
+    display:inline-block;
+    background:linear-gradient(135deg,#ff6b00,#ffd700);
+    color:#000; font-size:42px; font-weight:900;
+    padding:22px 60px; border-radius:100px;
+    box-shadow:0 12px 50px rgba(255,150,0,0.4);
+  }
+
+  .watermark {
+    position:absolute; bottom:1.5%;
+    width:100%; text-align:center;
+    color:rgba(255,255,255,0.2); font-size:24px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <div class="hook">
+    <h1>3 כלי AI שכל<br>בעל עסק חייב<br>— חינם לגמרי</h1>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card card-1">
+      <div class="stat-emoji">🤖</div>
+      <div class="stat-number c1-num">ChatGPT</div>
+      <div class="stat-label">הצעות מחיר<br>מענה ללקוחות<br>פולו-אפ</div>
+    </div>
+    <div class="stat-card card-2">
+      <div class="stat-emoji">📱</div>
+      <div class="stat-number c2-num">WA Biz</div>
+      <div class="stat-label">WhatsApp Business<br>תשובה אוטומטית<br>24/7 חינם</div>
+    </div>
+    <div class="stat-card card-3">
+      <div class="stat-emoji">📊</div>
+      <div class="stat-number c3-num">SmartCRM</div>
+      <div class="stat-label">ניהול לקוחות<br>מעקב עסקאות<br>תזכורות</div>
+    </div>
+    <div class="stat-card card-4">
+      <div class="stat-emoji">🗒️</div>
+      <div class="stat-number c4-num">Notion AI</div>
+      <div class="stat-label">סיכומי פגישות<br>ניהול עבודה<br>אוטומציה</div>
+    </div>
+  </div>
+
+  <div class="big-reveal">
+    <div class="reveal-text">ביחד הם חוסכים לך</div>
+    <span class="reveal-highlight">3-4 שעות ביום</span>
+    <div class="reveal-text" style="font-size:32px;color:rgba(255,255,255,0.6)">
+      = 80+ שעות בחודש<br>= עוד 10,000₪ אפשריים
+    </div>
+  </div>
+
+  <div class="cta">
+    <div class="cta-inner">קישורים בביו ⬆️</div>
+  </div>
+
+  <div class="watermark">@okun_igal</div>
+</body>
+</html>

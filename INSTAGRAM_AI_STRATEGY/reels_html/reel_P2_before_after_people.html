@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1080px; height:1920px;
+    background:#040a14;
+    font-family:Arial,sans-serif;
+    overflow:hidden; color:white;
+  }
+  .bg {
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 50% 40% at 25% 40%, rgba(255,60,60,.15) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 75% 40%, rgba(0,200,80,.12) 0%, transparent 70%),
+      #040a14;
+  }
+
+  /* TITLE */
+  .title {
+    position:absolute; top:3%; width:100%; text-align:center;
+    opacity:0;
+    animation:dropDown .5s cubic-bezier(.175,.885,.32,1.275) .1s forwards;
+  }
+  @keyframes dropDown {
+    from{transform:translateY(-60px);opacity:0} to{opacity:1;transform:none}
+  }
+  .title h1 {
+    font-size:72px; font-weight:900; line-height:1.1;
+    background:linear-gradient(135deg,#fff,#ccc);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .vs-badge {
+    display:inline-block;
+    background:linear-gradient(135deg,#ff4444,#6600ff);
+    font-size:36px; font-weight:900; color:#fff;
+    padding:10px 40px; border-radius:100px;
+    margin-bottom:12px;
+    box-shadow:0 8px 30px rgba(100,0,255,.3);
+  }
+
+  /* SPLIT: TWO PEOPLE */
+  .people-row {
+    position:absolute; top:18%;
+    left:0; right:0;
+    display:flex;
+    justify-content:space-around;
+    align-items:flex-end;
+    opacity:0;
+    animation:fadeUp .6s ease .7s forwards;
+  }
+  @keyframes fadeUp {from{transform:translateY(40px);opacity:0}to{opacity:1;transform:none}}
+
+  .person-side { display:flex; flex-direction:column; align-items:center; gap:0; }
+
+  /* Thought bubble */
+  .thought {
+    border-radius:20px;
+    padding:16px 20px;
+    font-size:22px;
+    max-width:260px;
+    text-align:center;
+    margin-bottom:8px;
+    position:relative;
+    line-height:1.4;
+    opacity:0;
+  }
+  .thought-bad {
+    background:linear-gradient(135deg,#1a0505,#2d0505);
+    border:2px solid rgba(255,60,60,.5);
+    color:rgba(255,180,180,.9);
+    animation:thoughtIn .4s ease 1.3s forwards;
+  }
+  .thought-good {
+    background:linear-gradient(135deg,#051a08,#052d0a);
+    border:2px solid rgba(0,200,80,.5);
+    color:rgba(180,255,180,.9);
+    animation:thoughtIn .4s ease 1.6s forwards;
+  }
+  @keyframes thoughtIn {from{transform:scale(.7);opacity:0}to{opacity:1;transform:none}}
+
+  .label-under {
+    font-size:26px; font-weight:700;
+    text-align:center; margin-bottom:8px;
+    opacity:0;
+  }
+  .label-bad  { color:#ff5555; animation:fadeIn .3s ease 2.1s forwards; }
+  .label-good { color:#00cc55; animation:fadeIn .3s ease 2.1s forwards; }
+  @keyframes fadeIn { to{opacity:1} }
+
+  /* DIVIDER */
+  .divider {
+    position:absolute; top:18%; bottom:58%;
+    left:50%; transform:translateX(-50%);
+    width:3px;
+    background:linear-gradient(180deg,transparent,rgba(255,255,255,.3),transparent);
+    opacity:0;
+    animation:dividerIn .3s ease .7s forwards;
+  }
+  @keyframes dividerIn { to{opacity:1} }
+  .vs-center {
+    position:absolute; top:42%;
+    left:50%; transform:translateX(-50%);
+    width:60px; height:60px;
+    background:linear-gradient(135deg,#ff4444,#6600ff);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; font-weight:900;
+    opacity:0;
+    animation:vsIn .4s cubic-bezier(.175,.885,.32,1.275) .9s forwards;
+    box-shadow:0 4px 20px rgba(100,0,200,.4);
+  }
+  @keyframes vsIn {
+    from{transform:translateX(-50%) scale(0);opacity:0}
+    to{transform:translateX(-50%) scale(1);opacity:1}
+  }
+
+  /* METRICS BOX */
+  .metrics {
+    position:absolute; top:69%;
+    left:30px; right:30px;
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:16px;
+    opacity:0;
+    animation:metricsIn .5s ease 3.2s forwards;
+  }
+  @keyframes metricsIn {
+    from{transform:translateY(30px);opacity:0} to{opacity:1;transform:none}
+  }
+  .metric {
+    border-radius:20px; padding:24px 20px; text-align:center;
+  }
+  .metric-bad  {
+    background:linear-gradient(135deg,#1a0505,#2d0808);
+    border:1px solid rgba(255,60,60,.3);
+  }
+  .metric-good {
+    background:linear-gradient(135deg,#051a08,#082d10);
+    border:1px solid rgba(0,200,80,.3);
+  }
+  .metric-num {
+    font-size:56px; font-weight:900;
+    line-height:1;
+  }
+  .mn-bad  { color:#ff5555; }
+  .mn-good { color:#00cc55; }
+  .metric-desc { font-size:21px; color:rgba(255,255,255,.6); margin-top:6px; line-height:1.3; }
+
+  /* RESULT BANNER */
+  .banner {
+    position:absolute; top:87%;
+    left:30px; right:30px;
+    background:linear-gradient(135deg,#0f001a,#1f0035);
+    border:2px solid rgba(180,80,255,.5);
+    border-radius:20px; padding:24px 28px;
+    text-align:center;
+    opacity:0;
+    animation:bannerIn .5s cubic-bezier(.175,.885,.32,1.275) 4.5s forwards;
+    box-shadow:0 0 50px rgba(120,0,255,.2);
+  }
+  @keyframes bannerIn {
+    from{transform:scale(.85);opacity:0} to{opacity:1;transform:none}
+  }
+  .banner-text {
+    font-size:32px; font-weight:900;
+    background:linear-gradient(135deg,#ffd700,#ff8c00);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .banner-sub {
+    font-size:24px; color:rgba(255,255,255,.6); margin-top:6px;
+  }
+
+  .cta {
+    position:absolute; bottom:2%;
+    width:100%; text-align:center;
+    opacity:0;
+    animation:ctaIn .4s ease 5.8s forwards;
+  }
+  @keyframes ctaIn { from{opacity:0} to{opacity:1} }
+  .cta-inner {
+    display:inline-block;
+    background:linear-gradient(135deg,#bb44ff,#6600ff);
+    font-size:38px; font-weight:900;
+    padding:20px 52px; border-radius:100px;
+    box-shadow:0 10px 40px rgba(100,0,255,.4);
+  }
+  .watermark {
+    position:absolute; bottom:.3%;
+    width:100%; text-align:center;
+    color:rgba(255,255,255,.2); font-size:20px;
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="title">
+  <div class="vs-badge">לפני VS אחרי AI</div>
+  <h1>אותו עסק —<br>תוצאות שונות</h1>
+</div>
+
+<div class="divider"></div>
+<div class="vs-center">VS</div>
+
+<!-- TWO PEOPLE -->
+<div class="people-row">
+
+  <!-- LEFT: BEFORE (stressed worker) -->
+  <div class="person-side">
+    <div class="thought thought-bad">
+      שעה כתיבת<br>הצעת מחיר 😩<br>כל יום...
+    </div>
+    <!-- Stressed worker SVG -->
+    <svg width="200" height="340" viewBox="0 0 200 340">
+      <!-- Body - grey/tired colors -->
+      <ellipse cx="100" cy="220" rx="50" ry="68" fill="#555577"/>
+      <!-- Head -->
+      <ellipse cx="100" cy="120" rx="36" ry="40" fill="#f0c090"/>
+      <!-- Tired expression -->
+      <path d="M70 108 Q76 100 82 108" stroke="#6a4020" stroke-width="3" fill="none"/>
+      <path d="M118 108 Q124 100 130 108" stroke="#6a4020" stroke-width="3" fill="none"/>
+      <!-- Sad mouth -->
+      <path d="M85 135 Q100 127 115 135" stroke="#6a4020" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <!-- Sweat drop -->
+      <ellipse cx="132" cy="108" rx="6" ry="9" fill="#88bbff" opacity=".7"/>
+      <!-- Hair messy -->
+      <path d="M64 98 Q68 72 78 68 Q90 62 100 64 Q114 62 124 70 Q134 78 136 98" fill="#4a3020"/>
+      <path d="M64 98 Q60 88 66 80" stroke="#4a3020" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <!-- Paper stack in hands -->
+      <rect x="32" y="210" width="50" height="64" rx="4" fill="#ffffcc" transform="rotate(-5,57,242)"/>
+      <rect x="38" y="216" width="50" height="64" rx="4" fill="#fff" transform="rotate(2,63,248)"/>
+      <!-- Lines on paper -->
+      <line x1="44" y1="225" x2="80" y2="225" stroke="#ccc" stroke-width="2"/>
+      <line x1="44" y1="233" x2="74" y2="233" stroke="#ccc" stroke-width="2"/>
+      <line x1="44" y1="241" x2="78" y2="241" stroke="#ccc" stroke-width="2"/>
+      <!-- Arms -->
+      <path d="M52 185 Q40 210 35 235" stroke="#555577" stroke-width="22" stroke-linecap="round" fill="none"/>
+      <path d="M148 185 Q160 210 165 235" stroke="#555577" stroke-width="22" stroke-linecap="round" fill="none"/>
+      <!-- Legs -->
+      <rect x="74" y="282" width="22" height="56" rx="10" fill="#333355"/>
+      <rect x="102" y="282" width="22" height="56" rx="10" fill="#333355"/>
+      <rect x="68" y="326" width="32" height="14" rx="7" fill="#222232"/>
+      <rect x="96" y="326" width="32" height="14" rx="7" fill="#222232"/>
+    </svg>
+    <div class="label-under label-bad">❌ לפני AI</div>
+  </div>
+
+  <!-- RIGHT: AFTER (happy worker with phone) -->
+  <div class="person-side">
+    <div class="thought thought-good">
+      30 שניות!<br>ChatGPT כתב<br>הכל 🎉
+    </div>
+    <!-- Happy worker SVG -->
+    <svg width="200" height="340" viewBox="0 0 200 340">
+      <!-- Body - bright/energetic -->
+      <ellipse cx="100" cy="220" rx="50" ry="68" fill="#f5a623"/>
+      <!-- Safety vest -->
+      <rect x="82" y="174" width="36" height="8" rx="4" fill="#fff" opacity=".7"/>
+      <rect x="82" y="192" width="36" height="8" rx="4" fill="#fff" opacity=".7"/>
+      <!-- Head -->
+      <ellipse cx="100" cy="118" rx="36" ry="40" fill="#f0c090"/>
+      <!-- Happy eyes -->
+      <path d="M78 108 Q84 102 90 108" stroke="#4a3020" stroke-width="3" fill="none"/>
+      <path d="M110 108 Q116 102 122 108" stroke="#4a3020" stroke-width="3" fill="none"/>
+      <!-- Big smile -->
+      <path d="M82 130 Q100 146 118 130" stroke="#4a3020" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+      <!-- Rosy cheeks -->
+      <ellipse cx="78" cy="128" rx="10" ry="6" fill="#ff8888" opacity=".4"/>
+      <ellipse cx="122" cy="128" rx="10" ry="6" fill="#ff8888" opacity=".4"/>
+      <!-- Hard hat -->
+      <ellipse cx="100" cy="82" rx="40" ry="20" fill="#ffd700"/>
+      <rect x="62" y="82" width="76" height="13" rx="6" fill="#ffd700"/>
+      <ellipse cx="100" cy="82" rx="40" ry="9" fill="#e8c000"/>
+      <rect x="56" y="90" width="88" height="8" rx="4" fill="#e8c000"/>
+      <!-- Phone in raised hand - celebration -->
+      <path d="M148 185 Q168 160 162 135" stroke="#f5a623" stroke-width="22" stroke-linecap="round" fill="none"/>
+      <rect x="148" y="116" width="28" height="48" rx="6" fill="#1a1a2e"/>
+      <rect x="151" y="120" width="22" height="38" rx="4" fill="#10a37f"/>
+      <!-- Chat icon on phone -->
+      <text x="162" y="143" text-anchor="middle" font-size="18" fill="white">G</text>
+      <!-- Other arm -->
+      <path d="M52 185 Q38 210 44 235" stroke="#f5a623" stroke-width="22" stroke-linecap="round" fill="none"/>
+      <ellipse cx="44" cy="237" rx="14" ry="12" fill="#f0c090"/>
+      <!-- Star sparkles -->
+      <text x="168" y="106" font-size="28" fill="#ffd700">✨</text>
+      <text x="32" y="165" font-size="20" fill="#00cc55">⭐</text>
+      <!-- Legs -->
+      <rect x="74" y="282" width="22" height="56" rx="10" fill="#3a3a5c"/>
+      <rect x="102" y="282" width="22" height="56" rx="10" fill="#3a3a5c"/>
+      <rect x="68" y="326" width="32" height="14" rx="7" fill="#2a2020"/>
+      <rect x="96" y="326" width="32" height="14" rx="7" fill="#2a2020"/>
+    </svg>
+    <div class="label-under label-good">✅ אחרי AI</div>
+  </div>
+</div>
+
+<!-- METRICS -->
+<div class="metrics">
+  <div class="metric metric-bad">
+    <div class="metric-num mn-bad">60<span style="font-size:28px">דק׳</span></div>
+    <div class="metric-desc">הצעת מחיר<br>ידנית בעבר</div>
+  </div>
+  <div class="metric metric-good">
+    <div class="metric-num mn-good">30<span style="font-size:28px">שנ׳</span></div>
+    <div class="metric-desc">הצעת מחיר<br>עם ChatGPT</div>
+  </div>
+  <div class="metric metric-bad">
+    <div class="metric-num mn-bad">12<span style="font-size:28px">ש׳</span></div>
+    <div class="metric-desc">עבודה<br>ביום — לפני</div>
+  </div>
+  <div class="metric metric-good">
+    <div class="metric-num mn-good">8<span style="font-size:28px">ש׳</span></div>
+    <div class="metric-desc">עבודה<br>ביום — אחרי</div>
+  </div>
+</div>
+
+<!-- BANNER -->
+<div class="banner">
+  <div class="banner-text">4 שעות פנויות יותר ביום</div>
+  <div class="banner-sub">= 80 שעות בחודש = 10,000₪ אפשריים נוספים</div>
+</div>
+
+<div class="cta">
+  <div class="cta-inner">שמרו 📌 + עקבו</div>
+</div>
+<div class="watermark">@okun_igal</div>
+</body>
+</html>
