@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import { ArrowLeft, BarChart3, CheckCircle2, LayoutDashboard, MessageCircle, MousePointerClick, ShieldCheck, Users } from "lucide-react";
 
 const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || "";
@@ -66,9 +67,17 @@ function CtaLink({ href, children, secondary = false }) {
 }
 
 export default function Landing() {
+  const [userCount, setUserCount] = useState(null);
   const whatsappHref = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("היי, ראיתי את SmartCRM ואני רוצה לשמוע עוד")}`
     : demoUrl;
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/subscribe/stats`)
+      .then(r => r.json())
+      .then(d => { if (d.userCount > 0) setUserCount(d.userCount); })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#e0f2fe,transparent_35%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_45%,#ffffff_100%)] text-slate-900" dir="rtl">
@@ -89,6 +98,12 @@ export default function Landing() {
               <MousePointerClick size={16} />
               חינם לחלוטין — ללא כרטיס אשראי
             </div>
+            {userCount !== null && (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
+                <CheckCircle2 size={15} />
+                {userCount}+ בעלי עסקים כבר נרשמו
+              </div>
+            )}
             <h1 className="mt-6 max-w-3xl text-4xl font-black leading-tight text-slate-950 md:text-6xl">
               מפסיקים לאבד לידים בין וואטסאפ, אקסל והודעות.
             </h1>
