@@ -48,13 +48,13 @@ function requireAuth(req, res, next) {
   }
 }
 
-function formatSubscriptionStatus(user) {
+async function formatSubscriptionStatus(user) {
   const effectiveEndAt = user.trial_extended_until || user.trial_ends_at;
   const now = Date.now();
   const endDate = effectiveEndAt ? Date.parse(effectiveEndAt) : NaN;
   const msLeft = Number.isNaN(endDate) ? 0 : Math.max(0, endDate - now);
   const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-  const leadCount = getLeadCountForUser(user.id);
+  const leadCount = await getLeadCountForUser(user.id);
 
   return {
     plan: user.plan,
@@ -71,8 +71,8 @@ function formatSubscriptionStatus(user) {
     usage: {
       leadCount,
       valueGateMinLeads: VALUE_GATE_MIN_LEADS,
-      valueGateReached: leadCount >= VALUE_GATE_MIN_LEADS
-    }
+      valueGateReached: leadCount >= VALUE_GATE_MIN_LEADS,
+    },
   };
 }
 
@@ -80,18 +80,15 @@ function normalizePlan(plan) {
   if (plan === 'basic' || plan === 'pro' || plan === 'free_trial') {
     return plan;
   }
-
   return 'free_trial';
 }
 
 function getSafeFrontendUrl() {
   try {
     const parsed = new URL(FRONTEND_URL);
-
     if (isProduction && parsed.protocol !== 'https:') {
       return null;
     }
-
     return parsed.origin;
   } catch {
     return null;
@@ -119,14 +116,15 @@ function safeDetailsFromError(error) {
   };
 }
 
-function findUserForStripeRefs(customerId, subscriptionId, metadataUserId) {
+async function findUserForStripeRefs(customerId, subscriptionId, metadataUserId, txApi = db) {
   const parsedUserId = Number(metadataUserId);
   if (Number.isInteger(parsedUserId) && parsedUserId > 0) {
-    const userById = db.prepare(`
-      SELECT id, plan
-      FROM users
-      WHERE id = ?
-    `).get(parsedUserId);
+    const userById = await txApi.one(
+      `SELECT id, plan
+       FROM users
+       WHERE id = $1`,
+      [parsedUserId]
+    );
 
     if (userById) {
       return userById;
@@ -134,11 +132,12 @@ function findUserForStripeRefs(customerId, subscriptionId, metadataUserId) {
   }
 
   if (subscriptionId) {
-    const userBySubscription = db.prepare(`
-      SELECT id, plan
-      FROM users
-      WHERE billing_subscription_id = ?
-    `).get(String(subscriptionId));
+    const userBySubscription = await txApi.one(
+      `SELECT id, plan
+       FROM users
+       WHERE billing_subscription_id = $1`,
+      [String(subscriptionId)]
+    );
 
     if (userBySubscription) {
       return userBySubscription;
@@ -146,11 +145,12 @@ function findUserForStripeRefs(customerId, subscriptionId, metadataUserId) {
   }
 
   if (customerId) {
-    const userByCustomer = db.prepare(`
-      SELECT id, plan
-      FROM users
-      WHERE billing_customer_id = ?
-    `).get(String(customerId));
+    const userByCustomer = await txApi.one(
+      `SELECT id, plan
+       FROM users
+       WHERE billing_customer_id = $1`,
+      [String(customerId)]
+    );
 
     if (userByCustomer) {
       return userByCustomer;
@@ -160,27 +160,29 @@ function findUserForStripeRefs(customerId, subscriptionId, metadataUserId) {
   return null;
 }
 
-function updateWebhookStatus(eventId, status, errorMessage = null) {
-  db.prepare(`
-    UPDATE billing_webhook_events
-    SET processing_status = ?,
-        processing_error = ?,
-        processed_at = CURRENT_TIMESTAMP
-    WHERE event_id = ?
-  `).run(status, errorMessage, eventId);
+async function updateWebhookStatus(eventId, status, errorMessage = null) {
+  await db.query(
+    `UPDATE billing_webhook_events
+     SET processing_status = $1,
+         processing_error = $2,
+         processed_at = NOW()
+     WHERE event_id = $3`,
+    [status, errorMessage, eventId]
+  );
 }
 
-router.get('/status', requireAuth, (req, res) => {
+router.get('/status', requireAuth, async (req, res) => {
   try {
-    runBillingLifecycle('status_check');
+    await runBillingLifecycle('status_check');
 
-    const user = db.prepare(`
-      SELECT id, plan, subscription_status, trial_started_at, trial_ends_at,
-             trial_extended_until, billing_descriptor, language_preference,
-             canceled_at, cancel_reason
-      FROM users
-      WHERE id = ?
-    `).get(req.userId);
+    const user = await db.one(
+      `SELECT id, plan, subscription_status, trial_started_at, trial_ends_at,
+              trial_extended_until, billing_descriptor, language_preference,
+              canceled_at, cancel_reason
+       FROM users
+       WHERE id = $1`,
+      [req.userId]
+    );
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'משתמש לא נמצא' });
@@ -188,7 +190,7 @@ router.get('/status', requireAuth, (req, res) => {
 
     res.json({
       success: true,
-      subscription: formatSubscriptionStatus(user)
+      subscription: await formatSubscriptionStatus(user),
     });
   } catch (error) {
     console.error('Billing status error:', error.message);
@@ -196,13 +198,14 @@ router.get('/status', requireAuth, (req, res) => {
   }
 });
 
-router.post('/extend-trial', requireAuth, (req, res) => {
+router.post('/extend-trial', requireAuth, async (req, res) => {
   try {
-    const user = db.prepare(`
-      SELECT id, subscription_status, trial_ends_at, trial_extended_until
-      FROM users
-      WHERE id = ?
-    `).get(req.userId);
+    const user = await db.one(
+      `SELECT id, subscription_status, trial_ends_at, trial_extended_until
+       FROM users
+       WHERE id = $1`,
+      [req.userId]
+    );
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'משתמש לא נמצא' });
@@ -216,59 +219,64 @@ router.post('/extend-trial', requireAuth, (req, res) => {
       return res.status(400).json({ success: false, error: 'הארכת ניסיון כבר ניתנה' });
     }
 
-    const leadCount = getLeadCountForUser(user.id);
+    const leadCount = await getLeadCountForUser(user.id);
     if (leadCount >= VALUE_GATE_MIN_LEADS) {
       return res.status(400).json({ success: false, error: 'לא ניתן להאריך ניסיון לאחר השגת ערך שימוש מינימלי' });
     }
 
-    db.prepare(`
-      UPDATE users
-      SET trial_extended_until = datetime(COALESCE(trial_ends_at, CURRENT_TIMESTAMP), '+14 days'),
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(req.userId);
+    await db.query(
+      `UPDATE users
+       SET trial_extended_until = COALESCE(trial_ends_at, NOW()) + INTERVAL '14 days',
+           updated_at = NOW()
+       WHERE id = $1`,
+      [req.userId]
+    );
 
-    db.prepare(`
-      INSERT INTO billing_events (user_id, event_type, event_status, details)
-      VALUES (?, 'trial_extended_manual', 'success', ?)
-    `).run(req.userId, JSON.stringify({ leadCount, threshold: VALUE_GATE_MIN_LEADS }));
+    await db.query(
+      `INSERT INTO billing_events (user_id, event_type, event_status, details)
+       VALUES ($1, 'trial_extended_manual', 'success', $2)`,
+      [req.userId, JSON.stringify({ leadCount, threshold: VALUE_GATE_MIN_LEADS })]
+    );
 
-    const updatedUser = db.prepare(`
-      SELECT id, plan, subscription_status, trial_started_at, trial_ends_at,
-             trial_extended_until, billing_descriptor, language_preference,
-             canceled_at, cancel_reason
-      FROM users
-      WHERE id = ?
-    `).get(req.userId);
+    const updatedUser = await db.one(
+      `SELECT id, plan, subscription_status, trial_started_at, trial_ends_at,
+              trial_extended_until, billing_descriptor, language_preference,
+              canceled_at, cancel_reason
+       FROM users
+       WHERE id = $1`,
+      [req.userId]
+    );
 
-    res.json({ success: true, subscription: formatSubscriptionStatus(updatedUser) });
+    res.json({ success: true, subscription: await formatSubscriptionStatus(updatedUser) });
   } catch (error) {
     console.error('Extend trial error:', error.message);
     res.status(500).json({ success: false, error: 'שגיאה בהארכת ניסיון' });
   }
 });
 
-router.post('/cancel', requireAuth, (req, res) => {
+router.post('/cancel', requireAuth, async (req, res) => {
   try {
     const cancelReason = typeof req.body?.reason === 'string' ? req.body.reason.trim().slice(0, 300) : null;
 
-    const result = db.prepare(`
-      UPDATE users
-      SET subscription_status = 'canceled',
-          canceled_at = CURRENT_TIMESTAMP,
-          cancel_reason = ?,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(cancelReason, req.userId);
+    const result = await db.exec(
+      `UPDATE users
+       SET subscription_status = 'canceled',
+           canceled_at = NOW(),
+           cancel_reason = $1,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [cancelReason, req.userId]
+    );
 
     if (result.changes === 0) {
       return res.status(404).json({ success: false, error: 'משתמש לא נמצא' });
     }
 
-    db.prepare(`
-      INSERT INTO billing_events (user_id, event_type, event_status, details)
-      VALUES (?, 'subscription_canceled', 'success', ?)
-    `).run(req.userId, JSON.stringify({ immediate: true, reason: cancelReason }));
+    await db.query(
+      `INSERT INTO billing_events (user_id, event_type, event_status, details)
+       VALUES ($1, 'subscription_canceled', 'success', $2)`,
+      [req.userId, JSON.stringify({ immediate: true, reason: cancelReason })]
+    );
 
     res.json({ success: true, message: 'המנוי בוטל מיידית' });
   } catch (error) {
@@ -290,43 +298,46 @@ router.post('/start-checkout', requireAuth, async (req, res) => {
     return res.status(503).json({
       success: false,
       error: 'הגדרת כתובת אפליקציה אינה תקינה',
-      code: 'FRONTEND_URL_INVALID'
+      code: 'FRONTEND_URL_INVALID',
     });
   }
 
   if (!stripe || !STRIPE_SECRET_KEY) {
-    db.prepare(`
-      INSERT INTO billing_events (user_id, event_type, event_status, details)
-      VALUES (?, 'checkout_started', 'blocked_missing_config', ?)
-    `).run(req.userId, JSON.stringify({ plan: selectedPlan, reason: 'missing_stripe_key' }));
+    await db.query(
+      `INSERT INTO billing_events (user_id, event_type, event_status, details)
+       VALUES ($1, 'checkout_started', 'blocked_missing_config', $2)`,
+      [req.userId, JSON.stringify({ plan: selectedPlan, reason: 'missing_stripe_key' })]
+    );
 
     return res.status(503).json({
       success: false,
       error: 'ספק הסליקה עדיין לא הוגדר בסביבה',
-      code: 'BILLING_PROVIDER_NOT_CONFIGURED'
+      code: 'BILLING_PROVIDER_NOT_CONFIGURED',
     });
   }
 
   const priceId = PLAN_TO_PRICE[selectedPlan];
   if (!priceId) {
-    db.prepare(`
-      INSERT INTO billing_events (user_id, event_type, event_status, details)
-      VALUES (?, 'checkout_started', 'blocked_missing_price', ?)
-    `).run(req.userId, JSON.stringify({ plan: selectedPlan }));
+    await db.query(
+      `INSERT INTO billing_events (user_id, event_type, event_status, details)
+       VALUES ($1, 'checkout_started', 'blocked_missing_price', $2)`,
+      [req.userId, JSON.stringify({ plan: selectedPlan })]
+    );
 
     return res.status(503).json({
       success: false,
       error: 'מחיר התוכנית עדיין לא הוגדר',
-      code: 'BILLING_PRICE_NOT_CONFIGURED'
+      code: 'BILLING_PRICE_NOT_CONFIGURED',
     });
   }
 
   try {
-    const user = db.prepare(`
-      SELECT id, email, name, billing_customer_id, subscription_status, plan, billing_subscription_id
-      FROM users
-      WHERE id = ?
-    `).get(req.userId);
+    const user = await db.one(
+      `SELECT id, email, name, billing_customer_id, subscription_status, plan, billing_subscription_id
+       FROM users
+       WHERE id = $1`,
+      [req.userId]
+    );
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'משתמש לא נמצא' });
@@ -336,7 +347,7 @@ router.post('/start-checkout', requireAuth, async (req, res) => {
       return res.status(409).json({
         success: false,
         error: 'יש מנוי פעיל. ניהול שינויים יתאפשר מפורטל מנויים ייעודי.',
-        code: 'SUBSCRIPTION_ALREADY_ACTIVE'
+        code: 'SUBSCRIPTION_ALREADY_ACTIVE',
       });
     }
 
@@ -352,30 +363,25 @@ router.post('/start-checkout', requireAuth, async (req, res) => {
       });
 
       customerId = customer.id;
-      db.prepare(`
-        UPDATE users
-        SET billing_customer_id = ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(customerId, user.id);
+      await db.query(
+        `UPDATE users
+         SET billing_customer_id = $1,
+             updated_at = NOW()
+         WHERE id = $2`,
+        [customerId, user.id]
+      );
     }
 
     const sessionPayload = {
       mode: 'subscription',
       customer: customerId,
-      line_items: [{
-        price: priceId,
-        quantity: 1,
-      }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${safeFrontendUrl}/settings?billing=success`,
       cancel_url: `${safeFrontendUrl}/settings?billing=cancel`,
       client_reference_id: String(user.id),
       allow_promotion_codes: true,
       billing_address_collection: 'required',
-      customer_update: {
-        address: 'auto',
-        name: 'auto',
-      },
+      customer_update: { address: 'auto', name: 'auto' },
       expires_at: Math.floor(Date.now() / 1000) + (30 * 60),
       metadata: {
         userId: String(user.id),
@@ -394,31 +400,26 @@ router.post('/start-checkout', requireAuth, async (req, res) => {
       ? await stripe.checkout.sessions.create(sessionPayload, { idempotencyKey })
       : await stripe.checkout.sessions.create(sessionPayload);
 
-    db.prepare(`
-      INSERT INTO billing_events (user_id, event_type, event_status, details)
-      VALUES (?, 'checkout_started', 'success', ?)
-    `).run(
-      req.userId,
-      JSON.stringify({ plan: selectedPlan, checkoutSessionId: session.id })
+    await db.query(
+      `INSERT INTO billing_events (user_id, event_type, event_status, details)
+       VALUES ($1, 'checkout_started', 'success', $2)`,
+      [req.userId, JSON.stringify({ plan: selectedPlan, checkoutSessionId: session.id })]
     );
 
-    return res.json({
-      success: true,
-      checkoutUrl: session.url,
-      sessionId: session.id,
-    });
+    return res.json({ success: true, checkoutUrl: session.url, sessionId: session.id });
   } catch (error) {
     console.error('Stripe checkout error:', error.message);
 
-    db.prepare(`
-      INSERT INTO billing_events (user_id, event_type, event_status, details)
-      VALUES (?, 'checkout_started', 'failed', ?)
-    `).run(req.userId, JSON.stringify({ plan: selectedPlan, ...safeDetailsFromError(error) }));
+    await db.query(
+      `INSERT INTO billing_events (user_id, event_type, event_status, details)
+       VALUES ($1, 'checkout_started', 'failed', $2)`,
+      [req.userId, JSON.stringify({ plan: selectedPlan, ...safeDetailsFromError(error) })]
+    );
 
     return res.status(500).json({
       success: false,
       error: 'שגיאה ביצירת עמוד התשלום',
-      code: 'CHECKOUT_CREATE_FAILED'
+      code: 'CHECKOUT_CREATE_FAILED',
     });
   }
 });
@@ -452,138 +453,146 @@ router.post('/webhook', async (req, res) => {
   }
 
   const payloadHash = crypto.createHash('sha256').update(req.body).digest('hex');
-  const existingEvent = db.prepare(`
-    SELECT id
-    FROM billing_webhook_events
-    WHERE event_id = ?
-  `).get(event.id);
+  const existingEvent = await db.one(
+    `SELECT id
+     FROM billing_webhook_events
+     WHERE event_id = $1`,
+    [event.id]
+  );
 
   if (existingEvent) {
     return res.json({ received: true, duplicate: true });
   }
 
   try {
-    db.prepare(`
-      INSERT INTO billing_webhook_events (event_id, event_type, payload_hash, processing_status)
-      VALUES (?, ?, ?, 'received')
-    `).run(event.id, event.type, payloadHash);
+    await db.query(
+      `INSERT INTO billing_webhook_events (event_id, event_type, payload_hash, processing_status)
+       VALUES ($1, $2, $3, 'received')`,
+      [event.id, event.type, payloadHash]
+    );
   } catch (error) {
-    // Unique constraint race-safe behavior.
-    if (error && String(error.message).includes('UNIQUE')) {
+    if (error && String(error.message).includes('duplicate key')) {
       return res.json({ received: true, duplicate: true });
     }
     throw error;
   }
 
-  const processEvent = db.transaction((incomingEvent) => {
-    const object = incomingEvent.data?.object || {};
-
-    if (incomingEvent.type === 'checkout.session.completed') {
-      const userId = object.metadata?.userId || object.client_reference_id;
-      const user = findUserForStripeRefs(object.customer, object.subscription, userId);
-      if (!user) {
-        return { status: 'ignored', reason: 'user_not_found' };
-      }
-
-      const plan = normalizePlan(object.metadata?.plan || 'basic');
-      db.prepare(`
-        UPDATE users
-        SET plan = ?,
-            subscription_status = 'active',
-            billing_customer_id = ?,
-            billing_subscription_id = ?,
-            canceled_at = NULL,
-            cancel_reason = NULL,
-            last_billing_error = NULL,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(plan, String(object.customer || ''), String(object.subscription || ''), user.id);
-
-      db.prepare(`
-        INSERT INTO billing_events (user_id, event_type, event_status, details)
-        VALUES (?, 'checkout_completed', 'success', ?)
-      `).run(user.id, JSON.stringify({ stripeEventId: incomingEvent.id, plan }));
-
-      return { status: 'processed' };
-    }
-
-    if (incomingEvent.type === 'invoice.payment_succeeded') {
-      const user = findUserForStripeRefs(object.customer, object.subscription, object.metadata?.userId);
-      if (!user) {
-        return { status: 'ignored', reason: 'user_not_found' };
-      }
-
-      db.prepare(`
-        UPDATE users
-        SET subscription_status = 'active',
-            last_billing_error = NULL,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(user.id);
-
-      db.prepare(`
-        INSERT INTO billing_events (user_id, event_type, event_status, details)
-        VALUES (?, 'payment_succeeded', 'success', ?)
-      `).run(user.id, JSON.stringify({ stripeEventId: incomingEvent.id, invoiceId: object.id }));
-
-      return { status: 'processed' };
-    }
-
-    if (incomingEvent.type === 'invoice.payment_failed') {
-      const user = findUserForStripeRefs(object.customer, object.subscription, object.metadata?.userId);
-      if (!user) {
-        return { status: 'ignored', reason: 'user_not_found' };
-      }
-
-      db.prepare(`
-        UPDATE users
-        SET subscription_status = 'past_due',
-            last_billing_error = ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run('invoice_payment_failed', user.id);
-
-      db.prepare(`
-        INSERT INTO billing_events (user_id, event_type, event_status, details)
-        VALUES (?, 'payment_failed', 'past_due', ?)
-      `).run(user.id, JSON.stringify({ stripeEventId: incomingEvent.id, invoiceId: object.id }));
-
-      return { status: 'processed' };
-    }
-
-    if (incomingEvent.type === 'customer.subscription.deleted') {
-      const user = findUserForStripeRefs(object.customer, object.id, object.metadata?.userId);
-      if (!user) {
-        return { status: 'ignored', reason: 'user_not_found' };
-      }
-
-      db.prepare(`
-        UPDATE users
-        SET subscription_status = 'canceled',
-            canceled_at = CURRENT_TIMESTAMP,
-            cancel_reason = 'stripe_subscription_deleted',
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(user.id);
-
-      db.prepare(`
-        INSERT INTO billing_events (user_id, event_type, event_status, details)
-        VALUES (?, 'subscription_deleted', 'canceled', ?)
-      `).run(user.id, JSON.stringify({ stripeEventId: incomingEvent.id, subscriptionId: object.id }));
-
-      return { status: 'processed' };
-    }
-
-    return { status: 'ignored', reason: 'unsupported_event_type' };
-  });
-
   try {
-    const result = processEvent(event);
-    updateWebhookStatus(event.id, result.status, result.reason || null);
+    const result = await db.tx(async (tx) => {
+      const object = event.data?.object || {};
+
+      if (event.type === 'checkout.session.completed') {
+        const userId = object.metadata?.userId || object.client_reference_id;
+        const user = await findUserForStripeRefs(object.customer, object.subscription, userId, tx);
+        if (!user) {
+          return { status: 'ignored', reason: 'user_not_found' };
+        }
+
+        const plan = normalizePlan(object.metadata?.plan || 'basic');
+        await tx.query(
+          `UPDATE users
+           SET plan = $1,
+               subscription_status = 'active',
+               billing_customer_id = $2,
+               billing_subscription_id = $3,
+               canceled_at = NULL,
+               cancel_reason = NULL,
+               last_billing_error = NULL,
+               updated_at = NOW()
+           WHERE id = $4`,
+          [plan, String(object.customer || ''), String(object.subscription || ''), user.id]
+        );
+
+        await tx.query(
+          `INSERT INTO billing_events (user_id, event_type, event_status, details)
+           VALUES ($1, 'checkout_completed', 'success', $2)`,
+          [user.id, JSON.stringify({ stripeEventId: event.id, plan })]
+        );
+
+        return { status: 'processed' };
+      }
+
+      if (event.type === 'invoice.payment_succeeded') {
+        const user = await findUserForStripeRefs(object.customer, object.subscription, object.metadata?.userId, tx);
+        if (!user) {
+          return { status: 'ignored', reason: 'user_not_found' };
+        }
+
+        await tx.query(
+          `UPDATE users
+           SET subscription_status = 'active',
+               last_billing_error = NULL,
+               updated_at = NOW()
+           WHERE id = $1`,
+          [user.id]
+        );
+
+        await tx.query(
+          `INSERT INTO billing_events (user_id, event_type, event_status, details)
+           VALUES ($1, 'payment_succeeded', 'success', $2)`,
+          [user.id, JSON.stringify({ stripeEventId: event.id, invoiceId: object.id })]
+        );
+
+        return { status: 'processed' };
+      }
+
+      if (event.type === 'invoice.payment_failed') {
+        const user = await findUserForStripeRefs(object.customer, object.subscription, object.metadata?.userId, tx);
+        if (!user) {
+          return { status: 'ignored', reason: 'user_not_found' };
+        }
+
+        await tx.query(
+          `UPDATE users
+           SET subscription_status = 'past_due',
+               last_billing_error = $1,
+               updated_at = NOW()
+           WHERE id = $2`,
+          ['invoice_payment_failed', user.id]
+        );
+
+        await tx.query(
+          `INSERT INTO billing_events (user_id, event_type, event_status, details)
+           VALUES ($1, 'payment_failed', 'past_due', $2)`,
+          [user.id, JSON.stringify({ stripeEventId: event.id, invoiceId: object.id })]
+        );
+
+        return { status: 'processed' };
+      }
+
+      if (event.type === 'customer.subscription.deleted') {
+        const user = await findUserForStripeRefs(object.customer, object.id, object.metadata?.userId, tx);
+        if (!user) {
+          return { status: 'ignored', reason: 'user_not_found' };
+        }
+
+        await tx.query(
+          `UPDATE users
+           SET subscription_status = 'canceled',
+               canceled_at = NOW(),
+               cancel_reason = 'stripe_subscription_deleted',
+               updated_at = NOW()
+           WHERE id = $1`,
+          [user.id]
+        );
+
+        await tx.query(
+          `INSERT INTO billing_events (user_id, event_type, event_status, details)
+           VALUES ($1, 'subscription_deleted', 'canceled', $2)`,
+          [user.id, JSON.stringify({ stripeEventId: event.id, subscriptionId: object.id })]
+        );
+
+        return { status: 'processed' };
+      }
+
+      return { status: 'ignored', reason: 'unsupported_event_type' };
+    });
+
+    await updateWebhookStatus(event.id, result.status, result.reason || null);
     return res.json({ received: true });
   } catch (error) {
     console.error('Stripe webhook processing error:', error.message);
-    updateWebhookStatus(event.id, 'failed', error.message.slice(0, 500));
+    await updateWebhookStatus(event.id, 'failed', error.message.slice(0, 500));
     return res.status(500).json({ success: false, error: 'Webhook processing failed' });
   }
 });

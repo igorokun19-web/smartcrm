@@ -269,23 +269,6 @@ app.get('/api/health', (req, res) => {
 
 // Keep trial lifecycle up to date without manual intervention.
 const BILLING_LIFECYCLE_INTERVAL_MS = Number(process.env.BILLING_LIFECYCLE_INTERVAL_MS || 6 * 60 * 60 * 1000);
-try {
-  const startupLifecycleResult = runBillingLifecycle('startup');
-  console.log(`✓ Billing lifecycle startup scan: ${startupLifecycleResult.scanned} users, updated ${startupLifecycleResult.updated}`);
-} catch (error) {
-  console.error('⚠️  Billing lifecycle startup error:', error.message);
-}
-
-setInterval(() => {
-  try {
-    const result = runBillingLifecycle('interval');
-    if (result.updated > 0) {
-      console.log(`✓ Billing lifecycle interval update: ${result.updated} users changed`);
-    }
-  } catch (error) {
-    console.error('⚠️  Billing lifecycle interval error:', error.message);
-  }
-}, BILLING_LIFECYCLE_INTERVAL_MS);
 
 // ============================================
 // ERROR HANDLING
@@ -325,16 +308,36 @@ app.use((req, res) => {
 // ============================================
 // START SERVER
 // ============================================
+async function startServer() {
+  await db.ready;
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`
+  try {
+    const startupLifecycleResult = await runBillingLifecycle('startup');
+    console.log(`✓ Billing lifecycle startup scan: ${startupLifecycleResult.scanned} users, updated ${startupLifecycleResult.updated}`);
+  } catch (error) {
+    console.error('⚠️  Billing lifecycle startup error:', error.message);
+  }
+
+  setInterval(async () => {
+    try {
+      const result = await runBillingLifecycle('interval');
+      if (result.updated > 0) {
+        console.log(`✓ Billing lifecycle interval update: ${result.updated} users changed`);
+      }
+    } catch (error) {
+      console.error('⚠️  Billing lifecycle interval error:', error.message);
+    }
+  }, BILLING_LIFECYCLE_INTERVAL_MS);
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`
 ╔════════════════════════════════════════╗
 ║  🚀 MyServices CRM Backend Server      ║
 ╠════════════════════════════════════════╣
 ║  ✅ Running on port ${PORT}              ║
 ║  📍 Local: http://localhost:${PORT}      ║
 ║  🌐 Frontend: ${process.env.FRONTEND_URL}  ║
-║  🔐 Database: SQLite (crm.db)          ║
+║  🔐 Database: PostgreSQL                ║
 ║  ✨ Features:                          ║
 ║    • Password Hashing (bcryptjs)       ║
 ║    • JWT Authentication                ║
@@ -342,11 +345,16 @@ app.listen(PORT, '0.0.0.0', () => {
 ║    • Password Recovery Email           ║
 ╚════════════════════════════════════════╝
   `);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('❌ Failed to start server:', error.message);
+  process.exit(1);
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\n⛔ Server shutting down...');
-  db.close();
-  process.exit(0);
+  db.pool.end().finally(() => process.exit(0));
 });

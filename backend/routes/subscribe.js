@@ -5,17 +5,16 @@ const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Public stats for social proof on landing page
-router.get('/stats', (req, res) => {
+router.get('/stats', async (req, res) => {
   try {
-    const { count } = db.prepare('SELECT COUNT(*) as count FROM users WHERE username != ?').get('admin');
-    res.json({ success: true, userCount: Math.max(count, 0) });
+    const row = await db.one('SELECT COUNT(*)::int AS count FROM users WHERE username != $1', ['admin']);
+    res.json({ success: true, userCount: Math.max(row?.count || 0, 0) });
   } catch {
     res.json({ success: true, userCount: 0 });
   }
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : null;
   const source = typeof req.body?.source === 'string' ? req.body.source.trim().slice(0, 50) : 'landing';
 
@@ -24,10 +23,12 @@ router.post('/', (req, res) => {
   }
 
   try {
-    db.prepare(`
-      INSERT INTO email_subscribers (email, source) VALUES (?, ?)
-      ON CONFLICT(email) DO NOTHING
-    `).run(email, source);
+    await db.query(
+      `INSERT INTO email_subscribers (email, source)
+       VALUES ($1, $2)
+       ON CONFLICT(email) DO NOTHING`,
+      [email, source]
+    );
     return res.json({ success: true });
   } catch {
     return res.status(500).json({ success: false, error: 'שגיאה בשמירה' });
