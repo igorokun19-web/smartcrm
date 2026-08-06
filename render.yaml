@@ -12,12 +12,12 @@ services:
       - key: PORT
         value: 3001
       - key: JWT_SECRET
-        value: your-jwt-secret-key-change-this
+        sync: false
       - key: FRONTEND_URL
         value: https://frontend-two-pearl-10.vercel.app
       - key: EMAIL_HOST
         value: smtp.gmail.com
       - key: EMAIL_USER
-        value: your-email@gmail.com
+        sync: false
       - key: EMAIL_PASSWORD
-        value: your-app-password
+        sync: false

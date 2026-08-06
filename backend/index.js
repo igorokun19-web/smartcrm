@@ -83,6 +83,26 @@ const billingMutationLimiter = rateLimit({
   keyGenerator: (req) => ipKeyGenerator(req.ip)
 });
 
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // limit each IP to 10 registrations per hour
+  message: 'יותר מדי בקשות הרשמה. נסה שוב בעוד שעה.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(req.ip)
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // limit each IP to 5 reset requests per hour
+  message: 'יותר מדי בקשות איפוס סיסמה. נסה שוב בעוד שעה.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(req.ip)
+});
+
+
+
 // CORS configuration
 const devOrigins = [
   'http://localhost:5175',
@@ -221,40 +241,13 @@ app.use(express.static(publicPath, {
 }));
 
 // ============================================
-// AUTHENTICATION MIDDLEWARE
-// ============================================
-
-const jwt = require('jsonwebtoken');
-
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      error: 'טוקן נדרש'
-    });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET || 'dev-secret', (err, user) => {
-    if (err) {
-      return res.status(403).json({
-        success: false,
-        error: 'טוקן לא חוקי או פג תוקף'
-      });
-    }
-    req.user = user;
-    next();
-  });
-}
-
-// ============================================
 // API ROUTES
 // ============================================
 
-// Auth routes with rate limiting on login
+// Auth routes with rate limiting on login/register/password-reset
 app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', registerLimiter);
+app.use('/api/auth/forgot-password', passwordResetLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/crm', crmRoutes);

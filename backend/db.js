@@ -214,7 +214,7 @@ function initDatabase() {
     const existingAdmin = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
 
     if (!existingAdmin) {
-      const hashedPassword = bcrypt.hashSync('admin123', 10);
+      const hashedPassword = bcrypt.hashSync('admin123', 12);
       const stmt = db.prepare(`
         INSERT INTO users (username, email, password_hash, name)
         VALUES (?, ?, ?, ?)
@@ -232,7 +232,7 @@ function initDatabase() {
     employees.forEach(emp => {
       const existing = db.prepare('SELECT * FROM users WHERE username = ?').get(emp.username);
       if (!existing) {
-        const hashedPassword = bcrypt.hashSync(emp.password, 10);
+        const hashedPassword = bcrypt.hashSync(emp.password, 12);
         const stmt = db.prepare(`
           INSERT INTO users (username, email, password_hash, name)
           VALUES (?, ?, ?, ?)

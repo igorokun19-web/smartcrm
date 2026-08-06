@@ -48,12 +48,44 @@ function getAuthToken() {
   return window.localStorage.getItem('authToken');
 }
 
+// Routes that carry a one-time secret in the URL itself must never be sent to
+// analytics (our own backend or Google Analytics) - the raw path/referrer would
+// leak a valid password-reset token to a third party and to long-lived logs.
+const SENSITIVE_PATH_PATTERNS = [
+  { test: /^\/reset-password\/.+/, replacement: '/reset-password/[redacted]' },
+];
+
+function sanitizePath(pathname) {
+  if (!pathname) {
+    return pathname;
+  }
+
+  const match = SENSITIVE_PATH_PATTERNS.find(({ test }) => test.test(pathname));
+  return match ? match.replacement : pathname;
+}
+
+function sanitizeReferrer(referrer) {
+  if (!referrer) {
+    return referrer;
+  }
+
+  try {
+    const url = new URL(referrer);
+    const sanitized = sanitizePath(url.pathname);
+    return sanitized === url.pathname ? referrer : `${url.origin}${sanitized}`;
+  } catch {
+    return referrer;
+  }
+}
+
 function getCurrentPath() {
   if (typeof window === 'undefined') {
     return null;
   }
 
-  return `${window.location.pathname}${window.location.search}`;
+  const rawPath = `${window.location.pathname}${window.location.search}`;
+  const sanitizedPathname = sanitizePath(window.location.pathname);
+  return sanitizedPathname === window.location.pathname ? rawPath : sanitizedPathname;
 }
 
 function getCampaignParams() {
@@ -120,7 +152,7 @@ export function trackEvent(eventName, metadata = {}, options = {}) {
     title: options.title || document.title,
     clientId: getClientId(),
     sessionId: getSessionId(),
-    referrer: document.referrer || null,
+    referrer: sanitizeReferrer(document.referrer) || null,
     ...getCampaignParams(),
     metadata,
   };

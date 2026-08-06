@@ -235,7 +235,7 @@ router.post('/reset-password', (req, res) => {
     }
 
     // Hash new password
-    const hashedPassword = bcrypt.hashSync(newPassword, 10);
+    const hashedPassword = bcrypt.hashSync(newPassword, 12);
 
     // Update user password
     const updateStmt = db.prepare(`
@@ -351,7 +351,7 @@ router.post('/register', (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = bcrypt.hashSync(password, 12);
 
     // Create user
     const trialStartAt = new Date().toISOString();
