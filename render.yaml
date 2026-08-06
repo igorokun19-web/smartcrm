@@ -6,11 +6,17 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
+    disk:
+      name: smartcrm-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3001
+      - key: DB_PATH
+        value: /var/data/crm.db
       - key: JWT_SECRET
         sync: false
       - key: FRONTEND_URL

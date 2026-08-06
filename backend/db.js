@@ -1,8 +1,12 @@
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'crm.db');
+// DB_PATH must point to a persistent disk mount in production (see render.yaml),
+// otherwise the SQLite file is wiped on every deploy/restart (ephemeral filesystem).
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'crm.db');
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 const db = new Database(dbPath);
 const isProduction = process.env.NODE_ENV === 'production';
 const allowDemoSeed = process.env.ALLOW_DEMO_SEED === 'true';
