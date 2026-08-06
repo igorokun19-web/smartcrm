@@ -25,7 +25,7 @@
   "categories": ["business", "productivity"],
   "screenshots": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'%3E%3Crect fill='%23f0f0f0' width='540' height='720'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' font-family='Arial' fill='%23333'%3ESmartCRM%3C/text%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'%3E%3Crect fill='%23f0f0f0' width='540' height='720'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='48' font-family='Arial' fill='%23333'%3EMyServices%20CRM%3C/text%3E%3C/svg%3E",
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow"

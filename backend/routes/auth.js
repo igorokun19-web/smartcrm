@@ -130,7 +130,15 @@ router.post('/forgot-password', async (req, res) => {
     );
 
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-    await sendPasswordResetEmail(user.email, user.name, resetLink);
+    const emailResult = await sendPasswordResetEmail(user.email, user.name, resetLink);
+
+    if (!emailResult?.success) {
+      console.error('❌ Password reset email failed:', emailResult?.error || 'unknown reason');
+      return res.status(503).json({
+        success: false,
+        error: 'שירות שליחת המייל אינו זמין כרגע. נסה שוב בעוד כמה דקות.'
+      });
+    }
 
     res.json({ success: true, message: 'קישור איפוס סיסמה נשלח לדוא״ל שלך' });
   } catch (error) {

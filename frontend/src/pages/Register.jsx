@@ -101,7 +101,7 @@ export default function Register() {
               </span>
             </h2>
             <p className="text-xl text-gray-100 leading-relaxed">
-              קח חלק בעולם ניהול הלידים החכם. הצטרף לאלפים של עסקים שמשתמשים ב-SmartCRM כדי להגדיל את ההכנסות שלהם.
+              קח חלק בעולם ניהול הלידים החכם. הצטרף לאלפים של עסקים שמשתמשים ב-MyServices CRM כדי להגדיל את ההכנסות שלהם.
             </p>
           </div>
 

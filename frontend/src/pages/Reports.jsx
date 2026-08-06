@@ -201,9 +201,9 @@ export default function Reports() {
         <div className="mb-6">
           <p className="text-gray-600 mb-4">ייצא את כל לידיך בפורמטים שונים:</p>
           <div className="flex flex-wrap gap-3">
-            <ExportButton format="json" data={leadsForExport} filename="smartcrm-leads" />
-            <ExportButton format="csv" data={leadsForExport} filename="smartcrm-leads" />
-            <ExportButton format="xlsx" data={leadsForExport} filename="smartcrm-leads" />
+            <ExportButton format="json" data={leadsForExport} filename="myservicescrm-leads" />
+            <ExportButton format="csv" data={leadsForExport} filename="myservicescrm-leads" />
+            <ExportButton format="xlsx" data={leadsForExport} filename="myservicescrm-leads" />
           </div>
         </div>
 

@@ -55,18 +55,20 @@ async function sendPasswordResetEmail(email, name, resetLink) {
     `;
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: email,
       subject: '🔐 איפוס סיסמה - MyServices CRM',
       html: htmlContent
     });
 
     console.log(`✅ Password reset email sent to ${email}`);
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Email send error:', error);
-    // Don't throw - email failure shouldn't block login
-    return false;
+    return {
+      success: false,
+      error: error?.message || 'Unknown email error'
+    };
   }
 }
 

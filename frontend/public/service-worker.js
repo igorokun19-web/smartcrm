@@ -1,5 +1,5 @@
 // Service Worker for PWA
-const CACHE_NAME = 'smartcrm-v3';
+const CACHE_NAME = 'myservicescrm-v4';
 const urlsToCache = ['/'];
 
 self.addEventListener('install', event => {

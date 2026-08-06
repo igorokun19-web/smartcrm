@@ -99,8 +99,8 @@ export default function Invoices() {
           <div class="details">
             <div>
               <strong>מ:</strong><br/>
-              SmartCRM - ניהול לידים<br/>
-              טל: 1-800-SMARTCRM
+              MyServices CRM - ניהול לידים<br/>
+              טל: 1-800-MYSERVICES
             </div>
             <div>
               <strong>ל:</strong><br/>

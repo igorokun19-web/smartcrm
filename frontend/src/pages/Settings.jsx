@@ -10,7 +10,7 @@ export default function Settings() {
   const { leads } = useCrm();
   const { billing, billingLoading, extendTrial, cancelSubscription, refreshBillingStatus, startCheckout } = useAuth();
   const [companyInfo, setCompanyInfo] = useState(
-    JSON.parse(localStorage.getItem("companyInfo") || '{"name":"SmartCRM","email":"info@smartcrm.com","phone":"1-800-SMARTCRM","address":"תל אביב, ישראל","logo":""}')
+    JSON.parse(localStorage.getItem("companyInfo") || '{"name":"MyServices CRM","email":"info@myservices.com","phone":"1-800-MYSERVICES","address":"תל אביב, ישראל","logo":""}')
   );
   const [saved, setSaved] = useState(false);
   const [billingNotice, setBillingNotice] = useState("");
@@ -222,7 +222,7 @@ export default function Settings() {
               value={companyInfo.name}
               onChange={(e) => setCompanyInfo({ ...companyInfo, name: e.target.value })}
               className={inputClass}
-              placeholder="SmartCRM"
+              placeholder="MyServices CRM"
             />
           </div>
 
@@ -310,7 +310,7 @@ export default function Settings() {
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
-              a.download = `smartcrm_backup_${new Date().toISOString().split("T")[0]}.json`;
+              a.download = `myservicescrm_backup_${new Date().toISOString().split("T")[0]}.json`;
               a.click();
             }}
             className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2"
@@ -381,7 +381,7 @@ export default function Settings() {
           </div>
         </div>
         <p className="mt-6 text-blue-100 text-sm">
-          גרסה 1.0 • © 2026 SmartCRM • כל הזכויות שמורות
+          גרסה 1.0 • © 2026 MyServices CRM • כל הזכויות שמורות
         </p>
       </div>
     </div>

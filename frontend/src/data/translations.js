@@ -371,11 +371,11 @@ export const translations = {
     header: {
       welcome: "Welcome to",
       profile: "System Administrator",
-      appName: "SmartCRM Pro",
+      appName: "MyServices CRM Pro",
       language: "Language",
     },
     sidebar: {
-      appName: "SmartCRM",
+      appName: "MyServices CRM",
       appDesc: "Lead and invoice management",
       dashboard: "Dashboard",
       leads: "Leads",
@@ -499,7 +499,7 @@ export const translations = {
       addTaskError: "Please enter a task title",
       noPhoneNumber: "No phone number available",
       whatsappGreeting: "Hello",
-      whatsappMessage: "This is a message from SmartCRM",
+      whatsappMessage: "This is a message from MyServices CRM",
     },
     pipeline: {
       title: "Sales Pipeline",

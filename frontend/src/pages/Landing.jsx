@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useEffect } from "react";
-import { ArrowLeft, BarChart3, CheckCircle2, LayoutDashboard, MessageCircle, MousePointerClick, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, CheckCircle2, LayoutDashboard, MessageCircle, MousePointerClick, ShieldCheck, Users } from "lucide-react";
 
 const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || "";
 const whatsappNumber = (import.meta.env.VITE_WHATSAPP_NUMBER || "").replace(/\D/g, "");
@@ -69,7 +69,7 @@ function CtaLink({ href, children, secondary = false }) {
 export default function Landing() {
   const [userCount, setUserCount] = useState(null);
   const whatsappHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("היי, ראיתי את SmartCRM ואני רוצה לשמוע עוד")}`
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("היי, ראיתי את MyServices CRM ואני רוצה לשמוע עוד")}`
     : demoUrl;
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function Landing() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#e0f2fe,transparent_35%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_45%,#ffffff_100%)] text-slate-900" dir="rtl">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-700">SmartCRM</p>
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-700">MyServices CRM</p>
           <p className="mt-1 text-sm text-slate-600">ניהול לידים חכם לעסקים קטנים</p>
         </div>
         <a href="/login" className="text-sm font-semibold text-slate-700 underline-offset-4 hover:underline">
@@ -108,7 +108,7 @@ export default function Landing() {
               מפסיקים לאבד לידים בין וואטסאפ, אקסל והודעות.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
-              SmartCRM מרכזת לידים, לקוחות ומעקב במקום אחד. פחות בלגן, פחות פניות שנופלות בין הכיסאות, ויותר סדר לצוות שמוכר ומשרת לקוחות.
+              MyServices CRM מרכזת לידים, לקוחות ומעקב במקום אחד. פחות בלגן, פחות פניות שנופלות בין הכיסאות, ויותר סדר לצוות שמוכר ומשרת לקוחות.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
