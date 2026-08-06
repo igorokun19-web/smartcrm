@@ -6,6 +6,12 @@ const { runBillingLifecycle } = require('../services/billingLifecycle');
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 const MAX_LEADS_PER_ACCOUNT = 5000;
+const OWNER_USERNAMES = new Set(
+  (process.env.OWNER_USERNAMES || '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+);
 
 function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -32,10 +38,8 @@ function isValidLead(lead) {
 
 function requireBillingAccess(req, res, next) {
   try {
-    runBillingLifecycle('crm_access');
-
     const user = db.prepare(`
-      SELECT subscription_status
+      SELECT username, subscription_status
       FROM users
       WHERE id = ?
     `).get(req.userId);
@@ -43,6 +47,12 @@ function requireBillingAccess(req, res, next) {
     if (!user) {
       return res.status(404).json({ success: false, error: 'משתמש לא נמצא' });
     }
+
+    if (OWNER_USERNAMES.has(user.username.toLowerCase())) {
+      return next();
+    }
+
+    runBillingLifecycle('crm_access');
 
     const allowedStatuses = new Set(['trialing', 'active']);
     if (!allowedStatuses.has(user.subscription_status)) {

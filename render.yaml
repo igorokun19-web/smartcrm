@@ -21,3 +21,5 @@ services:
         sync: false
       - key: EMAIL_PASSWORD
         sync: false
+      - key: OWNER_USERNAMES
+        sync: false
