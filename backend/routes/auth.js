@@ -136,14 +136,14 @@ router.post('/forgot-password', async (req, res) => {
       console.error('❌ Password reset email failed:', emailResult?.error || 'unknown reason');
       return res.status(503).json({
         success: false,
-        error: 'שירות שליחת המייל אינו זמין כרגע. נסה שוב בעוד כמה דקות.'
+        error: 'שליחת מייל לאיפוס סגורה זמנית. נסה שוב בעוד כמה דקות.'
       });
     }
 
     res.json({ success: true, message: 'קישור איפוס סיסמה נשלח לדוא״ל שלך' });
   } catch (error) {
     console.error('❌ Forgot password error:', error);
-    res.status(500).json({ success: false, error: 'שגיאה בשליחת דוא״ל איפוס' });
+    res.status(500).json({ success: false, error: 'שליחת מייל לאיפוס סגורה זמנית. נסה שוב בעוד כמה דקות.' });
   }
 });
 
