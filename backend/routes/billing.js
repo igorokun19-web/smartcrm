@@ -17,6 +17,12 @@ const STRIPE_PRICE_PRO = process.env.STRIPE_PRICE_PRO;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5175';
 const STRIPE_WEBHOOK_TOLERANCE_SECONDS = Number(process.env.STRIPE_WEBHOOK_TOLERANCE_SECONDS || 300);
 const isProduction = process.env.NODE_ENV === 'production';
+const OWNER_USERNAMES = new Set(
+  (process.env.OWNER_USERNAMES || '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+);
 
 const PLAN_TO_PRICE = {
   basic: STRIPE_PRICE_BASIC,
@@ -176,7 +182,7 @@ router.get('/status', requireAuth, async (req, res) => {
     await runBillingLifecycle('status_check');
 
     const user = await db.one(
-      `SELECT id, plan, subscription_status, trial_started_at, trial_ends_at,
+      `SELECT id, username, plan, subscription_status, trial_started_at, trial_ends_at,
               trial_extended_until, billing_descriptor, language_preference,
               canceled_at, cancel_reason
        FROM users
@@ -186,6 +192,22 @@ router.get('/status', requireAuth, async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'משתמש לא נמצא' });
+    }
+
+    if (OWNER_USERNAMES.has(String(user.username || '').toLowerCase()) && user.subscription_status !== 'active') {
+      await db.query(
+        `UPDATE users
+         SET subscription_status = 'active',
+             trial_ends_at = NULL,
+             trial_extended_until = NULL,
+             updated_at = NOW()
+         WHERE id = $1`,
+        [req.userId]
+      );
+
+      user.subscription_status = 'active';
+      user.trial_ends_at = null;
+      user.trial_extended_until = null;
     }
 
     res.json({

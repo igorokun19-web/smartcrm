@@ -2,6 +2,12 @@ const db = require('../db');
 
 const VALUE_GATE_MIN_LEADS = Number(process.env.VALUE_GATE_MIN_LEADS || 5);
 const TRIAL_EXTENSION_DAYS = Number(process.env.TRIAL_EXTENSION_DAYS || 14);
+const OWNER_USERNAMES = new Set(
+  (process.env.OWNER_USERNAMES || '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+);
 
 async function recordBillingEvent(userId, eventType, eventStatus, details = null) {
   await db.query(
@@ -17,6 +23,28 @@ async function getLeadCountForUser(userId) {
 }
 
 async function processUserTrial(user) {
+  if (OWNER_USERNAMES.has(String(user.username || '').toLowerCase())) {
+    if (user.subscription_status !== 'active') {
+      await db.query(
+        `UPDATE users
+         SET subscription_status = 'active',
+             trial_ends_at = NULL,
+             trial_extended_until = NULL,
+             updated_at = NOW()
+         WHERE id = $1`,
+        [user.id]
+      );
+
+      await recordBillingEvent(user.id, 'owner_unlocked', 'active', {
+        reason: 'owner_username',
+      });
+
+      return { status: 'owner_activated', reason: 'owner_username' };
+    }
+
+    return { status: 'unchanged', reason: 'owner_username' };
+  }
+
   const now = Date.now();
   const trialEndsAt = user.trial_ends_at ? Date.parse(user.trial_ends_at) : NaN;
   const trialExtendedUntil = user.trial_extended_until ? Date.parse(user.trial_extended_until) : NaN;
@@ -91,16 +119,16 @@ async function processUserTrial(user) {
 
 async function runBillingLifecycle(reason = 'scheduler') {
   const users = await db.many(
-    `SELECT id, subscription_status, trial_ends_at, trial_extended_until
+     `SELECT id, username, subscription_status, trial_ends_at, trial_extended_until
      FROM users
-     WHERE subscription_status = 'trialing'`
+      WHERE subscription_status IN ('trialing', 'active')`
   );
 
   let updated = 0;
 
   for (const user of users) {
     const result = await processUserTrial(user);
-    if (result.status === 'extended' || result.status === 'past_due') {
+    if (result.status === 'extended' || result.status === 'past_due' || result.status === 'owner_activated') {
       updated += 1;
     }
   }
