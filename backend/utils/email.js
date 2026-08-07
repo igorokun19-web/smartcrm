@@ -4,6 +4,8 @@ const smtpPort = Number(process.env.EMAIL_PORT || 587);
 const smtpSecure = process.env.EMAIL_SECURE
   ? String(process.env.EMAIL_SECURE).toLowerCase() === 'true'
   : smtpPort === 465;
+const resendApiKey = process.env.RESEND_API_KEY;
+const emailProvider = String(process.env.EMAIL_PROVIDER || '').toLowerCase();
 
 // Create transporter
 const transporter = nodemailer.createTransport({
@@ -18,6 +20,65 @@ const transporter = nodemailer.createTransport({
   greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS || 15000),
   socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS || 20000),
 });
+
+async function sendWithResend(to, subject, html) {
+  if (!resendApiKey) {
+    return {
+      success: false,
+      error: 'RESEND_API_KEY is missing'
+    };
+  }
+
+  try {
+    const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        html
+      })
+    });
+
+    if (!response.ok) {
+      const responseText = await response.text();
+      return {
+        success: false,
+        error: `Resend API error: ${response.status} ${responseText}`
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error?.message || 'Unknown Resend error'
+    };
+  }
+}
+
+async function sendWithSmtp(to, subject, html) {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to,
+      subject,
+      html
+    });
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error?.message || 'Unknown SMTP error'
+    };
+  }
+}
 
 // Send password reset email
 async function sendPasswordResetEmail(email, name, resetLink) {
@@ -62,12 +123,31 @@ async function sendPasswordResetEmail(email, name, resetLink) {
       </html>
     `;
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-      to: email,
-      subject: '🔐 איפוס סיסמה - MyServices CRM',
-      html: htmlContent
-    });
+    const subject = '🔐 איפוס סיסמה - MyServices CRM';
+
+    // Provider strategy:
+    // 1) If EMAIL_PROVIDER=resend, use Resend only.
+    // 2) If EMAIL_PROVIDER=smtp, use SMTP only.
+    // 3) Default auto mode: try Resend when key exists, fallback to SMTP.
+    let result;
+    if (emailProvider === 'resend') {
+      result = await sendWithResend(email, subject, htmlContent);
+    } else if (emailProvider === 'smtp') {
+      result = await sendWithSmtp(email, subject, htmlContent);
+    } else if (resendApiKey) {
+      result = await sendWithResend(email, subject, htmlContent);
+      if (!result.success) {
+        console.warn('Resend failed, falling back to SMTP:', result.error);
+        result = await sendWithSmtp(email, subject, htmlContent);
+      }
+    } else {
+      result = await sendWithSmtp(email, subject, htmlContent);
+    }
+
+    if (!result.success) {
+      console.error('Email provider failure:', result.error);
+      return result;
+    }
 
     console.log(`✅ Password reset email sent to ${email}`);
     return { success: true };
