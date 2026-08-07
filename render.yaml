@@ -19,9 +19,13 @@ services:
         value: https://frontend-two-pearl-10.vercel.app
       - key: EMAIL_HOST
         value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
       - key: EMAIL_USER
         sync: false
       - key: EMAIL_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
         sync: false
       - key: OWNER_USERNAMES
         sync: false
