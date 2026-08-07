@@ -1,14 +1,22 @@
 const nodemailer = require('nodemailer');
 
+const smtpPort = Number(process.env.EMAIL_PORT || 587);
+const smtpSecure = process.env.EMAIL_SECURE
+  ? String(process.env.EMAIL_SECURE).toLowerCase() === 'true'
+  : smtpPort === 465;
+
 // Create transporter
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false, // true for 465, false for other ports
+  port: smtpPort,
+  secure: smtpSecure,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
-  }
+  },
+  connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS || 15000),
+  greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS || 15000),
+  socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS || 20000),
 });
 
 // Send password reset email
