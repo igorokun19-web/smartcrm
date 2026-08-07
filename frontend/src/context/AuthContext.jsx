@@ -370,9 +370,14 @@ export function AuthProvider({ children }) {
 
       return { success: true, message: data.message };
     } catch (err) {
-      setError(err.message);
-      trackEvent("forgot_password_failed", { reason: err.message });
-      return { success: false, error: err.message };
+      const normalizedError =
+        typeof err?.message === "string" && err.message.includes("שירות שליחת המייל אינו זמין כרגע")
+          ? "שליחת מייל לאיפוס סגורה זמנית. נסה שוב בעוד כמה דקות."
+          : err.message;
+
+      setError(normalizedError);
+      trackEvent("forgot_password_failed", { reason: normalizedError });
+      return { success: false, error: normalizedError };
     } finally {
       setLoading(false);
     }
