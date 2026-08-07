@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useState, useEffect } from "react";
 
 import { setAnalyticsUser, trackEvent } from "../lib/analytics";
 
@@ -35,6 +35,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
+      setBilling(null);
       setAnalyticsUser(null);
     };
 
@@ -69,16 +70,7 @@ export function AuthProvider({ children }) {
     validateToken();
   }, [user]);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setBilling(null);
-      return;
-    }
-
-    refreshBillingStatus();
-  }, [isAuthenticated]);
-
-  const refreshBillingStatus = async () => {
+  const refreshBillingStatus = useCallback(async () => {
     const token = localStorage.getItem("authToken");
     if (!token) {
       setBilling(null);
@@ -113,7 +105,19 @@ export function AuthProvider({ children }) {
     } finally {
       setBillingLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      refreshBillingStatus();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [isAuthenticated, refreshBillingStatus]);
 
   const extendTrial = async () => {
     const token = localStorage.getItem("authToken");

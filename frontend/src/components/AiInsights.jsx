@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, Clock, TrendingUp, AlertTriangle, Zap } from "lucide-react";
+import { Clock, TrendingUp, AlertTriangle, Zap } from "lucide-react";
 
 function AiBadge() {
   return (
@@ -14,7 +14,7 @@ export default function AiInsights({ leads }) {
   const navigate = useNavigate();
 
   const insights = useMemo(() => {
-    const now = Date.now();
+    const now = new Date().getTime();
     const results = [];
 
     // Leads with no follow-up in 3+ days

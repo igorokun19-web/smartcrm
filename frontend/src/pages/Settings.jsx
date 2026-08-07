@@ -13,17 +13,21 @@ export default function Settings() {
     JSON.parse(localStorage.getItem("companyInfo") || '{"name":"MyServices CRM","email":"info@myservices.com","phone":"1-800-MYSERVICES","address":"תל אביב, ישראל","logo":""}')
   );
   const [saved, setSaved] = useState(false);
-  const [billingNotice, setBillingNotice] = useState("");
+  const [billingNotice, setBillingNotice] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const billingResult = params.get("billing");
+
+    if (billingResult === "success") return "✅ התשלום הושלם בהצלחה. המנוי עודכן.";
+    if (billingResult === "cancel") return "ℹ️ התשלום בוטל. לא בוצע חיוב.";
+    return "";
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const billingResult = params.get("billing");
 
     if (billingResult === "success") {
-      setBillingNotice("✅ התשלום הושלם בהצלחה. המנוי עודכן.");
       refreshBillingStatus();
-    } else if (billingResult === "cancel") {
-      setBillingNotice("ℹ️ התשלום בוטל. לא בוצע חיוב.");
     }
 
     if (billingResult) {
@@ -32,7 +36,7 @@ export default function Settings() {
       const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}`;
       window.history.replaceState({}, "", nextUrl);
     }
-  }, []);
+  }, [refreshBillingStatus]);
 
   const handleSave = () => {
     localStorage.setItem("companyInfo", JSON.stringify(companyInfo));
