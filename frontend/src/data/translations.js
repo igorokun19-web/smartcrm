@@ -53,8 +53,8 @@ export const translations = {
 
     // Dashboard
     dashboard: {
-      title: "דשבורד Pro",
-      subtitle: "סקירת ביצועים בזמן אמת",
+      title: "דשבורד",
+      subtitle: "סקירת ביצועים",
       totalLeads: "סה״כ לידים",
       closedDeals: "עסקאות סגורות",
       quotes: "הצעות מחיר",
@@ -76,7 +76,7 @@ export const translations = {
 
     // Leads
     leads: {
-      title: "ניהול לידים Pro v2",
+      title: "ניהול לידים",
       addNewLead: "הוספת ליד חדש",
       addLead: "הוספת ליד חדש",
       editLead: "עריכת ליד",
@@ -416,7 +416,7 @@ export const translations = {
       noData: "There are no leads to analyze yet.",
     },
     dashboard: {
-      title: "Pro Dashboard",
+      title: "Dashboard",
       subtitle: "Live performance overview",
       totalLeads: "Total Leads",
       closedDeals: "Closed Deals",

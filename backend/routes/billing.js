@@ -1,12 +1,10 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const db = require('../db');
 const { runBillingLifecycle, getLeadCountForUser } = require('../services/billingLifecycle');
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET;
 const VALUE_GATE_MIN_LEADS = Number(process.env.VALUE_GATE_MIN_LEADS || 5);
 const BILLING_DESCRIPTOR = process.env.BILLING_DESCRIPTOR || 'RYNEX';
 
@@ -17,12 +15,6 @@ const STRIPE_PRICE_PRO = process.env.STRIPE_PRICE_PRO;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5175';
 const STRIPE_WEBHOOK_TOLERANCE_SECONDS = Number(process.env.STRIPE_WEBHOOK_TOLERANCE_SECONDS || 300);
 const isProduction = process.env.NODE_ENV === 'production';
-const OWNER_USERNAMES = new Set(
-  (process.env.OWNER_USERNAMES || '')
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean)
-);
 
 const PLAN_TO_PRICE = {
   basic: STRIPE_PRICE_BASIC,
@@ -33,26 +25,9 @@ const stripe = STRIPE_SECRET_KEY
   ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' })
   : null;
 
+const { requireAuth } = require('../middleware/requireAuth');
+
 const usingLiveStripeKey = Boolean(STRIPE_SECRET_KEY && STRIPE_SECRET_KEY.startsWith('sk_live_'));
-
-function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : null;
-
-  if (!token) {
-    return res.status(401).json({ success: false, error: 'נדרשת התחברות' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.userId = decoded.userId;
-    next();
-  } catch {
-    return res.status(403).json({ success: false, error: 'טוקן לא חוקי או פג תוקף' });
-  }
-}
 
 async function formatSubscriptionStatus(user) {
   const effectiveEndAt = user.trial_extended_until || user.trial_ends_at;
@@ -194,7 +169,7 @@ router.get('/status', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'משתמש לא נמצא' });
     }
 
-    if (OWNER_USERNAMES.has(String(user.username || '').toLowerCase()) && user.subscription_status !== 'active') {
+    if (req.isOwner && user.subscription_status !== 'active') {
       await db.query(
         `UPDATE users
          SET subscription_status = 'active',

@@ -1,77 +1,69 @@
-/* eslint-disable react-refresh/only-export-components */
+﻿/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
-
+import { supabase } from "../lib/supabaseClient";
 import { setAnalyticsUser, trackEvent } from "../lib/analytics";
 
 const AuthContext = createContext();
 
-// Dynamic API URL - use current origin in production, localhost in dev
 const API_URL = import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? "http://localhost:3001" : "https://smartcrm-3cle.onrender.com");
 
+// Normalise Supabase user to the shape the rest of the app expects
+function normalizeUser(supaUser) {
+  if (!supaUser) return null;
+  return {
+    id:       supaUser.id,
+    email:    supaUser.email,
+    name:     supaUser.user_metadata?.name || supaUser.email?.split("@")[0] || "",
+    username: supaUser.user_metadata?.username || supaUser.email?.split("@")[0] || "",
+  };
+}
+
+async function getAccessToken() {
+  const { data } = await supabase.auth.getSession();
+  return data?.session?.access_token || null;
+}
+
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("authToken") ? true : false;
-  });
-
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [billing, setBilling] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser]         = useState(null);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState(null);
+  const [billing, setBilling]   = useState(null);
   const [billingLoading, setBillingLoading] = useState(false);
 
-  // ========================================
-  // VALIDATE TOKEN ON APP LOAD
-  // ========================================
+  // ============================================================
+  // SESSION LISTENER â€” Supabase manages persistence automatically
+  // ============================================================
   useEffect(() => {
-    const clearSession = () => {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      localStorage.removeItem("rememberMe");
-      setUser(null);
-      setIsAuthenticated(false);
-      setError(null);
-      setBilling(null);
-      setAnalyticsUser(null);
-    };
-
-    const validateToken = async () => {
-      const token = localStorage.getItem("authToken");
-      if (token && !user) {
-        try {
-          const response = await fetch(`${API_URL}/api/auth/validate-token`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ token }),
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            setUser(data.user);
-            setIsAuthenticated(true);
-            setAnalyticsUser(data.user.id);
-          } else {
-            // Token expired or invalid
-            clearSession();
-          }
-        } catch (err) {
-          console.error("Token validation error:", err);
-          clearSession();
-        }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const u = normalizeUser(session.user);
+        setUser(u);
+        setIsAuthenticated(true);
+        setAnalyticsUser(u.id);
       }
-    };
+    });
 
-    validateToken();
-  }, [user]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u = normalizeUser(session.user);
+        setUser(u);
+        setIsAuthenticated(true);
+        setAnalyticsUser(u.id);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        setAnalyticsUser(null);
+        setBilling(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const refreshBillingStatus = useCallback(async () => {
-    const token = localStorage.getItem("authToken");
+    const token = await getAccessToken();
     if (!token) {
       setBilling(null);
       return null;
@@ -93,7 +85,7 @@ export function AuthProvider({ children }) {
         }
 
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "שגיאה בשליפת סטטוס מנוי");
+        throw new Error(data.error || "×©×’×™××” ×‘×©×œ×™×¤×ª ×¡×˜×˜×•×¡ ×ž× ×•×™");
       }
 
       const data = await response.json();
@@ -120,337 +112,129 @@ export function AuthProvider({ children }) {
   }, [isAuthenticated, refreshBillingStatus]);
 
   const extendTrial = async () => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      return { success: false, error: "טוקן חסר" };
-    }
-
+    const token = await getAccessToken();
+    if (!token) return { success: false, error: "×œ× ×ž×—×•×‘×¨" };
     setBillingLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/billing/extend-trial`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({}),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        return { success: false, error: data.error || "שגיאה בהארכת ניסיון" };
-      }
-
+      const res  = await fetch(`${API_URL}/api/billing/extend-trial`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: "{}" });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
       setBilling(data.subscription || null);
       return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message };
-    } finally {
-      setBillingLoading(false);
-    }
+    } catch (e) { return { success: false, error: e.message }; }
+    finally { setBillingLoading(false); }
   };
 
   const cancelSubscription = async (reason = "") => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      return { success: false, error: "טוקן חסר" };
-    }
-
+    const token = await getAccessToken();
+    if (!token) return { success: false, error: "×œ× ×ž×—×•×‘×¨" };
     setBillingLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/billing/cancel`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ reason }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        return { success: false, error: data.error || "שגיאה בביטול מנוי" };
-      }
-
+      const res  = await fetch(`${API_URL}/api/billing/cancel`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ reason }) });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
       await refreshBillingStatus();
       return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message };
-    } finally {
-      setBillingLoading(false);
-    }
+    } catch (e) { return { success: false, error: e.message }; }
+    finally { setBillingLoading(false); }
   };
 
   const startCheckout = async (plan) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      return { success: false, error: "טוקן חסר" };
-    }
-
+    const token = await getAccessToken();
+    if (!token) return { success: false, error: "×œ× ×ž×—×•×‘×¨" };
     setBillingLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/billing/start-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ plan }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        return { success: false, error: data.error || "שגיאה בפתיחת תשלום" };
-      }
-
-      return {
-        success: true,
-        checkoutUrl: data.checkoutUrl,
-        sessionId: data.sessionId,
-      };
-    } catch (err) {
-      return { success: false, error: err.message };
-    } finally {
-      setBillingLoading(false);
-    }
+      const res  = await fetch(`${API_URL}/api/billing/start-checkout`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ plan }) });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      return { success: true, checkoutUrl: data.checkoutUrl, sessionId: data.sessionId };
+    } catch (e) { return { success: false, error: e.message }; }
+    finally { setBillingLoading(false); }
   };
 
-  // ========================================
-  // 1. LOGIN WITH PASSWORD HASHING (Backend)
-  // ========================================
-  const login = async (username, password, rememberMe = false) => {
-    setLoading(true);
-    setError(null);
-
+  // ============================================================
+  // AUTH METHODS â€” all via Supabase
+  // ============================================================
+  const login = async (email, password) => {
+    setLoading(true); setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-          rememberMe,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "שגיאה בהתחברות");
-      }
-
-      // Save JWT token
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
-      // Save "Remember Me" preference
-      if (rememberMe) {
-        localStorage.setItem("rememberMe", "true");
-      }
-
-      setUser(data.user);
-      setIsAuthenticated(true);
-      setAnalyticsUser(data.user.id);
-      trackEvent("login_success", { rememberMe, userId: data.user.id }, { path: "/login" });
-
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      if (err) throw new Error(err.message);
+      trackEvent("login_success", { userId: email }, { path: "/login" });
       return true;
-    } catch (err) {
-      setError(err.message);
-      trackEvent("login_failed", { reason: err.message }, { path: "/login" });
+    } catch (e) {
+      setError(e.message);
+      trackEvent("login_failed", { reason: e.message }, { path: "/login" });
       return false;
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  // ========================================
-  // LOGOUT
-  // ========================================
-  async function logout() {
-    const token = localStorage.getItem("authToken");
-    const currentUserId = user?.id || null;
+  const logout = async () => {
+    trackEvent("logout", { userId: user?.id });
+    await supabase.auth.signOut();
+  };
 
-    if (currentUserId) {
-      trackEvent("logout", { userId: currentUserId });
-    }
-    
+  const register = async (_username, email, password, _confirmPassword, name) => {
+    setLoading(true); setError(null);
     try {
-      // Notify backend
-      if (token) {
-        await fetch(`${API_URL}/api/auth/logout`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token }),
-        });
-      }
-    } catch (err) {
-      console.error("Logout error:", err);
-    } finally {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      localStorage.removeItem("rememberMe");
-      setUser(null);
-      setIsAuthenticated(false);
-      setError(null);
-      setBilling(null);
-      setAnalyticsUser(null);
-    }
-  }
-
-  // ========================================
-  // 2. REGISTER NEW USER
-  // ========================================
-  const register = async (username, email, password, confirmPassword, name) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          confirmPassword,
-          name,
-        }),
+      const { error: err } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } },
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "שגיאה בהרשמה");
-      }
-
-      // Save JWT token
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      setUser(data.user);
-      setIsAuthenticated(true);
-      setAnalyticsUser(data.user.id);
-      trackEvent("register_success", { userId: data.user.id }, { path: "/register" });
-
+      if (err) throw new Error(err.message);
+      trackEvent("register_success", { userId: email }, { path: "/register" });
       return true;
-    } catch (err) {
-      setError(err.message);
-      trackEvent("register_failed", { reason: err.message }, { path: "/register" });
+    } catch (e) {
+      setError(e.message);
+      trackEvent("register_failed", { reason: e.message }, { path: "/register" });
       return false;
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  // ========================================
-  // 3. FORGOT PASSWORD
-  // ========================================
   const forgotPassword = async (email) => {
-    setLoading(true);
-    setError(null);
-
+    setLoading(true); setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
+      const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "שגיאה בשליחת דוא״ל");
-      }
-
+      if (err) throw new Error(err.message);
       trackEvent("forgot_password_requested", { email });
-
-      return { success: true, message: data.message };
-    } catch (err) {
-      const normalizedError =
-        typeof err?.message === "string" && err.message.includes("שירות שליחת המייל אינו זמין כרגע")
-          ? "שליחת מייל לאיפוס סגורה זמנית. נסה שוב בעוד כמה דקות."
-          : err.message;
-
-      setError(normalizedError);
-      trackEvent("forgot_password_failed", { reason: normalizedError });
-      return { success: false, error: normalizedError };
-    } finally {
-      setLoading(false);
-    }
+      return { success: true };
+    } catch (e) {
+      setError(e.message);
+      return { success: false, error: e.message };
+    } finally { setLoading(false); }
   };
 
-  // ========================================
-  // 4. RESET PASSWORD
-  // ========================================
-  const resetPassword = async (token, newPassword) => {
-    setLoading(true);
-    setError(null);
-
+  const resetPassword = async (_token, newPassword) => {
+    setLoading(true); setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          newPassword,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "שגיאה בשינוי סיסמה");
-      }
-
+      const { error: err } = await supabase.auth.updateUser({ password: newPassword });
+      if (err) throw new Error(err.message);
       trackEvent("reset_password_success", {});
-
-      return { success: true, message: data.message };
-    } catch (err) {
-      setError(err.message);
-      trackEvent("reset_password_failed", { reason: err.message });
-      return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const value = {
-    isAuthenticated,
-    user,
-    loading,
-    error,
-    billing,
-    billingLoading,
-    login,
-    logout,
-    register,
-    forgotPassword,
-    resetPassword,
-    refreshBillingStatus,
-    extendTrial,
-    cancelSubscription,
-    startCheckout,
+      return { success: true };
+    } catch (e) {
+      setError(e.message);
+      return { success: false, error: e.message };
+    } finally { setLoading(false); }
   };
 
   return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{
+      isAuthenticated, user, loading, error,
+      billing, billingLoading,
+      login, logout, register,
+      forgotPassword, resetPassword,
+      refreshBillingStatus, extendTrial, cancelSubscription, startCheckout,
+    }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 }

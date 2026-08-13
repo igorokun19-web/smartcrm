@@ -33,6 +33,9 @@ Thumbs.db
 dist/
 build/
 *.tsbuildinfo
+test-results/
+playwright-report/
+
 
 # Temporary files
 tmp/

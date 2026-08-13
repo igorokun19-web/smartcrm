@@ -1,28 +1,77 @@
-import { useState } from "react";
-import { Plus, Download, Trash2, Edit2, DollarSign, MessageCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { Plus, Download, Trash2, Edit2, DollarSign, CheckCircle, MessageCircle } from "lucide-react";
 import { useCrm, formatDate } from "../context/CrmContext";
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 const inputClass = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500";
-const btnClass = "px-3 py-1 rounded text-sm font-medium cursor-pointer transition";
+const btnClass = "px-3 py-1 rounded text-sm font-medium cursor-pointer transition flex items-center gap-1";
+
+const EMPTY_FORM = {
+  id: "",
+  number: "",
+  leadId: "",
+  amount: "",
+  tax: "17",
+  status: "draft",
+  dueDate: new Date().toISOString().split("T")[0],
+  issueDate: new Date().toISOString().split("T")[0],
+  description: "",
+  items: [],
+};
 
 export default function Invoices() {
-  const { leads } = useCrm();
+  const { leads, addTask } = useCrm();
+  const location = useLocation();
   const [invoices, setInvoices] = useState(JSON.parse(localStorage.getItem("invoices") || "[]"));
+  const [services] = useState(JSON.parse(localStorage.getItem("services") || "[]"));
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    id: "",
-    number: "",
-    leadId: "",
-    amount: "",
-    tax: "17",
-    status: "draft",
-    dueDate: new Date().toISOString().split("T")[0],
-    issueDate: new Date().toISOString().split("T")[0],
-    description: "",
-    items: [],
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
+
+  // Pre-fill form when navigating from a lead
+  useEffect(() => {
+    const fromLead = location.state?.fromLead;
+    if (fromLead) {
+      setFormData({
+        ...EMPTY_FORM,
+        number: `INV-${Date.now().toString().slice(-6)}`,
+        leadId: fromLead.id,
+        description: fromLead.message || "",
+      });
+      setEditingId(null);
+      setShowForm(true);
+    }
+  }, [location.state]);
+
+  // Auto-fill description when lead selection changes in the form
+  function handleLeadChange(leadId) {
+    const lead = leads.find((l) => l.id == leadId);
+    setFormData((prev) => ({
+      ...prev,
+      leadId,
+      description: lead?.message || prev.description,
+    }));
+  }
+
+  // Auto-fill amount + description when a service is picked
+  function handleServiceChange(serviceId) {
+    const svc = services.find((s) => s.id === serviceId);
+    if (svc) {
+      setFormData((prev) => ({
+        ...prev,
+        amount: svc.basePrice || prev.amount,
+        description: svc.name + (svc.description ? ` — ${svc.description}` : ""),
+      }));
+    }
+  }
+
+  // Mark invoice as paid directly from the table row
+  function markPaid(invoiceId) {
+    const updated = invoices.map((i) => i.id === invoiceId ? { ...i, status: "paid" } : i);
+    setInvoices(updated);
+    localStorage.setItem("invoices", JSON.stringify(updated));
+  }
 
   const statuses = {
     draft: { label: "טיוטה", color: "gray", icon: "📝" },
@@ -46,18 +95,20 @@ export default function Invoices() {
 
     setInvoices(updated);
     localStorage.setItem("invoices", JSON.stringify(updated));
-    setFormData({
-      id: "",
-      number: "",
-      leadId: "",
-      amount: "",
-      tax: "17",
-      status: "draft",
-      dueDate: new Date().toISOString().split("T")[0],
-      issueDate: new Date().toISOString().split("T")[0],
-      description: "",
-      items: [],
-    });
+
+    // Auto-task: payment reminder on the linked lead when creating a new non-paid invoice
+    if (!editingId && formData.leadId && formData.status !== "paid") {
+      const reminderDate = new Date();
+      reminderDate.setDate(reminderDate.getDate() + 14);
+      addTask(formData.leadId, {
+        title: `תזכורת תשלום — חשבונית ${formData.number}`,
+        dueDate: reminderDate.toISOString().split("T")[0],
+        priority: "Medium",
+        completed: false,
+      });
+    }
+
+    setFormData({ ...EMPTY_FORM });
     setEditingId(null);
     setShowForm(false);
   };
@@ -164,18 +215,7 @@ export default function Invoices() {
           onClick={() => {
             setShowForm(true);
             setEditingId(null);
-            setFormData({
-              id: "",
-              number: `INV-${Date.now().toString().slice(-6)}`,
-              leadId: "",
-              amount: "",
-              tax: "17",
-              status: "draft",
-              dueDate: new Date().toISOString().split("T")[0],
-              issueDate: new Date().toISOString().split("T")[0],
-              description: "",
-              items: [],
-            });
+            setFormData({ ...EMPTY_FORM, number: `INV-${Date.now().toString().slice(-6)}` });
           }}
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
         >
@@ -223,18 +263,36 @@ export default function Invoices() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">לקוח</label>
                 <select
                   value={formData.leadId}
-                  onChange={(e) => setFormData({ ...formData, leadId: e.target.value })}
+                  onChange={(e) => handleLeadChange(e.target.value)}
                   className={inputClass}
                 >
                   <option value="">בחר לקוח</option>
                   {leads.map((lead) => (
                     <option key={lead.id} value={lead.id}>
-                      {lead.name}
+                      {lead.name} — {lead.phone}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
+
+            {services.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">מלא משירות קיים (אופציונלי)</label>
+                <select
+                  defaultValue=""
+                  onChange={(e) => handleServiceChange(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">בחר שירות...</option>
+                  {services.map((svc) => (
+                    <option key={svc.id} value={svc.id}>
+                      {svc.name} — ₪{svc.basePrice}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-4">
               <div>
@@ -383,6 +441,15 @@ export default function Invoices() {
                         >
                           <Download size={16} />
                         </button>
+                        {invoice.status !== "paid" && (
+                          <button
+                            onClick={() => markPaid(invoice.id)}
+                            className={`${btnClass} bg-green-100 text-green-700 hover:bg-green-200`}
+                            title="סמן כשולם"
+                          >
+                            <CheckCircle size={14} /> שולם
+                          </button>
+                        )}
                         <button
                           onClick={() => handleEdit(invoice)}
                           className={`${btnClass} bg-yellow-100 text-yellow-700 hover:bg-yellow-200`}

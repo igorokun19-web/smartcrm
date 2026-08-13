@@ -1,13 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
+import { supabase } from "../lib/supabaseClient";
 
 const STORAGE_KEY = "myservices-leads";
 const LEGACY_STORAGE_KEY = "myservices-leads";
-const API_URL = import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? "http://localhost:3001" : "https://smartcrm-3cle.onrender.com");
-const REMOTE_SYNC_DISABLED_KEY = `crm-remote-sync-disabled:${API_URL}`;
-const CRM_REMOTE_SYNC_ENABLED = import.meta.env.VITE_CRM_REMOTE_SYNC === "true";
 
 const CrmContext = createContext(null);
 
@@ -231,185 +228,75 @@ function loadLeads(storageKey) {
   }
 }
 
-function isRemoteSyncDisabled() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return window.localStorage.getItem(REMOTE_SYNC_DISABLED_KEY) === "1";
-}
-
-function setRemoteSyncDisabled(disabled) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (disabled) {
-    window.localStorage.setItem(REMOTE_SYNC_DISABLED_KEY, "1");
-    return;
-  }
-
-  window.localStorage.removeItem(REMOTE_SYNC_DISABLED_KEY);
-}
-
 export function CrmProvider({ children }) {
   const { isAuthenticated, user } = useAuth();
   const scopedStorageKey = getScopedStorageKey(user?.id);
   const [leads, setLeads] = useState(() => loadLeads(scopedStorageKey));
-  const [remoteWorkspaceReady, setRemoteWorkspaceReady] = useState(false);
-  const [remoteSyncEnabled, setRemoteSyncEnabled] = useState(
-    () => CRM_REMOTE_SYNC_ENABLED && !isRemoteSyncDisabled()
-  );
   const [hydratedStorageKey, setHydratedStorageKey] = useState(scopedStorageKey);
+  const saveTimer = useRef(null);
 
+  // Hydrate from localStorage when user changes
   useEffect(() => {
     let cancelled = false;
-
     queueMicrotask(() => {
-      if (cancelled) {
-        return;
-      }
-
+      if (cancelled) return;
       setHydratedStorageKey(null);
       setLeads(loadLeads(scopedStorageKey));
-      setRemoteWorkspaceReady(false);
-      setRemoteSyncEnabled(
-        CRM_REMOTE_SYNC_ENABLED && Boolean(isAuthenticated) && !isRemoteSyncDisabled()
-      );
       setHydratedStorageKey(scopedStorageKey);
     });
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [scopedStorageKey, isAuthenticated]);
 
+  // Keep localStorage cache in sync (for offline fallback)
   useEffect(() => {
-    if (hydratedStorageKey !== scopedStorageKey) {
-      return;
-    }
-
+    if (hydratedStorageKey !== scopedStorageKey) return;
     localStorage.setItem(scopedStorageKey, JSON.stringify(leads));
   }, [leads, scopedStorageKey, hydratedStorageKey]);
 
+  // Load from Supabase when user logs in
   useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
     let cancelled = false;
 
-    async function loadWorkspace() {
-      if (!isAuthenticated) {
-        setRemoteWorkspaceReady(false);
-        return;
-      }
+    async function loadFromSupabase() {
+      const { data, error } = await supabase
+        .from("user_data")
+        .select("leads")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (!remoteSyncEnabled) {
-        setRemoteWorkspaceReady(true);
-        return;
-      }
+      if (cancelled || error) return;
 
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_URL}/api/crm/leads`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.status === 404) {
-          setRemoteSyncDisabled(true);
-          setRemoteSyncEnabled(false);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(`CRM read failed with status ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success || cancelled) {
-          return;
-        }
-
-        if (data.leads.length > 0) {
-          setLeads(data.leads.map(normalizeLead));
-        } else {
-          const localLeads = loadLeads(scopedStorageKey);
-          if (localLeads.length === 0) {
-            return;
-          }
-
-          const saveResponse = await fetch(`${API_URL}/api/crm/leads`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ leads: localLeads }),
-          });
-
-          if (saveResponse.status === 404) {
-            setRemoteSyncDisabled(true);
-            setRemoteSyncEnabled(false);
-          }
-        }
-      } catch (error) {
-        console.error("CRM workspace synchronization failed:", error);
-        setRemoteSyncDisabled(true);
-        setRemoteSyncEnabled(false);
-      } finally {
-        if (!cancelled) {
-          setRemoteWorkspaceReady(true);
-        }
+      if (data?.leads?.length > 0) {
+        setLeads(data.leads.map(normalizeLead));
+      } else {
+        // First login — push local leads to Supabase
+        const localLeads = loadLeads(scopedStorageKey);
+        await supabase.from("user_data").upsert({ user_id: user.id, leads: localLeads });
       }
     }
 
-    loadWorkspace();
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthenticated, scopedStorageKey, remoteSyncEnabled]);
+    loadFromSupabase();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, user?.id, scopedStorageKey]);
 
+  // Debounced save to Supabase on every leads change
   useEffect(() => {
-    if (!isAuthenticated || !remoteWorkspaceReady || !remoteSyncEnabled) {
-      return;
-    }
+    if (!isAuthenticated || !user?.id || hydratedStorageKey !== scopedStorageKey) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      await supabase
+        .from("user_data")
+        .upsert({ user_id: user.id, leads });
+    }, 1500);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [leads, isAuthenticated, user?.id, scopedStorageKey, hydratedStorageKey]);
 
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      return;
-    }
-
-    fetch(`${API_URL}/api/crm/leads`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ leads }),
-    })
-      .then((response) => {
-        if (response.status === 404) {
-          setRemoteSyncDisabled(true);
-          setRemoteSyncEnabled(false);
-        }
-      })
-      .catch((error) => {
-        console.error("CRM workspace save failed:", error);
-        setRemoteSyncDisabled(true);
-        setRemoteSyncEnabled(false);
-      });
-  }, [isAuthenticated, leads, remoteWorkspaceReady, remoteSyncEnabled]);
-
-  // Keep multiple tabs/windows in sync with each other.
+  // Keep multiple tabs in sync
   useEffect(() => {
     function handleStorage(event) {
-      if (event.key === scopedStorageKey) {
-        setLeads(loadLeads(scopedStorageKey));
-      }
+      if (event.key === scopedStorageKey) setLeads(loadLeads(scopedStorageKey));
     }
-
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
   }, [scopedStorageKey]);
@@ -421,6 +308,11 @@ export function CrmProvider({ children }) {
   }, []);
 
   const addLead = useCallback(({ name, phone, email = "", message = "" }) => {
+    // Auto-create a follow-up task due tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
     const newLead = normalizeLead({
       id: createId(),
       name,
@@ -430,7 +322,12 @@ export function CrmProvider({ children }) {
       status: "New",
       createdAt: nowIso(),
       notes: [],
-      tasks: [],
+      tasks: [normalizeTask({
+        title: `מעקב ראשוני — ליצור קשר עם ${name}`,
+        dueDate: tomorrowStr,
+        priority: "High",
+        completed: false,
+      })],
       activity: [createActivity("lead-created", "נוצר ליד חדש")],
     });
 
@@ -464,17 +361,36 @@ export function CrmProvider({ children }) {
       updateLead(leadId, (lead) => {
         if (lead.status === status) return lead;
 
-        return {
+        const updatedLead = {
           ...lead,
           status,
           activity: [
-            createActivity(
-              "status-changed",
-              `הסטטוס שונה ל-${getStatusLabel(status)}`
-            ),
+            createActivity("status-changed", `הסטטוס שונה ל-${getStatusLabel(status)}`),
             ...(lead.activity || []),
           ],
         };
+
+        // Auto-task: quote follow-up 7 days out
+        if (status === "Quoted") {
+          const followUp = new Date();
+          followUp.setDate(followUp.getDate() + 7);
+          const alreadyHasQuoteTask = (lead.tasks || []).some(
+            (t) => !t.completed && t.title.includes("הצעת מחיר")
+          );
+          if (!alreadyHasQuoteTask) {
+            updatedLead.tasks = [
+              ...((lead.tasks || [])),
+              normalizeTask({
+                title: `מעקב הצעת מחיר — לבדוק אם ${lead.name} אישר`,
+                dueDate: followUp.toISOString().split("T")[0],
+                priority: "High",
+                completed: false,
+              }),
+            ];
+          }
+        }
+
+        return updatedLead;
       });
     },
     [updateLead]

@@ -1,9 +1,102 @@
 import { useState } from "react";
-import { Calendar, Clock, CheckCircle2, Edit3, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Calendar, Clock, CheckCircle2, Edit3, Trash2, AlertTriangle, Bell } from "lucide-react";
 import { useCrm, getPriorityLabel } from "../context/CrmContext";
 
 const kpiCard =
   "rounded-xl border p-4 bg-white shadow-sm";
+
+// Computes smart alerts from leads data
+function useAlerts(leads) {
+  const today = new Date().toISOString().split("T")[0];
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+  const noNextAction = leads.filter(
+    (l) => l.status !== "Won" && l.status !== "Lost" &&
+      !(l.tasks || []).some((t) => !t.completed)
+  );
+
+  const unhandledQuotes = leads.filter(
+    (l) => l.status === "Quoted" &&
+      !(l.tasks || []).some((t) => !t.completed)
+  );
+
+  const dormant = leads.filter(
+    (l) => l.status !== "Won" && l.status !== "Lost" &&
+      new Date(l.createdAt) < new Date(threeDaysAgo) &&
+      (l.activity || []).every((a) => new Date(a.createdAt || a.timestamp) < new Date(threeDaysAgo)) &&
+      (l.notes || []).length === 0
+  );
+
+  return { noNextAction, unhandledQuotes, dormant };
+}
+
+function AlertsPanel({ leads, onNavigate }) {
+  const { noNextAction, unhandledQuotes, dormant } = useAlerts(leads);
+  const total = noNextAction.length + unhandledQuotes.length + dormant.length;
+  if (total === 0) return null;
+
+  const groups = [
+    {
+      key: "noAction",
+      icon: "⚡",
+      label: "לידים ללא פעולה הבאה",
+      items: noNextAction,
+      color: "text-amber-700",
+      bg: "bg-amber-50",
+      border: "border-amber-200",
+    },
+    {
+      key: "quotes",
+      icon: "📋",
+      label: "הצעות מחיר ללא מעקב",
+      items: unhandledQuotes,
+      color: "text-blue-700",
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+    },
+    {
+      key: "dormant",
+      icon: "😴",
+      label: "לידים ללא פעילות (3+ ימים)",
+      items: dormant,
+      color: "text-gray-700",
+      bg: "bg-gray-50",
+      border: "border-gray-200",
+    },
+  ].filter((g) => g.items.length > 0);
+
+  return (
+    <div className="rounded-xl border border-rose-200 bg-white shadow-sm overflow-hidden">
+      <div className="px-4 py-2.5 bg-rose-50 border-b border-rose-200 flex items-center gap-2">
+        <Bell size={15} className="text-rose-600" />
+        <p className="text-sm font-bold text-rose-700">התרעות — {total} לידים דורשים תשומת לב</p>
+      </div>
+      <div className="divide-y divide-neutral-100">
+        {groups.map((group) =>
+          group.items.map((lead) => (
+            <button
+              key={group.key + lead.id}
+              onClick={() => onNavigate("/leads")}
+              className={`w-full flex items-center justify-between px-4 py-2.5 hover:${group.bg} transition text-right`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">{group.icon}</span>
+                <div>
+                  <span className={`text-sm font-semibold ${group.color}`}>{lead.name}</span>
+                  <span className="text-xs text-neutral-400 mr-2">{lead.phone}</span>
+                </div>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full border ${group.bg} ${group.border} ${group.color}`}>
+                {group.label}
+              </span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
 
 function KanbanColumn({ title, icon, tasks, onComplete, onReopen, onDelete, onEdit, taskCount, bgColor }) {
   return (
@@ -148,6 +241,7 @@ function KanbanCard({ task, onComplete, onReopen, onDelete, onEdit }) {
 
 export default function Tasks() {
   const { leads, toggleTask, deleteTask: deleteTaskFromContext, editTask } = useCrm();
+  const navigate = useNavigate();
 
   const [editingTask, setEditingTask] = useState(null);
 
@@ -250,14 +344,11 @@ export default function Tasks() {
     <div className="p-6 space-y-8" dir="rtl">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold">
-          📋 Kanban Board Pro
-        </h1>
-
-        <p className="text-gray-500 mt-2">
-          ניהול משימות בתצוגת Kanban מתקדמת
-        </p>
+        <h1 className="text-2xl font-bold text-neutral-900">משימות</h1>
       </div>
+
+      {/* Smart alerts */}
+      <AlertsPanel leads={leads} onNavigate={navigate} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">

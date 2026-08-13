@@ -1,36 +1,11 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const db = require('../db');
 const { runBillingLifecycle } = require('../services/billingLifecycle');
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET;
+const { requireAuth } = require('../middleware/requireAuth');
+
 const MAX_LEADS_PER_ACCOUNT = 5000;
-const OWNER_USERNAMES = new Set(
-  (process.env.OWNER_USERNAMES || '')
-    .split(',')
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean)
-);
-
-function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : null;
-
-  if (!token) {
-    return res.status(401).json({ success: false, error: 'נדרשת התחברות' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.userId = decoded.userId;
-    next();
-  } catch {
-    return res.status(403).json({ success: false, error: 'טוקן לא חוקי או פג תוקף' });
-  }
-}
 
 function isValidLead(lead) {
   return lead && typeof lead === 'object' && lead.id != null && typeof lead.name === 'string';

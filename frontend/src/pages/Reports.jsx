@@ -1,8 +1,90 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Download } from "lucide-react";
 import { useCrm, calculateLeadScore, formatDate } from "../context/CrmContext";
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
+
+function SmartInsights({ leads }) {
+  const insights = useMemo(() => {
+    const invoices = JSON.parse(localStorage.getItem("invoices") || "[]");
+    const services = JSON.parse(localStorage.getItem("services") || "[]");
+    const total = leads.length;
+    const won = leads.filter((l) => l.status === "Won").length;
+    const quoted = leads.filter((l) => l.status === "Quoted").length;
+    const allTasks = leads.flatMap((l) => l.tasks || []);
+    const completedTasks = allTasks.filter((t) => t.completed).length;
+    const noActionLeads = leads.filter(
+      (l) => l.status !== "Won" && l.status !== "Lost" &&
+        !(l.tasks || []).some((t) => !t.completed)
+    ).length;
+    const paidRevenue = invoices
+      .filter((i) => i.status === "paid")
+      .reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+    const unpaidRevenue = invoices
+      .filter((i) => i.status !== "paid")
+      .reduce((sum, i) => sum + parseFloat(i.amount || 0), 0);
+
+    // Most profitable service by basePrice
+    const topService = services.sort(
+      (a, b) => parseFloat(b.basePrice || 0) - parseFloat(a.basePrice || 0)
+    )[0];
+
+    // Best lead score
+    const bestLead = leads.reduce(
+      (best, l) => (calculateLeadScore(l) > calculateLeadScore(best) ? l : best),
+      leads[0]
+    );
+
+    const items = [];
+
+    if (total > 0) {
+      const pct = Math.round((won / total) * 100);
+      items.push({ icon: pct >= 30 ? "✅" : "⚡", text: `${pct}% מהלידים נסגרו בהצלחה (${won} מתוך ${total})`, color: pct >= 30 ? "text-green-700" : "text-amber-700" });
+    }
+    if (quoted > 0) {
+      items.push({ icon: "📋", text: `${quoted} הצעות מחיר פתוחות — פוטנציאל ₪${(quoted * 2000).toLocaleString()} לסגירה`, color: "text-blue-700" });
+    }
+    if (noActionLeads > 0) {
+      items.push({ icon: "⚠️", text: `${noActionLeads} לידים ללא פעולה הבאה — דורשים טיפול`, color: "text-red-700" });
+    }
+    if (allTasks.length > 0) {
+      const pct = Math.round((completedTasks / allTasks.length) * 100);
+      items.push({ icon: "📋", text: `${pct}% מהמשימות הושלמו (${completedTasks} מתוך ${allTasks.length})`, color: "text-slate-700" });
+    }
+    if (paidRevenue > 0) {
+      items.push({ icon: "✅", text: `הכנסות שהתקבלו: ₪${paidRevenue.toLocaleString()}`, color: "text-green-700" });
+    }
+    if (unpaidRevenue > 0) {
+      items.push({ icon: "💸", text: `חשבוניות פתוחות: ₪${unpaidRevenue.toLocaleString()} ממתינים לגבייה`, color: "text-orange-700" });
+    }
+    if (topService) {
+      items.push({ icon: "📈", text: `השירות היקר ביותר: ${topService.name} (₪${topService.basePrice})`, color: "text-purple-700" });
+    }
+    if (bestLead) {
+      items.push({ icon: "⭐", text: `הליד בעל הניקוד הגבוה ביותר: ${bestLead.name} (${calculateLeadScore(bestLead)}/100)`, color: "text-indigo-700" });
+    }
+
+    return items;
+  }, [leads]);
+
+  if (insights.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-indigo-100 bg-white shadow-sm overflow-hidden">
+      <div className="px-4 py-2.5 bg-indigo-50 border-b border-indigo-100">
+        <p className="text-sm font-bold text-indigo-700">💡 תובנות חכמות</p>
+      </div>
+      <ul className="divide-y divide-neutral-50">
+        {insights.map((item, i) => (
+          <li key={i} className="flex items-center gap-3 px-4 py-3">
+            <span className="text-lg shrink-0">{item.icon}</span>
+            <span className={`text-sm font-medium ${item.color}`}>{item.text}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function ExportButton({ format, data, filename }) {
   const handleExport = () => {
@@ -133,9 +215,11 @@ export default function Reports() {
     <div className="p-6 space-y-8" dir="rtl">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold">📈 Advanced Reports Pro</h1>
-        <p className="text-gray-500 mt-2">דוחות מפורטים, אנליטיקה מתקדמת וייצוא נתונים</p>
+        <h1 className="text-2xl font-bold text-neutral-900">דוחות</h1>
       </div>
+
+      {/* Smart text insights */}
+      <SmartInsights leads={leads} />
 
       {/* Report Type Selector */}
       <div className="bg-white rounded-lg shadow p-4">

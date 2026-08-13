@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Users, Eye, Globe, LogIn, RefreshCw } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? "http://localhost:3001" : "https://smartcrm-3cle.onrender.com");
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
+const conversionLabels = {
+  register_success: "הרשמה הושלמה",
+  login_success: "התחברות מוצלחת",
+  lead_created: "ליד נוצר",
+  forgot_password_requested: "בקשת איפוס סיסמה",
+  reset_password_success: "איפוס סיסמה הצליח",
+};
 
 function Kpi({ icon: Icon, label, value, color }) {
   return (
@@ -23,6 +30,47 @@ export default function Visitors() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const publicationReport = useMemo(() => {
+    if (!data) {
+      return null;
+    }
+
+    const topCampaign = data.topCampaigns?.[0];
+    const topReferrer = data.topReferrers?.[0];
+    const topConversion = data.conversionEvents?.[0];
+    const socialWinner = data.socialBreakdown?.[0];
+
+    const safeCampaign = topCampaign
+      ? `${topCampaign.campaign} (${topCampaign.source}/${topCampaign.medium})`
+      : "אין עדיין קמפיין מוביל";
+    const safeReferrer = topReferrer ? topReferrer.referrer : "אין עדיין רפרר מוביל";
+    const safeConversion = topConversion
+      ? `${conversionLabels[topConversion.event_name] || topConversion.event_name} - ${topConversion.events}`
+      : "אין עדיין המרות מדידות";
+    const safeSocial = socialWinner ? socialWinner.channel : "אין עדיין ערוץ מוביל";
+
+    return [
+      `טווח נבדק: ${data.range.days} ימים`,
+      `תנועה מובילה: ${safeSocial}`,
+      `מקור מוביל: ${safeReferrer}`,
+      `קמפיין מוביל: ${safeCampaign}`,
+      `המרה חזקה: ${safeConversion}`,
+      `סך לידים/המרות: ${data.totals.usage_events}`,
+    ].join("\n");
+  }, [data]);
+
+  const copyReport = useCallback(async () => {
+    if (!publicationReport) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(publicationReport);
+    } catch {
+      window.alert("לא הצלחתי להעתיק אוטומטית. אפשר לסמן ולהעתיק ידנית.");
+    }
+  }, [publicationReport]);
 
   const fetchSummary = useCallback(async (selectedDays) => {
     setLoading(true);
@@ -83,6 +131,14 @@ export default function Visitors() {
             <RefreshCw size={16} />
             רענן
           </button>
+          {publicationReport && (
+            <button
+              onClick={copyReport}
+              className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm bg-gray-900 text-white hover:bg-gray-800"
+            >
+              העתק דוח
+            </button>
+          )}
         </div>
       </div>
 
@@ -166,6 +222,115 @@ export default function Visitors() {
               </div>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className={kpiCard}>
+              <h2 className="font-bold text-gray-800 mb-3">מקורות הפניה מובילים</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-right text-gray-500 border-b">
+                      <th className="p-2">מקור</th>
+                      <th className="p-2">אירועים</th>
+                      <th className="p-2">מבקרים</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.topReferrers.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="p-3 text-center text-gray-400">
+                          אין נתונים בטווח שנבחר
+                        </td>
+                      </tr>
+                    ) : (
+                      data.topReferrers.map((row) => (
+                        <tr key={row.referrer} className="border-b hover:bg-gray-50">
+                          <td className="p-2">{row.referrer}</td>
+                          <td className="p-2">{row.events}</td>
+                          <td className="p-2">{row.visitors}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className={kpiCard}>
+              <h2 className="font-bold text-gray-800 mb-3">פירוק תנועה חברתית</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-right text-gray-500 border-b">
+                      <th className="p-2">ערוץ</th>
+                      <th className="p-2">אירועים</th>
+                      <th className="p-2">מבקרים</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.socialBreakdown.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="p-3 text-center text-gray-400">
+                          אין נתונים בטווח שנבחר
+                        </td>
+                      </tr>
+                    ) : (
+                      data.socialBreakdown.map((row) => (
+                        <tr key={row.channel} className="border-b hover:bg-gray-50">
+                          <td className="p-2 capitalize">{row.channel}</td>
+                          <td className="p-2">{row.events}</td>
+                          <td className="p-2">{row.visitors}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className={kpiCard}>
+            <h2 className="font-bold text-gray-800 mb-3">המרות מרכזיות</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-right text-gray-500 border-b">
+                    <th className="p-2">אירוע</th>
+                    <th className="p-2">כמות</th>
+                    <th className="p-2">סשנים</th>
+                    <th className="p-2">מבקרים</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.conversionEvents.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="p-3 text-center text-gray-400">
+                        אין נתוני המרה בטווח שנבחר
+                      </td>
+                    </tr>
+                  ) : (
+                    data.conversionEvents.map((row) => (
+                      <tr key={row.event_name} className="border-b hover:bg-gray-50">
+                        <td className="p-2">{conversionLabels[row.event_name] || row.event_name}</td>
+                        <td className="p-2">{row.events}</td>
+                        <td className="p-2">{row.sessions}</td>
+                        <td className="p-2">{row.visitors}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {publicationReport && (
+            <div className={kpiCard}>
+              <h2 className="font-bold text-gray-800 mb-3">דוח אופרטיבי לפרסום</h2>
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 border rounded-lg p-4 leading-6">
+                {publicationReport}
+              </pre>
+            </div>
+          )}
 
           <div className={kpiCard}>
             <h2 className="font-bold text-gray-800 mb-3">קמפיינים מובילים (UTM)</h2>

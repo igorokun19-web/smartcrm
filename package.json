@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@playwright/test": "^1.62.1",
     "playwright": "^1.62.1"
   },
   "name": "smartcrm",
@@ -16,7 +17,8 @@
   "scripts": {
     "qa:frontend": "npm --prefix frontend run lint && npm --prefix frontend run build",
     "qa:smoke": "node scripts/smoke-api.mjs",
-    "qa": "npm run qa:frontend && npm run qa:smoke",
+    "qa:e2e": "playwright test",
+    "qa": "npm run qa:frontend && npm run qa:smoke && npm run qa:e2e",
     "test": "npm run qa"
   },
   "repository": {

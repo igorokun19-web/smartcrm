@@ -160,27 +160,6 @@ export default function Register() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
-              {/* Username */}
-              <div className="space-y-2">
-                <label htmlFor="register-username" className="block text-sm font-semibold text-gray-700">
-                  <span className="flex items-center space-x-2 space-x-reverse">
-                    <span>👤</span>
-                    <span>שם משתמש</span>
-                  </span>
-                </label>
-                <input
-                  id="register-username"
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  placeholder="בחר שם משתמש ייחודי"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
-                  autoComplete="username"
-                  disabled={loading}
-                />
-              </div>
-
               {/* Name */}
               <div className="space-y-2">
                 <label htmlFor="register-name" className="block text-sm font-semibold text-gray-700">

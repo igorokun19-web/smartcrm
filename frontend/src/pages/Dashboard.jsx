@@ -15,7 +15,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, Users, CheckCircle, AlertCircle, PlusCircle, ArrowLeft } from "lucide-react";
+import { TrendingUp, Users, CheckCircle, AlertCircle, PlusCircle, ArrowLeft, Calendar, FileText } from "lucide-react";
 
 function WelcomeBanner({ onAddLead }) {
   return (
@@ -45,6 +45,42 @@ function WelcomeBanner({ onAddLead }) {
 }
 
 import { colors } from "../styles/theme";
+
+function FocusPanel({ items, onNavigate }) {
+  const active = items.filter((i) => i.count > 0);
+  if (active.length === 0) {
+    return (
+      <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 flex items-center gap-3">
+        <CheckCircle size={18} className="text-green-600 shrink-0" />
+        <p className="text-sm font-semibold text-green-800">הכל נקי — אין פעולות ממתינות</p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-amber-200 bg-white overflow-hidden shadow-sm">
+      <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200">
+        <p className="text-sm font-bold text-amber-700">⚡ מה צריך לעשות עכשיו?</p>
+      </div>
+      <div className="divide-y divide-neutral-100">
+        {active.map((item) => (
+          <button
+            key={item.key}
+            onClick={() => onNavigate(item.path)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-neutral-50 transition text-right"
+          >
+            <div className="flex items-center gap-2.5">
+              <item.Icon size={15} className={item.iconColor} />
+              <span className="text-sm text-neutral-800">{item.label}</span>
+            </div>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.badgeClass}`}>
+              {item.count}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function KPICard({ icon: Icon, label, value, color }) {
   return (
@@ -78,6 +114,20 @@ export default function Dashboard() {
   const overdueTasks = allTasks.filter(
     (t) => !t.completed && t.dueDate && t.dueDate < today
   ).length;
+  const todayTasks = allTasks.filter(
+    (t) => !t.completed && t.dueDate === today
+  ).length;
+  const unpaidInvoices = JSON.parse(localStorage.getItem("invoices") || "[]").filter(
+    (i) => i.status !== "paid"
+  ).length;
+
+  const focusItems = [
+    { key: "newLeads",    label: "לידים חדשים",              count: newLeads,        path: "/leads",    Icon: Users,       iconColor: "text-blue-500",   badgeClass: "bg-blue-100 text-blue-700" },
+    { key: "todayTasks",  label: "משימות להיום",              count: todayTasks,      path: "/tasks",    Icon: Calendar,    iconColor: "text-purple-500", badgeClass: "bg-purple-100 text-purple-700" },
+    { key: "overdue",     label: "משימות באיחור",             count: overdueTasks,    path: "/tasks",    Icon: AlertCircle, iconColor: "text-red-500",    badgeClass: "bg-red-100 text-red-700" },
+    { key: "quotes",      label: "הצעות מחיר שממתינות",      count: quotedDeals,     path: "/leads",    Icon: TrendingUp,  iconColor: "text-yellow-600", badgeClass: "bg-yellow-100 text-yellow-700" },
+    { key: "invoices",    label: "חשבוניות שלא שולמו",       count: unpaidInvoices,  path: "/invoices", Icon: FileText,    iconColor: "text-orange-500", badgeClass: "bg-orange-100 text-orange-700" },
+  ];
 
   const closeRate = totalLeads > 0 ? Math.round((closedDeals / totalLeads) * 100) : 0;
 
@@ -116,11 +166,10 @@ export default function Dashboard() {
         <WelcomeBanner onAddLead={() => navigate("/leads")} />
       )}
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-neutral-900">{t("dashboard.title")}</h1>
-        <p className="text-neutral-500 text-sm md:text-base mt-1">{t("dashboard.subtitle")}</p>
-      </div>
+      {/* Focus panel — action items only */}
+      {leads.length > 0 && (
+        <FocusPanel items={focusItems} onNavigate={navigate} />
+      )}
 
       {/* AI Insights */}
       <AiInsights leads={leads} />
@@ -195,56 +244,6 @@ export default function Dashboard() {
           ) : (
             <EmptyState title={t("dashboard.noData")} description={t("dashboard.noLeadsToDisplay")} />
           )}
-        </Card>
-      </div>
-
-      {/* Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Conversion Rate */}
-        <Card>
-          <h3 className="text-sm font-semibold text-neutral-600 mb-2">
-            {t("dashboard.conversionRate")}
-          </h3>
-          <div className="flex items-baseline gap-2 mb-4">
-            <p className="text-3xl font-bold text-neutral-900">{closeRate}%</p>
-          </div>
-          <div className="w-full bg-neutral-200 rounded-full h-2">
-            <div
-              className="bg-green-600 h-2 rounded-full transition-all"
-              style={{ width: `${closeRate}%` }}
-            />
-          </div>
-        </Card>
-
-        {/* Task Completion */}
-        <Card>
-          <h3 className="text-sm font-semibold text-neutral-600 mb-2">
-            {t("dashboard.taskCompletion")}
-          </h3>
-          <div className="flex items-baseline gap-2 mb-4">
-            <p className="text-3xl font-bold text-neutral-900">{taskCompletionRate}%</p>
-          </div>
-          <div className="w-full bg-neutral-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all"
-              style={{ width: `${taskCompletionRate}%` }}
-            />
-          </div>
-        </Card>
-
-        {/* Average Tasks per Lead */}
-        <Card>
-          <h3 className="text-sm font-semibold text-neutral-600 mb-2">
-            {t("dashboard.avgTasks")}
-          </h3>
-          <div className="flex items-baseline gap-2 mb-4">
-            <p className="text-3xl font-bold text-neutral-900">
-              {totalLeads > 0 ? (allTasks.length / totalLeads).toFixed(1) : "0"}
-            </p>
-          </div>
-          <p className="text-xs text-neutral-500">
-            {t("dashboard.totalTasksLabel")} {allTasks.length} {t("dashboard.tasks")}
-          </p>
         </Card>
       </div>
 

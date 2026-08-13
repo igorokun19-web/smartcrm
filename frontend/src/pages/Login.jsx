@@ -24,6 +24,7 @@ export default function Login() {
       return;
     }
 
+    // username field is used as email with Supabase
     const success = await login(username, password, rememberMe);
     if (success) {
       navigate("/dashboard");
@@ -108,25 +109,25 @@ export default function Login() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
-              {/* Username Input */}
+              {/* Email Input */}
               <div className="space-y-2">
-                <label htmlFor="login-username" className="block text-sm font-semibold text-gray-700">
+                <label htmlFor="login-email" className="block text-sm font-semibold text-gray-700">
                   <span className="flex items-center space-x-2 space-x-reverse">
-                    <span>👤</span>
-                    <span>{t("login.username")}</span>
+                    <span>📧</span>
+                    <span>דואִל</span>
                   </span>
                 </label>
                 <div className={`relative transition-all duration-300 ${focusedField === 'username' ? 'scale-105' : ''}`}>
                   <input
-                    id="login-username"
-                    type="text"
+                    id="login-email"
+                    type="email"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     onFocus={() => setFocusedField('username')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder={t("login.usernamePlaceholder")}
+                    placeholder="your@email.com"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
-                    autoComplete="username"
+                    autoComplete="email"
                     disabled={loading}
                   />
                 </div>

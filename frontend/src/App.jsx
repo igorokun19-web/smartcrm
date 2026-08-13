@@ -28,6 +28,8 @@ import Guide from "./pages/Guide";
 import About from "./pages/About";
 import Landing from "./pages/Landing";
 import { LanguageProvider } from "./context/LanguageContext";
+import GlobalFAB from "./components/GlobalFAB";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
@@ -65,6 +67,9 @@ function AppContent() {
 
             <div className="p-3 md:p-6 pb-20 md:pb-6">
               <TrialBanner />
+
+              <GlobalFAB />
+              <MobileBottomNav />
 
               <Routes>
                 <Route

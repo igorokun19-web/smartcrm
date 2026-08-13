@@ -182,6 +182,63 @@ router.get('/summary', requireAuth, async (req, res) => {
       [String(days)]
     );
 
+    const topReferrers = await db.many(
+      `SELECT
+        COALESCE(
+          NULLIF(SPLIT_PART(REPLACE(REPLACE(referrer, 'https://', ''), 'http://', ''), '/', 1), ''),
+          '(direct)'
+        ) AS referrer,
+        COUNT(*)::int AS events,
+        COUNT(DISTINCT client_id)::int AS visitors
+      FROM analytics_events
+      WHERE created_at >= NOW() - ($1::text || ' days')::interval
+        AND event_name = 'page_view'
+      GROUP BY 1
+      ORDER BY events DESC
+      LIMIT 10`,
+      [String(days)]
+    );
+
+    const conversionEvents = await db.many(
+      `SELECT
+        event_name,
+        COUNT(*)::int AS events,
+        COUNT(DISTINCT session_id)::int AS sessions,
+        COUNT(DISTINCT client_id)::int AS visitors
+      FROM analytics_events
+      WHERE created_at >= NOW() - ($1::text || ' days')::interval
+        AND event_name IN (
+          'register_success',
+          'login_success',
+          'lead_created',
+          'forgot_password_requested',
+          'reset_password_success'
+        )
+      GROUP BY event_name
+      ORDER BY events DESC`,
+      [String(days)]
+    );
+
+    const socialBreakdown = await db.many(
+      `SELECT
+        CASE
+          WHEN LOWER(COALESCE(utm_source, '')) LIKE '%facebook%' OR LOWER(COALESCE(referrer, '')) LIKE '%facebook%' THEN 'facebook'
+          WHEN LOWER(COALESCE(utm_source, '')) LIKE '%instagram%' OR LOWER(COALESCE(referrer, '')) LIKE '%instagram%' THEN 'instagram'
+          WHEN LOWER(COALESCE(utm_source, '')) LIKE '%whatsapp%' OR LOWER(COALESCE(referrer, '')) LIKE '%whatsapp%' THEN 'whatsapp'
+          WHEN LOWER(COALESCE(utm_source, '')) LIKE '%linkedin%' OR LOWER(COALESCE(referrer, '')) LIKE '%linkedin%' THEN 'linkedin'
+          WHEN LOWER(COALESCE(utm_source, '')) LIKE '%tiktok%' OR LOWER(COALESCE(referrer, '')) LIKE '%tiktok%' THEN 'tiktok'
+          ELSE 'other'
+        END AS channel,
+        COUNT(*)::int AS events,
+        COUNT(DISTINCT client_id)::int AS visitors
+      FROM analytics_events
+      WHERE created_at >= NOW() - ($1::text || ' days')::interval
+        AND event_name = 'page_view'
+      GROUP BY 1
+      ORDER BY events DESC`,
+      [String(days)]
+    );
+
     const daily = await db.many(
       `SELECT
         DATE(created_at) AS date,
@@ -203,6 +260,9 @@ router.get('/summary', requireAuth, async (req, res) => {
       topPages,
       topCampaigns,
       topUsageEvents,
+      topReferrers,
+      conversionEvents,
+      socialBreakdown,
       daily,
     });
   } catch (error) {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Download, Edit2, Trash2, Plus, MessageCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Edit2, Trash2, Plus, MessageCircle, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   useCrm,
   formatDate,
@@ -10,9 +11,11 @@ import {
 } from "../context/CrmContext";
 import { useTranslation } from "../hooks/useTranslation";
 import { useDebounce } from "../hooks/index";
+import { trackEvent } from "../lib/analytics";
 
 export default function Leads() {
   const { t, language } = useTranslation();
+  const navigate = useNavigate();
   const {
     leads,
     addLead,
@@ -100,6 +103,7 @@ export default function Leads() {
     }
 
     addLead({ name, phone, message });
+    trackEvent("lead_created", { source: "crm_manual", hasMessage: Boolean(message) }, { path: "/leads" });
     resetForm();
   };
 
@@ -509,6 +513,17 @@ export default function Leads() {
                         >
                           <MessageCircle size={18} />
                           <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-violet-500 text-white rounded-full px-1 leading-3 py-0.5 hidden group-hover:block">AI</span>
+                        </button>
+                        <button
+                          onClick={() => navigate("/invoices", {
+                            state: {
+                              fromLead: { id: lead.id, name: lead.name, phone: lead.phone, message: lead.message },
+                            },
+                          })}
+                          className="p-2 hover:bg-indigo-100 rounded-lg text-indigo-600"
+                          title="צור חשבונית"
+                        >
+                          <FileText size={18} />
                         </button>
                         <button
                           onClick={() => editLead(lead)}

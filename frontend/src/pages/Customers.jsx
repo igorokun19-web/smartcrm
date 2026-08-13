@@ -155,28 +155,6 @@ function CustomerDetailModal({ customer, onClose, now }) {
           </button>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 pb-6 border-b">
-          <div>
-            <p className="text-sm text-gray-500">LTV משוער</p>
-            <p className="text-2xl font-bold">₪{ltv.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">סטטוס</p>
-            <span className={`${badgeStyle} ${statusColors[customer.status]} text-white mt-1`}>
-              {customer.status}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">ימים כלקוח</p>
-            <p className="text-2xl font-bold">{daysSinceCreated}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">אינטראקציות</p>
-            <p className="text-2xl font-bold">{(customer.tasks?.length || 0) + (customer.notes?.length || 0) + (customer.activity?.length || 0)}</p>
-          </div>
-        </div>
-
         {/* Tasks Section */}
         {customer.tasks && customer.tasks.length > 0 && (
           <div className="mb-6">
@@ -317,8 +295,7 @@ export default function Customers() {
     <div className="p-6 space-y-8" dir="rtl">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold">🤝 Customers Pro v2</h1>
-        <p className="text-gray-500 mt-2">ניהול לקוחות מתקדם עם אנליטיקה חכמה</p>
+        <h1 className="text-2xl font-bold text-neutral-900">🤝 לקוחות</h1>
       </div>
 
       {/* KPI Cards */}
@@ -357,40 +334,6 @@ export default function Customers() {
           </div>
           <p className="text-3xl font-bold text-orange-600">{conversionRate}%</p>
           <p className="text-xs text-gray-500 mt-2">{wonCount} לקוחות מומרים</p>
-        </div>
-      </div>
-
-      {/* Customer Segments */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4">📊 פילוח לקוחות</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-            <p className="text-2xl mb-2">👑</p>
-            <p className="font-bold text-lg text-purple-900">{vipCount}</p>
-            <p className="text-sm text-purple-700">VIP לקוחות</p>
-            <p className="text-xs text-purple-600 mt-2">הלקוחות הכי ערכיים</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-            <p className="text-2xl mb-2">⚡</p>
-            <p className="font-bold text-lg text-green-900">{activeCount}</p>
-            <p className="text-sm text-green-700">לקוחות פעילים</p>
-            <p className="text-xs text-green-600 mt-2">עם אינטראקציה קבועה</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-            <p className="text-2xl mb-2">⚠️</p>
-            <p className="font-bold text-lg text-orange-900">{atRiskCount}</p>
-            <p className="text-sm text-orange-700">לקוחות בסיכון</p>
-            <p className="text-xs text-orange-600 mt-2">צריכים עניין מחדש</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-            <p className="text-2xl mb-2">😴</p>
-            <p className="font-bold text-lg text-gray-900">{inactiveCount}</p>
-            <p className="text-sm text-gray-700">לקוחות לא פעילים</p>
-            <p className="text-xs text-gray-600 mt-2">לא היה קשר ימים</p>
-          </div>
         </div>
       </div>
 
