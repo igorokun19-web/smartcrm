@@ -29,3 +29,7 @@ services:
         sync: false
       - key: OWNER_USERNAMES
         sync: false
+      - key: SUPABASE_URL
+        value: https://scbukcbotjjovbmgdwhw.supabase.co
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
