@@ -127,110 +127,132 @@ function CustomerCard({ customer, onExpand, now }) {
 function CustomerDetailModal({ customer, onClose, now }) {
   if (!customer) return null;
 
-  const ltv = estimateLifetimeValue(customer);
+  const invoices = JSON.parse(localStorage.getItem("invoices") || "[]")
+    .filter((i) => i.id === customer.id || i.leadId === customer.id);
+  const paidRevenue = invoices
+    .filter((i) => i.status === "paid")
+    .reduce((s, i) => s + parseFloat(i.amount || 0), 0);
   const daysSinceCreated = Math.floor((now - new Date(customer.createdAt).getTime()) / (24 * 60 * 60 * 1000));
 
-  const statusColors = {
-    Won: "bg-green-500",
-    Quoted: "bg-blue-500",
-    Contacted: "bg-purple-500",
-    New: "bg-yellow-500",
-    Lost: "bg-red-500",
-  };
+  const timelineEvents = [
+    ...(customer.activity || []).map((a) => ({
+      date: a.createdAt,
+      icon: a.type === "lead-created" ? "🌱" : a.type === "status-changed" ? "🔄" : a.type === "note-added" ? "📝" : "•",
+      text: a.text,
+    })),
+    ...(customer.tasks || []).filter((t) => t.completed).map((t) => ({
+      date: t.createdAt,
+      icon: "✅",
+      text: `הושלמה: ${t.title}`,
+    })),
+    ...invoices.map((i) => ({
+      date: i.issueDate,
+      icon: i.status === "paid" ? "💰" : "📄",
+      text: `חשבונית ${i.number} — ₪${parseFloat(i.amount || 0).toFixed(0)} (${i.status === "paid" ? "שולמה" : "פתוחה"})`,
+    })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-2xl my-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h2 className="text-3xl font-bold mb-2">{customer.name}</h2>
-            <p className="text-gray-600">📞 {customer.phone}</p>
-            {customer.email && <p className="text-gray-600">✉️ {customer.email}</p>}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4 overflow-y-auto" dir="rtl">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8">
+
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-900">{customer.name}</h2>
+            <div className="flex flex-wrap gap-3 mt-2">
+              <a href={`tel:${customer.phone}`} className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                📞 {customer.phone}
+              </a>
+              {customer.email && (
+                <a href={`mailto:${customer.email}`} className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                  ✉️ {customer.email}
+                </a>
+              )}
+              <button
+                onClick={() => {
+                  const phone = customer.phone?.replace(/\D/g, "");
+                  if (phone) window.open(`https://wa.me/972${phone.slice(-9)}`);
+                }}
+                className="flex items-center gap-1 text-sm text-green-600 hover:underline"
+              >
+                💬 WhatsApp
+              </button>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl font-bold">✕</button>
         </div>
 
-        {/* Tasks Section */}
-        {customer.tasks && customer.tasks.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-bold text-lg mb-3">📋 משימות ({customer.tasks.length})</h3>
-            <div className="space-y-2">
-              {customer.tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={`p-3 rounded-lg border-l-4 ${
-                    task.completed
-                      ? "bg-green-50 border-green-500"
-                      : "bg-yellow-50 border-yellow-500"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-semibold">{task.title}</p>
-                      {task.dueDate && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          📅 {formatDate(task.dueDate)}
-                        </p>
-                      )}
-                    </div>
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-bold ${
-                        task.completed
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {task.completed ? "הושלם" : "פתוח"}
+        <div className="p-6 space-y-6">
+          {/* KPIs */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-green-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-green-600">הכנסות</p>
+              <p className="text-xl font-bold text-green-700">₪{paidRevenue.toLocaleString()}</p>
+            </div>
+            <div className="bg-blue-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-blue-600">ימים כלקוח</p>
+              <p className="text-xl font-bold text-blue-700">{daysSinceCreated}</p>
+            </div>
+            <div className="bg-purple-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-purple-600">חשבוניות</p>
+              <p className="text-xl font-bold text-purple-700">{invoices.length}</p>
+            </div>
+          </div>
+
+          {/* Invoices */}
+          {invoices.length > 0 && (
+            <div>
+              <h3 className="font-bold text-gray-800 mb-2">💵 חשבוניות</h3>
+              <div className="space-y-1">
+                {invoices.map((inv) => (
+                  <div key={inv.id} className="flex justify-between items-center px-3 py-2 bg-gray-50 rounded-lg text-sm">
+                    <span className="text-gray-700">{inv.number} — ₪{parseFloat(inv.amount || 0).toFixed(0)}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${inv.status === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                      {inv.status === "paid" ? "שולמה" : "ממתינה"}
                     </span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Notes Section */}
-        {customer.notes && customer.notes.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-bold text-lg mb-3">📝 הערות ({customer.notes.length})</h3>
-            <div className="space-y-2">
-              {customer.notes.map((note, idx) => (
-                <div key={idx} className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                  <p className="text-sm text-gray-700">{note}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Activity Section */}
-        {customer.activity && customer.activity.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-bold text-lg mb-3">📊 פעילות ({customer.activity.length})</h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {customer.activity.map((act, idx) => (
-                <div key={idx} className="flex items-start gap-3 text-sm">
-                  <span className="text-gray-400 text-xs mt-1">•</span>
-                  <div>
-                    <p className="text-gray-700">{act.action}</p>
-                    <p className="text-xs text-gray-500 mt-1">{formatDate(act.timestamp)}</p>
+          {/* Open Tasks */}
+          {(customer.tasks || []).filter((t) => !t.completed).length > 0 && (
+            <div>
+              <h3 className="font-bold text-gray-800 mb-2">📋 משימות פתוחות</h3>
+              <div className="space-y-1">
+                {(customer.tasks || []).filter((t) => !t.completed).map((task) => (
+                  <div key={task.id} className="flex justify-between items-center px-3 py-2 bg-yellow-50 rounded-lg text-sm">
+                    <span>{task.title}</span>
+                    {task.dueDate && <span className="text-xs text-gray-500">{task.dueDate}</span>}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="flex gap-3 pt-4 border-t">
-          <button
-            onClick={onClose}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
-          >
+          {/* Timeline */}
+          {timelineEvents.length > 0 && (
+            <div>
+              <h3 className="font-bold text-gray-800 mb-3">📅 Timeline</h3>
+              <div className="space-y-2 max-h-56 overflow-y-auto">
+                {timelineEvents.slice(0, 12).map((ev, i) => (
+                  <div key={i} className="flex items-start gap-3 text-sm">
+                    <span className="shrink-0 text-base">{ev.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-800 truncate">{ev.text}</p>
+                      {ev.date && <p className="text-xs text-gray-400">{new Date(ev.date).toLocaleDateString("he-IL")}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 pb-5">
+          <button onClick={onClose} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-medium transition">
             סגור
           </button>
         </div>

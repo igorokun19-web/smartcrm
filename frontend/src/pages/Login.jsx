@@ -26,7 +26,7 @@ export default function Login() {
 
     const result = await login(username, password, rememberMe);
     if (result === true || result?.success) {
-      navigate("/dashboard");
+      navigate("/myday");
     } else {
       setLocalError(result?.error || error || t("login.invalidCredentials"));
     }

@@ -28,6 +28,7 @@ import Guide from "./pages/Guide";
 import About from "./pages/About";
 import Landing from "./pages/Landing";
 import CommandCenter from "./pages/CommandCenter";
+import MyDay from "./pages/MyDay";
 import { LanguageProvider } from "./context/LanguageContext";
 import GlobalFAB from "./components/GlobalFAB";
 import MobileBottomNav from "./components/MobileBottomNav";
@@ -134,6 +135,14 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <Visitors />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/myday"
+                  element={
+                    <ProtectedRoute>
+                      <MyDay />
                     </ProtectedRoute>
                   }
                 />

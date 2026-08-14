@@ -65,7 +65,7 @@ export default function Register() {
     );
 
     if (success) {
-      navigate("/dashboard");
+      navigate("/myday");
     } else {
       setLocalError(error || "שגיאה בהרשמה");
     }
