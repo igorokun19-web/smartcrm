@@ -78,7 +78,7 @@ function AppContent() {
                   path="/"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <MyDay />
                     </ProtectedRoute>
                   }
                 />

@@ -8,8 +8,8 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   
   const menuItems = [
+    { name: "☀️ היום שלי",              path: "/myday",     icon: "☀️" },
     { name: t("sidebar.dashboard"), path: "/dashboard", icon: "📊" },
-    { name: "היום שלי",              path: "/myday",     icon: "☀️" },
     { name: "מרכז פעולות",           path: "/command",   icon: "⚡" },
     { name: t("sidebar.leads"),      path: "/leads",     icon: "👥" },
     { name: t("sidebar.pipeline"), path: "/pipeline", icon: "🏗️" },
