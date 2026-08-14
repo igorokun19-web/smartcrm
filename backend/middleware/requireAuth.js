@@ -7,11 +7,18 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY,
-  { auth: { persistSession: false } }
-);
+// Lazy init — backend starts even if Supabase env vars are missing
+let supabaseAdmin = null;
+function getSupabaseAdmin() {
+  if (!supabaseAdmin && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+    supabaseAdmin = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY,
+      { auth: { persistSession: false } }
+    );
+  }
+  return supabaseAdmin;
+}
 
 const OWNER_EMAILS = new Set(
   (process.env.OWNER_EMAILS || process.env.OWNER_USERNAMES || '')
@@ -29,7 +36,11 @@ async function requireAuth(req, res, next) {
   }
 
   // Validate token via Supabase Admin API
-  const { data: { user: supaUser }, error } = await supabaseAdmin.auth.getUser(token);
+  const admin = getSupabaseAdmin();
+  if (!admin) {
+    return res.status(503).json({ success: false, error: 'שירות האימות אינו מוגדר' });
+  }
+  const { data: { user: supaUser }, error } = await admin.auth.getUser(token);
 
   if (error || !supaUser) {
     return res.status(403).json({ success: false, error: 'טוקן לא חוקי או פג תוקף' });
