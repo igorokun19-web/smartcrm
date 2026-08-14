@@ -9,7 +9,8 @@ export default function Sidebar() {
   
   const menuItems = [
     { name: t("sidebar.dashboard"), path: "/dashboard", icon: "📊" },
-    { name: t("sidebar.leads"), path: "/leads", icon: "👥" },
+    { name: "מרכז פעולות",           path: "/command",   icon: "⚡" },
+    { name: t("sidebar.leads"),      path: "/leads",     icon: "👥" },
     { name: t("sidebar.pipeline"), path: "/pipeline", icon: "🏗️" },
     { name: t("sidebar.customers"), path: "/customers", icon: "🤝" },
     { name: t("sidebar.tasks"), path: "/tasks", icon: "✅" },

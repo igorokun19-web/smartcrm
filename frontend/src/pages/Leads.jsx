@@ -8,6 +8,7 @@ import {
   getPriorityClass,
   calculateLeadScore,
   getLeadQuality,
+  getLeadTemperature,
 } from "../context/CrmContext";
 import { useTranslation } from "../hooks/useTranslation";
 import { useDebounce } from "../hooks/index";
@@ -399,15 +400,6 @@ export default function Leads() {
                 </div>
               </th>
               <th className="text-right p-4 cursor-pointer hover:bg-gray-200" onClick={() => {
-                if (sortBy === "phone") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                else { setSortBy("phone"); setSortOrder("asc"); }
-              }}>
-                <div className="flex items-center gap-2 justify-end">
-                  {t("leads.phone")}
-                  {sortBy === "phone" && (sortOrder === "asc" ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
-                </div>
-              </th>
-              <th className="text-right p-4 cursor-pointer hover:bg-gray-200" onClick={() => {
                 if (sortBy === "status") setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                 else { setSortBy("status"); setSortOrder("asc"); }
               }}>
@@ -433,7 +425,7 @@ export default function Leads() {
           <tbody>
             {filteredLeads.length === 0 ? (
               <tr>
-                <td colSpan="7" className="text-center p-8 text-gray-500">
+                <td colSpan="6" className="text-center p-8 text-gray-500">
                   {t("leads.noLeads")}
                 </td>
               </tr>
@@ -442,17 +434,20 @@ export default function Leads() {
                 <React.Fragment key={lead.id}>
                   <tr className="border-b hover:bg-gray-50 transition">
                     <td className="p-4 text-right">
-                      <div className="flex items-center gap-2">
-                        <div>
-                          <div className="font-semibold">{lead.name}</div>
-                          <div className="text-sm text-gray-600">{lead.phone}</div>
-                        </div>
-                        <div className={`${getLeadQuality(calculateLeadScore(lead)).color} text-white text-xs font-bold px-2 py-1 rounded whitespace-nowrap`}>
-                          {calculateLeadScore(lead)} pts
-                        </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="font-semibold">{lead.name}</div>
+                        <div className="text-sm text-gray-500">{lead.phone}</div>
+                        {(() => {
+                          const t = getLeadTemperature(lead);
+                          return (
+                            <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium w-fit ${t.bg}`} title={t.reason}>
+                              {t.label}
+                              <span className="text-[10px] opacity-70">— {t.reason}</span>
+                            </span>
+                          );
+                        })()}
                       </div>
                     </td>
-                    <td className="p-4 text-right text-sm text-gray-600">{lead.phone}</td>
                     <td className="p-4 text-right">
                       <select
                         value={lead.status || "New"}
@@ -545,7 +540,7 @@ export default function Leads() {
 
                   {expandedLeads[lead.id] && (
                     <tr className="bg-gray-50 border-b">
-                      <td colSpan="7" className="p-6">
+                      <td colSpan="6" className="p-6">
                         <div className="grid xl:grid-cols-3 gap-6">
                           {/* Notes Section */}
                           <div className="bg-blue-50 rounded-xl p-4">
@@ -689,23 +684,35 @@ export default function Leads() {
                             )}
                           </div>
 
-                          {/* Activity Section */}
+                          {/* Activity Timeline */}
                           <div className="bg-purple-50 rounded-xl p-4">
-                            <h4 className="font-bold text-purple-800 mb-3 flex items-center gap-2">
-                              📋 {t("leads.activity")} ({(lead.activity || []).length})
-                            </h4>
+                            <h4 className="font-bold text-purple-800 mb-3">📋 {t("leads.activity")} ({(lead.activity || []).length})</h4>
                             {(lead.activity || []).length === 0 ? (
                               <p className="text-gray-500 text-sm">{t("leads.noActivity")}</p>
                             ) : (
                               <div className="space-y-2 max-h-64 overflow-auto">
-                                {(lead.activity || []).map((item) => (
-                                  <div key={item.id} className="bg-white p-3 rounded border text-sm">
-                                    <p>{item.text}</p>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                      {formatDate(item.createdAt)}
-                                    </p>
-                                  </div>
-                                ))}
+                                {[...(lead.activity || [])].reverse().map((item) => {
+                                  const iconMap = {
+                                    "lead-created":   { icon: "🌱", bg: "bg-green-50 border-green-200" },
+                                    "status-changed": { icon: "🔄", bg: "bg-blue-50 border-blue-200" },
+                                    "note-added":     { icon: "📝", bg: "bg-yellow-50 border-yellow-200" },
+                                    "note-deleted":   { icon: "🗑️", bg: "bg-gray-50 border-gray-200" },
+                                    "task-added":     { icon: "✅", bg: "bg-indigo-50 border-indigo-200" },
+                                    "task-updated":   { icon: "✏️", bg: "bg-indigo-50 border-indigo-200" },
+                                    "task-deleted":   { icon: "🗑️", bg: "bg-gray-50 border-gray-200" },
+                                    "lead-updated":   { icon: "🖊️", bg: "bg-slate-50 border-slate-200" },
+                                  };
+                                  const { icon, bg } = iconMap[item.type] || { icon: "•", bg: "bg-white border-gray-100" };
+                                  return (
+                                    <div key={item.id} className={`flex gap-2 p-2 rounded-lg border text-sm ${bg}`}>
+                                      <span className="text-base shrink-0">{icon}</span>
+                                      <div>
+                                        <p className="text-gray-800">{item.text}</p>
+                                        <p className="text-xs text-gray-400 mt-0.5">{formatDate(item.createdAt)}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>

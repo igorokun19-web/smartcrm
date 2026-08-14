@@ -95,6 +95,33 @@ export function getLeadQuality(score) {
   return { label: "⭐ Very Low", color: "bg-red-500" };
 }
 
+// Lead temperature: hot / warm / cold + reason
+export function getLeadTemperature(lead) {
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  if (lead.status === "Won") return { temp: "won",  label: "✅ נסגר",   bg: "bg-emerald-100 text-emerald-700", reason: "עסקה סגורה" };
+  if (lead.status === "Lost") return { temp: "cold", label: "🔴 קר",    bg: "bg-red-100 text-red-600",         reason: "סומן כאבוד" };
+
+  const dates = [
+    ...(lead.activity || []).map(a => new Date(a.createdAt || 0).getTime()),
+    ...(lead.notes    || []).map(n => new Date(n.createdAt || 0).getTime()),
+    new Date(lead.createdAt || 0).getTime(),
+  ].filter(Boolean);
+  const lastActivity = Math.max(...dates);
+  const daysSince = Math.round((now - lastActivity) / dayMs);
+
+  if (lead.status === "Quoted") {
+    if (daysSince > 7)  return { temp: "cold", label: "🔴 קר",    bg: "bg-red-100 text-red-600",         reason: `הצעת מחיר פתוחה ${daysSince} ימים` };
+    return               { temp: "warm", label: "🟡 בינוני", bg: "bg-yellow-100 text-yellow-700",  reason: "ממתין לתשובה" };
+  }
+
+  const hasOpenTask = (lead.tasks || []).some(t => !t.completed);
+  if (daysSince <= 2 && hasOpenTask) return { temp: "hot",  label: "🟢 חם",     bg: "bg-green-100 text-green-700",   reason: "פעיל לאחרונה" };
+  if (daysSince <= 5)                return { temp: "warm", label: "🟡 בינוני", bg: "bg-yellow-100 text-yellow-700", reason: `${daysSince} ימים ללא פעילות` };
+  return                              { temp: "cold", label: "🔴 קר",    bg: "bg-red-100 text-red-600",        reason: `${daysSince} ימים ללא קשר` };
+}
+
 // Calculate pipeline statistics
 export function getPipelineStats(leads) {
   const statuses = {
