@@ -31,16 +31,6 @@ export default function Register() {
     setLocalError("");
 
     // Validation
-    if (!formData.username.trim()) {
-      setLocalError("שם משתמש נדרש");
-      return;
-    }
-
-    if (formData.username.length < 2 || formData.username.length > 50) {
-      setLocalError("שם משתמש חייב להיות בין 2-50 תווים");
-      return;
-    }
-
     if (!formData.name.trim()) {
       setLocalError("שם מלא נדרש");
       return;
