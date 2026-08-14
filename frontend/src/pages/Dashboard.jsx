@@ -24,7 +24,7 @@ function WelcomeBanner({ onAddLead }) {
         <div>
           <h2 className="text-xl font-bold mb-1">ברוך הבא! 👋 התחל עכשיו בשלושה צעדים</h2>
           <div className="flex flex-col sm:flex-row gap-3 mt-3 text-sm text-indigo-100">
-            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">1</span> הוסף ליד ראשון</span>
+            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">1</span> הוסף ליד</span>
             <span className="hidden sm:block text-indigo-300">→</span>
             <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">2</span> עקוב אחרי הסטטוס</span>
             <span className="hidden sm:block text-indigo-300">→</span>
@@ -256,15 +256,6 @@ export default function Dashboard() {
           <EmptyState
             title={t("dashboard.noLeads")}
             description={t("dashboard.startAddingLeads")}
-            action={
-              <button
-                onClick={() => navigate("/leads")}
-                className="flex items-center gap-2 bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition"
-              >
-                <PlusCircle size={16} />
-                הוסף ליד ראשון
-              </button>
-            }
           />
         ) : (
           <div className="space-y-3">
