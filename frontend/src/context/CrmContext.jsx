@@ -286,20 +286,23 @@ export function CrmProvider({ children }) {
     let cancelled = false;
 
     async function loadFromSupabase() {
-      const { data, error } = await supabase
-        .from("user_data")
-        .select("leads")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from("user_data")
+          .select("leads")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-      if (cancelled || error) return;
+        if (cancelled || error) return;
 
-      if (data?.leads?.length > 0) {
-        setLeads(data.leads.map(normalizeLead));
-      } else {
-        // First login — push local leads to Supabase
-        const localLeads = loadLeads(scopedStorageKey);
-        await supabase.from("user_data").upsert({ user_id: user.id, leads: localLeads });
+        if (data?.leads?.length > 0) {
+          setLeads(data.leads.map(normalizeLead));
+        } else {
+          const localLeads = loadLeads(scopedStorageKey);
+          await supabase.from("user_data").upsert({ user_id: user.id, leads: localLeads });
+        }
+      } catch (err) {
+        console.warn("Supabase load failed, using local storage:", err?.message);
       }
     }
 
@@ -312,9 +315,13 @@ export function CrmProvider({ children }) {
     if (!isAuthenticated || !user?.id || hydratedStorageKey !== scopedStorageKey) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      await supabase
-        .from("user_data")
-        .upsert({ user_id: user.id, leads });
+      try {
+        await supabase
+          .from("user_data")
+          .upsert({ user_id: user.id, leads });
+      } catch (err) {
+        console.warn("Supabase save failed:", err?.message);
+      }
     }, 1500);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [leads, isAuthenticated, user?.id, scopedStorageKey, hydratedStorageKey]);
