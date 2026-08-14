@@ -31,6 +31,8 @@ export function AuthProvider({ children }) {
   const [error, setError]       = useState(null);
   const [billing, setBilling]   = useState(null);
   const [billingLoading, setBillingLoading] = useState(false);
+  // true until the first getSession() resolves — prevents ProtectedRoute flash-redirect
+  const [initializing, setInitializing] = useState(true);
 
   // ============================================================
   // SESSION LISTENER â€” Supabase manages persistence automatically
@@ -43,6 +45,7 @@ export function AuthProvider({ children }) {
         setIsAuthenticated(true);
         setAnalyticsUser(u.id);
       }
+      setInitializing(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -222,7 +225,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      isAuthenticated, user, loading, error,
+      isAuthenticated, user, loading, error, initializing,
       billing, billingLoading,
       login, logout, register,
       forgotPassword, resetPassword,
