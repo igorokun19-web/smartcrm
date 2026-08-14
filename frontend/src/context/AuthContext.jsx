@@ -161,11 +161,11 @@ export function AuthProvider({ children }) {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) throw new Error(err.message);
       trackEvent("login_success", { userId: email }, { path: "/login" });
-      return true;
+      return { success: true };
     } catch (e) {
       setError(e.message);
       trackEvent("login_failed", { reason: e.message }, { path: "/login" });
-      return false;
+      return { success: false, error: e.message };
     } finally { setLoading(false); }
   };
 

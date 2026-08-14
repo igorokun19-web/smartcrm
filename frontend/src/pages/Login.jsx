@@ -24,12 +24,11 @@ export default function Login() {
       return;
     }
 
-    // username field is used as email with Supabase
-    const success = await login(username, password, rememberMe);
-    if (success) {
+    const result = await login(username, password, rememberMe);
+    if (result === true || result?.success) {
       navigate("/dashboard");
     } else {
-      setLocalError(error || t("login.invalidCredentials"));
+      setLocalError(result?.error || error || t("login.invalidCredentials"));
     }
   };
 
