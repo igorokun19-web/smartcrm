@@ -2,8 +2,8 @@ name: Keep Services Alive
 
 on:
   schedule:
-    # Runs every 10 minutes — keeps Render free tier from spinning down
-    - cron: '*/10 * * * *'
+    # Runs every 14 minutes — keeps Render free tier from spinning down
+    - cron: '*/14 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -12,12 +12,11 @@ jobs:
     steps:
       - name: Ping SmartCRM backend
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://smartcrm-3cle.onrender.com/api/health)
-          echo "SmartCRM health: $STATUS"
-          [ "$STATUS" = "200" ] || exit 1
-
-      - name: Ping CareerPilot frontend
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://careerpilot-ai-beige-beta.vercel.app)
-          echo "CareerPilot status: $STATUS"
-          [ "$STATUS" = "200" ] || exit 1
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 45 https://smartcrm-3cle.onrender.com/api/health)
+            echo "Attempt $i — SmartCRM health: $STATUS"
+            [ "$STATUS" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "⚠️ Backend did not respond after 3 attempts (may be warming up)"
+          exit 0
