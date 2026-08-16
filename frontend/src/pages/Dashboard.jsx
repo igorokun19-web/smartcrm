@@ -16,19 +16,28 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, Users, CheckCircle, AlertCircle, PlusCircle, ArrowLeft, Calendar, FileText } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+
+const bannerText = {
+  he: { title: "ברוך הבא! 👋 התחל עכשיו", step1: "הוסף ליד", step2: "עקוב אחרי הסטטוס", step3: "ראה את הגרף עולה", btn: "הוסף ליד ראשון" },
+  en: { title: "Welcome! 👋 Get started in 3 steps", step1: "Add a lead", step2: "Track the status", step3: "Watch your business grow", btn: "Add Your First Lead" },
+  ru: { title: "Добро пожаловать! 👋 3 простых шага", step1: "Добавьте лида", step2: "Отслеживайте статус", step3: "Наблюдайте за ростом", btn: "Добавить первого лида" },
+};
 
 function WelcomeBanner({ onAddLead }) {
+  const { language } = useLanguage();
+  const b = bannerText[language] || bannerText.en;
   return (
     <div className="rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white shadow-lg">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold mb-1">ברוך הבא! 👋 התחל עכשיו בשלושה צעדים</h2>
+          <h2 className="text-xl font-bold mb-1">{b.title}</h2>
           <div className="flex flex-col sm:flex-row gap-3 mt-3 text-sm text-indigo-100">
-            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">1</span> הוסף ליד</span>
+            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">1</span> {b.step1}</span>
             <span className="hidden sm:block text-indigo-300">→</span>
-            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">2</span> עקוב אחרי הסטטוס</span>
+            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">2</span> {b.step2}</span>
             <span className="hidden sm:block text-indigo-300">→</span>
-            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">3</span> ראה את הגרף עולה</span>
+            <span className="flex items-center gap-1"><span className="bg-white/20 rounded-full px-2 py-0.5 font-bold text-white">3</span> {b.step3}</span>
           </div>
         </div>
         <button
@@ -36,7 +45,7 @@ function WelcomeBanner({ onAddLead }) {
           className="flex items-center gap-2 bg-white text-indigo-700 font-bold px-5 py-3 rounded-xl shadow hover:bg-indigo-50 transition whitespace-nowrap"
         >
           <PlusCircle size={18} />
-          הוסף ליד ראשון
+          {b.btn}
           <ArrowLeft size={16} />
         </button>
       </div>

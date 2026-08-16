@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    width:1080px;height:1920px;
+    background:#0a0a0f;
+    font-family:'Arial Black',Arial,sans-serif;
+    overflow:hidden;color:white;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:flex-start;
+  }
+
+  /* Glow BG */
+  .glow-orange{
+    position:absolute;width:600px;height:600px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,80,0,.25) 0%,transparent 70%);
+    top:-80px;right:-150px;animation:g1 7s ease-in-out infinite;
+  }
+  .glow-blue{
+    position:absolute;width:500px;height:500px;border-radius:50%;
+    background:radial-gradient(circle,rgba(0,100,255,.15) 0%,transparent 70%);
+    bottom:300px;left:-100px;animation:g2 9s ease-in-out infinite;
+  }
+  @keyframes g1{0%,100%{transform:translate(0,0);}50%{transform:translate(-50px,80px);}}
+  @keyframes g2{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,-50px);}}
+
+  /* HOOK */
+  .hook{
+    position:absolute;top:5%;width:100%;text-align:center;
+    opacity:0;animation:hookIn .5s cubic-bezier(.175,.885,.32,1.275) .2s forwards;
+  }
+  @keyframes hookIn{from{transform:scale(2.5);opacity:0;filter:blur(12px);}to{transform:scale(1);opacity:1;filter:none;}}
+  .hook-tag{
+    display:inline-block;
+    background:linear-gradient(135deg,#ff3d00,#ff8c00);
+    font-size:34px;font-weight:900;
+    padding:10px 40px;border-radius:100px;
+    box-shadow:0 6px 24px rgba(255,60,0,.5);
+    margin-bottom:18px;letter-spacing:1px;
+  }
+  .hook h1{
+    font-size:80px;font-weight:900;line-height:1.05;
+    background:linear-gradient(180deg,#fff 60%,rgba(255,255,255,.6));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    padding:0 40px;
+  }
+
+  /* WHATSAPP PHONE MOCKUP */
+  .phone-wrap{
+    position:absolute;top:22%;left:50%;transform:translateX(-50%);
+    width:480px;
+    opacity:0;animation:slideUp .6s ease .9s forwards;
+  }
+  @keyframes slideUp{from{transform:translateX(-50%) translateY(60px);opacity:0;}
+    to{transform:translateX(-50%) translateY(0);opacity:1;}}
+  .phone{
+    background:#111;border-radius:36px;padding:0;
+    border:3px solid rgba(255,255,255,.12);
+    box-shadow:0 30px 80px rgba(0,0,0,.8);
+    overflow:hidden;
+  }
+  .phone-top{
+    background:#075e54;padding:20px 24px;
+    display:flex;align-items:center;gap:14px;
+  }
+  .avatar{
+    width:52px;height:52px;border-radius:50%;
+    background:linear-gradient(135deg,#f9a825,#f57f17);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;font-weight:900;
+  }
+  .contact-name{font-size:22px;font-weight:700;}
+  .contact-status{font-size:16px;color:rgba(255,255,255,.6);}
+  .phone-body{background:#0d1418;padding:20px;}
+
+  .msg{
+    margin-bottom:12px;
+    display:flex;flex-direction:column;
+  }
+  .msg.incoming{align-items:flex-start;}
+  .msg.outgoing{align-items:flex-end;}
+  .bubble{
+    max-width:340px;
+    padding:12px 18px;
+    border-radius:16px;
+    font-size:20px;line-height:1.5;
+    position:relative;
+  }
+  .msg.incoming .bubble{background:#1f2c33;border-radius:4px 16px 16px 16px;}
+  .msg.outgoing .bubble{background:#005c4b;border-radius:16px 4px 16px 16px;}
+  .time{font-size:14px;color:rgba(255,255,255,.4);margin-top:4px;padding:0 4px;}
+
+  /* UNANSWERED */
+  .no-answer{
+    display:flex;align-items:center;gap:12px;
+    background:rgba(255,50,50,.1);
+    border:1px solid rgba(255,50,50,.3);
+    border-radius:12px;
+    padding:14px 18px;margin:8px 0;
+    font-size:19px;
+  }
+  .no-answer-dot{
+    width:14px;height:14px;border-radius:50%;
+    background:#ff4444;animation:blink 1.2s infinite;
+  }
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+  /* DAMAGE BOX */
+  .damage{
+    position:absolute;bottom:18%;left:40px;right:40px;
+    background:linear-gradient(135deg,rgba(255,30,30,.12),rgba(255,100,0,.08));
+    border:1px solid rgba(255,60,60,.3);
+    border-radius:24px;padding:36px;
+    opacity:0;animation:slideUp .6s ease 2.5s forwards;
+  }
+  .damage-num{
+    font-size:96px;font-weight:900;
+    background:linear-gradient(135deg,#ff4444,#ff8c00);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-align:center;line-height:1;
+  }
+  .damage-label{
+    font-size:32px;color:rgba(255,255,255,.8);
+    text-align:center;margin-top:8px;
+  }
+
+  /* CTA */
+  .cta{
+    position:absolute;bottom:6%;width:100%;text-align:center;
+    opacity:0;animation:fadeIn .5s ease 3.2s forwards;
+  }
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .cta p{font-size:34px;color:rgba(255,255,255,.7);}
+  .cta .handle{font-size:30px;color:#ff8c00;font-weight:700;margin-top:8px;}
+</style>
+</head>
+<body>
+  <div class="glow-orange"></div>
+  <div class="glow-blue"></div>
+
+  <!-- HOOK -->
+  <div class="hook">
+    <div class="hook-tag">⚠️ זה קורה לך כל שישי</div>
+    <h1>3 לקוחות<br>שלחו בוואטסאפ<br>לא ענית</h1>
+  </div>
+
+  <!-- PHONE MOCKUP -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-top">
+        <div class="avatar">ד</div>
+        <div>
+          <div class="contact-name">דוד — לקוח פוטנציאלי</div>
+          <div class="contact-status">היום, 07:23</div>
+        </div>
+      </div>
+      <div class="phone-body">
+        <div class="msg incoming">
+          <div class="bubble">שלום, כמה עולה החלפת לוח חשמל? 🔌</div>
+          <div class="time">07:23</div>
+        </div>
+        <div class="no-answer">
+          <div class="no-answer-dot"></div>
+          <span>לא נענה — 6 שעות</span>
+        </div>
+        <div class="msg incoming">
+          <div class="bubble">בסוף לקחתי אחר. תודה 👋</div>
+          <div class="time">13:45</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAMAGE -->
+  <div class="damage">
+    <div class="damage-num">₪800</div>
+    <div class="damage-label">הלכו — בגלל הודעה אחת לא נענית</div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <p>עקבו לדעת איך למנוע את זה ⬇️</p>
+    <div class="handle">@okun_igal</div>
+  </div>
+</body>
+</html>

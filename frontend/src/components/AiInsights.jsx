@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, TrendingUp, AlertTriangle, Zap } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
 function AiBadge() {
   return (
@@ -10,8 +11,46 @@ function AiBadge() {
   );
 }
 
+const i18n = {
+  he: {
+    stale:      (n) => `${n} ליד${n > 1 ? "ים" : ""} לא טופל${n > 1 ? "ו" : ""} 3+ ימים`,
+    quotes:     (n) => `${n} הצעת מחיר ממתינ${n > 1 ? "ות" : "ת"} לסגירה`,
+    overdue:    (n) => `${n} משימ${n > 1 ? "ות" : "ה"} באיחור`,
+    conversion: (r) => `שיעור סגירה ${r}% — ${r > 20 ? "מעולה! 🎯" : "יש מה לשפר"}`,
+    empty:      "הוסף ליד ראשון — AI יתחיל לנתח את הנתונים שלך",
+    actionLeads: "עבור ללידים",
+    actionFollow: "עקוב עכשיו",
+    actionTasks: "ראה משימות",
+    actionAdd:  "הוסף ליד",
+  },
+  en: {
+    stale:      (n) => `${n} lead${n > 1 ? "s" : ""} with no follow-up in 3+ days`,
+    quotes:     (n) => `${n} pending quote${n > 1 ? "s" : ""} awaiting a decision`,
+    overdue:    (n) => `${n} overdue task${n > 1 ? "s" : ""}`,
+    conversion: (r) => `Close rate: ${r}% — ${r > 20 ? "Excellent! 🎯" : "Room to improve"}`,
+    empty:      "Add your first lead — AI will start analyzing your data",
+    actionLeads: "Go to Leads",
+    actionFollow: "Follow Up",
+    actionTasks: "View Tasks",
+    actionAdd:  "Add Lead",
+  },
+  ru: {
+    stale:      (n) => `${n} лид${n > 1 ? "а" : ""} без обработки 3+ дней`,
+    quotes:     (n) => `${n} предложени${n > 1 ? "я" : "е"} ожидает решения`,
+    overdue:    (n) => `${n} просроченн${n > 1 ? "ые" : "ая"} задача`,
+    conversion: (r) => `Конверсия: ${r}% — ${r > 20 ? "Отлично! 🎯" : "Есть потенциал"}`,
+    empty:      "Добавьте первого лида — AI начнёт анализировать данные",
+    actionLeads: "К лидам",
+    actionFollow: "Проследить",
+    actionTasks: "К задачам",
+    actionAdd:  "Добавить лида",
+  },
+};
+
 export default function AiInsights({ leads }) {
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const s = i18n[language] || i18n.en;
 
   const insights = useMemo(() => {
     const now = new Date().getTime();
@@ -27,14 +66,9 @@ export default function AiInsights({ leads }) {
     });
     if (stale.length > 0) {
       results.push({
-        id: "stale",
-        icon: Clock,
-        color: "text-amber-600",
-        bg: "bg-amber-50 border-amber-200",
-        title: `${stale.length} ליד${stale.length > 1 ? "ים" : ""} לא טופל${stale.length > 1 ? "ו" : ""} 3+ ימים`,
-        action: "עבור ללידים",
-        onAction: () => navigate("/leads"),
-        priority: "high"
+        id: "stale", icon: Clock, color: "text-amber-600", bg: "bg-amber-50 border-amber-200",
+        title: s.stale(stale.length), action: s.actionLeads,
+        onAction: () => navigate("/leads"), priority: "high"
       });
     }
 
@@ -46,14 +80,9 @@ export default function AiInsights({ leads }) {
     });
     if (pendingQuotes.length > 0) {
       results.push({
-        id: "quotes",
-        icon: TrendingUp,
-        color: "text-blue-600",
-        bg: "bg-blue-50 border-blue-200",
-        title: `${pendingQuotes.length} הצעת מחיר ממתינ${pendingQuotes.length > 1 ? "ות" : "ת"} לסגירה`,
-        action: "עקוב עכשיו",
-        onAction: () => navigate("/leads?filter=Quoted"),
-        priority: "high"
+        id: "quotes", icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50 border-blue-200",
+        title: s.quotes(pendingQuotes.length), action: s.actionFollow,
+        onAction: () => navigate("/leads?filter=Quoted"), priority: "high"
       });
     }
 
@@ -62,14 +91,9 @@ export default function AiInsights({ leads }) {
     const overdue = leads.flatMap(l => (l.tasks || []).filter(t => !t.completed && t.dueDate && t.dueDate < today));
     if (overdue.length > 0) {
       results.push({
-        id: "overdue",
-        icon: AlertTriangle,
-        color: "text-red-600",
-        bg: "bg-red-50 border-red-200",
-        title: `${overdue.length} משימ${overdue.length > 1 ? "ות" : "ה"} באיחור`,
-        action: "ראה משימות",
-        onAction: () => navigate("/tasks"),
-        priority: "critical"
+        id: "overdue", icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50 border-red-200",
+        title: s.overdue(overdue.length), action: s.actionTasks,
+        onAction: () => navigate("/tasks"), priority: "critical"
       });
     }
 
@@ -78,25 +102,16 @@ export default function AiInsights({ leads }) {
     if (leads.length >= 5 && closed > 0) {
       const rate = Math.round((closed / leads.length) * 100);
       results.push({
-        id: "conversion",
-        icon: Zap,
-        color: "text-green-600",
-        bg: "bg-green-50 border-green-200",
-        title: `שיעור סגירה ${rate}% — ${rate > 20 ? "מעולה! 🎯" : "יש מה לשפר"}`,
-        action: null,
-        priority: "info"
+        id: "conversion", icon: Zap, color: "text-green-600", bg: "bg-green-50 border-green-200",
+        title: s.conversion(rate), action: null, priority: "info"
       });
     }
 
-    // Empty state suggestion
+    // Empty state
     if (leads.length === 0) {
       results.push({
-        id: "empty",
-        icon: Zap,
-        color: "text-violet-600",
-        bg: "bg-violet-50 border-violet-200",
-        title: "הוסף ליד ראשון — AI יתחיל לנתח את הנתונים שלך",
-        action: "הוסף ליד",
+        id: "empty", icon: Zap, color: "text-violet-600", bg: "bg-violet-50 border-violet-200",
+        title: s.empty, action: s.actionAdd,
         onAction: () => navigate("/leads"),
         priority: "info"
       });

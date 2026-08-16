@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    width:1080px;height:1920px;
+    background:#050505;
+    font-family:'Arial Black',Arial,sans-serif;
+    overflow:hidden;color:white;
+  }
+
+  .glow1{
+    position:absolute;width:600px;height:600px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,150,0,.2) 0%,transparent 70%);
+    top:-100px;left:-100px;animation:g1 8s ease-in-out infinite;
+  }
+  .glow2{
+    position:absolute;width:500px;height:500px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,30,80,.12) 0%,transparent 70%);
+    bottom:400px;right:-50px;animation:g2 7s ease-in-out infinite;
+  }
+  @keyframes g1{0%,100%{transform:translate(0,0);}50%{transform:translate(80px,60px);}}
+  @keyframes g2{0%,100%{transform:translate(0,0);}50%{transform:translate(-60px,-80px);}}
+
+  /* HOOK — POV FORMAT */
+  .hook{
+    position:absolute;top:5%;width:100%;text-align:center;
+    opacity:0;animation:hookIn .4s ease .1s forwards;
+  }
+  @keyframes hookIn{from{transform:translateY(-30px);opacity:0;}to{opacity:1;transform:none;}}
+  .pov-label{
+    display:inline-block;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.15);
+    font-size:36px;font-weight:700;
+    padding:10px 44px;border-radius:100px;
+    letter-spacing:3px;margin-bottom:20px;
+  }
+  .hook h1{
+    font-size:76px;font-weight:900;line-height:1.08;
+    background:linear-gradient(135deg,#fff 60%,rgba(255,255,255,.65));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    padding:0 30px;
+  }
+
+  /* SCENARIO CARDS */
+  .scenarios{
+    position:absolute;top:26%;left:30px;right:30px;
+    opacity:0;animation:slideUp .7s ease 1s forwards;
+  }
+  @keyframes slideUp{from{transform:translateY(60px);opacity:0;}to{opacity:1;transform:none;}}
+
+  .scenario{
+    border-radius:22px;padding:28px 28px;margin-bottom:16px;
+    border:1px solid;
+  }
+  .scenario.bad{
+    background:linear-gradient(135deg,rgba(200,30,30,.1),rgba(180,80,0,.06));
+    border-color:rgba(220,50,50,.2);
+  }
+  .scenario.good{
+    background:linear-gradient(135deg,rgba(16,163,127,.1),rgba(0,200,100,.06));
+    border-color:rgba(16,163,127,.25);
+  }
+  .scenario-header{
+    display:flex;align-items:center;gap:14px;margin-bottom:12px;
+  }
+  .scenario-icon{font-size:36px;}
+  .scenario-title{font-size:30px;font-weight:900;}
+  .scenario.bad .scenario-title{color:#ff6655;}
+  .scenario.good .scenario-title{color:#10a37f;}
+  .scenario-body{font-size:22px;line-height:1.6;color:rgba(255,255,255,.78);}
+  .scenario-outcome{
+    margin-top:12px;
+    display:inline-block;
+    padding:6px 20px;border-radius:100px;
+    font-size:20px;font-weight:700;
+  }
+  .scenario.bad .scenario-outcome{background:rgba(220,50,50,.2);color:#ff7766;}
+  .scenario.good .scenario-outcome{background:rgba(16,163,127,.2);color:#10a37f;}
+
+  /* QUOTE */
+  .quote-box{
+    position:absolute;bottom:19%;left:30px;right:30px;
+    opacity:0;animation:slideUp .6s ease 2.4s forwards;
+  }
+  .quote{
+    background:rgba(255,255,255,.04);
+    border-right:4px solid #ff8800;
+    border-radius:0 20px 20px 0;
+    padding:28px 30px;
+    font-size:34px;line-height:1.5;
+    font-style:italic;
+    color:rgba(255,255,255,.9);
+  }
+  .quote-author{
+    margin-top:14px;
+    font-size:24px;color:rgba(255,255,255,.45);
+    padding-right:8px;
+  }
+
+  .cta{
+    position:absolute;bottom:5%;width:100%;text-align:center;
+    opacity:0;animation:fadeIn .5s ease 3.2s forwards;
+  }
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .cta p{font-size:34px;color:rgba(255,255,255,.75);}
+  .cta .handle{font-size:30px;color:#ff8800;font-weight:700;margin-top:8px;}
+</style>
+</head>
+<body>
+  <div class="glow1"></div>
+  <div class="glow2"></div>
+
+  <!-- HOOK -->
+  <div class="hook">
+    <div class="pov-label">P O V</div>
+    <h1>אתה קבלן.<br>יש לך 15 לידים<br>פתוחים עכשיו.</h1>
+  </div>
+
+  <!-- SCENARIOS -->
+  <div class="scenarios">
+    <div class="scenario bad">
+      <div class="scenario-header">
+        <span class="scenario-icon">😓</span>
+        <span class="scenario-title">בלי מערכת</span>
+      </div>
+      <div class="scenario-body">
+        אתה מנסה לזכור כל אחד. כמה ב-וואטסאפ, כמה בפתק, אחד בראש. בסוף — 5 נשכחים. כולם הלכו למתחרה.
+      </div>
+      <div class="scenario-outcome">💸 הפסד: ₪3,000+</div>
+    </div>
+
+    <div class="scenario good">
+      <div class="scenario-header">
+        <span class="scenario-icon">✅</span>
+        <span class="scenario-title">עם CRM</span>
+      </div>
+      <div class="scenario-body">
+        פותח אפליקציה. רואה 15 לידים מסודרים. "🔥 חם" בראש. לוחץ — שולח וואטסאפ. הכל מתועד. 8 דקות.
+      </div>
+      <div class="scenario-outcome">✅ סגרת 4 עסקאות</div>
+    </div>
+  </div>
+
+  <!-- QUOTE -->
+  <div class="quote-box">
+    <div class="quote">
+      "הפסקתי לאבד לידים ביום שהתחלתי לנהל אותם במסך אחד"
+    </div>
+    <div class="quote-author">— קבלן שיפוצים, ראשון לציון</div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <p>נסו חינם — קישור בביו ⬇️</p>
+    <div class="handle">@okun_igal</div>
+  </div>
+</body>
+</html>

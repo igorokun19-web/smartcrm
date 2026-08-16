@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    width:1080px;height:1920px;
+    background:#070a0f;
+    font-family:'Arial Black',Arial,sans-serif;
+    overflow:hidden;color:white;
+  }
+
+  .glow-green{
+    position:absolute;width:700px;height:700px;border-radius:50%;
+    background:radial-gradient(circle,rgba(16,163,127,.2) 0%,transparent 70%);
+    top:-100px;left:-200px;animation:g1 8s ease-in-out infinite;
+  }
+  .glow-gold{
+    position:absolute;width:500px;height:500px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,200,0,.15) 0%,transparent 70%);
+    bottom:400px;right:-100px;animation:g2 6s ease-in-out infinite;
+  }
+  @keyframes g1{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,80px);}}
+  @keyframes g2{0%,100%{transform:translate(0,0);}50%{transform:translate(-40px,-60px);}}
+
+  /* HOOK */
+  .hook{
+    position:absolute;top:4%;width:100%;text-align:center;
+    opacity:0;animation:hookIn .5s cubic-bezier(.175,.885,.32,1.275) .2s forwards;
+  }
+  @keyframes hookIn{from{transform:scale(2.5);opacity:0;filter:blur(12px);}to{transform:scale(1);opacity:1;filter:none;}}
+  .hook-badge{
+    display:inline-block;
+    background:linear-gradient(135deg,#10a37f,#05d49c);
+    font-size:32px;font-weight:900;padding:10px 44px;border-radius:100px;
+    box-shadow:0 8px 28px rgba(16,163,127,.5);margin-bottom:16px;
+  }
+  .hook h1{
+    font-size:84px;font-weight:900;line-height:1.05;
+    background:linear-gradient(180deg,#fff,rgba(255,255,255,.7));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    padding:0 30px;
+  }
+
+  /* BEFORE/AFTER CONTAINER */
+  .ba-wrap{
+    position:absolute;top:22%;left:30px;right:30px;
+    opacity:0;animation:slideUp .6s ease 1s forwards;
+  }
+  @keyframes slideUp{from{transform:translateY(60px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+  .ba-row{
+    display:flex;gap:20px;margin-bottom:20px;
+  }
+  .ba-card{
+    flex:1;border-radius:24px;padding:28px 24px;
+    border:1px solid;
+  }
+  .ba-card.before{
+    background:rgba(255,50,50,.08);
+    border-color:rgba(255,50,50,.25);
+  }
+  .ba-card.after{
+    background:rgba(16,163,127,.08);
+    border-color:rgba(16,163,127,.3);
+  }
+  .ba-label{
+    font-size:24px;font-weight:700;margin-bottom:12px;
+    letter-spacing:1px;
+  }
+  .ba-card.before .ba-label{color:#ff5555;}
+  .ba-card.after .ba-label{color:#10a37f;}
+  .ba-title{font-size:30px;font-weight:900;margin-bottom:10px;}
+  .ba-desc{font-size:20px;line-height:1.6;color:rgba(255,255,255,.7);}
+  .ba-time{
+    margin-top:14px;
+    display:inline-block;
+    padding:6px 20px;border-radius:100px;
+    font-size:20px;font-weight:700;
+  }
+  .ba-card.before .ba-time{background:rgba(255,50,50,.2);color:#ff7777;}
+  .ba-card.after .ba-time{background:rgba(16,163,127,.2);color:#10a37f;}
+
+  /* TASKS ROW */
+  .tasks{
+    margin-top:0;
+    display:grid;gap:14px;
+  }
+  .task{
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:20px 24px;
+    display:flex;align-items:center;gap:18px;
+    font-size:22px;
+  }
+  .task-icon{font-size:28px;}
+  .task-done{
+    margin-right:auto;
+    padding:4px 14px;border-radius:100px;
+    font-size:18px;font-weight:700;
+  }
+  .done{background:rgba(16,163,127,.2);color:#10a37f;}
+  .pending{background:rgba(255,200,0,.2);color:#ffc800;}
+
+  /* RESULT BOX */
+  .result{
+    position:absolute;bottom:17%;left:30px;right:30px;
+    background:linear-gradient(135deg,rgba(16,163,127,.15),rgba(0,200,120,.08));
+    border:1px solid rgba(16,163,127,.4);
+    border-radius:24px;padding:36px;
+    text-align:center;
+    opacity:0;animation:slideUp .6s ease 2.4s forwards;
+  }
+  .result-num{
+    font-size:100px;font-weight:900;
+    background:linear-gradient(135deg,#10a37f,#7fff7f);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    line-height:1;
+  }
+  .result-label{font-size:32px;color:rgba(255,255,255,.8);margin-top:6px;}
+
+  .cta{
+    position:absolute;bottom:6%;width:100%;text-align:center;
+    opacity:0;animation:fadeIn .5s ease 3.2s forwards;
+  }
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .cta p{font-size:34px;color:rgba(255,255,255,.7);}
+  .cta .handle{font-size:28px;color:#10a37f;font-weight:700;margin-top:8px;}
+</style>
+</head>
+<body>
+  <div class="glow-green"></div>
+  <div class="glow-gold"></div>
+
+  <!-- HOOK -->
+  <div class="hook">
+    <div class="hook-badge">⚡ לפני / אחרי CRM</div>
+    <h1>ניהול 20 לקוחות<br>— בלי אקסל<br>בלי כאב ראש</h1>
+  </div>
+
+  <!-- BEFORE/AFTER -->
+  <div class="ba-wrap">
+    <div class="ba-row">
+      <div class="ba-card before">
+        <div class="ba-label">❌ לפני</div>
+        <div class="ba-title">ה"שיטה" הישנה</div>
+        <div class="ba-desc">וואטסאפ, פתקים, אקסל, "אני זוכר"</div>
+        <div class="ba-time">⏱️ שעה וחצי ביום</div>
+      </div>
+      <div class="ba-card after">
+        <div class="ba-label">✅ אחרי</div>
+        <div class="ba-title">CRM בעברית</div>
+        <div class="ba-desc">הכל במסך אחד. טלפון או מחשב.</div>
+        <div class="ba-time">⚡ 8 דקות ביום</div>
+      </div>
+    </div>
+
+    <div class="tasks">
+      <div class="task">
+        <span class="task-icon">👥</span>
+        <span>כל הלידים — מסודרים לפי סטטוס</span>
+        <span class="task-done done">✓</span>
+      </div>
+      <div class="task">
+        <span class="task-icon">📋</span>
+        <span>משימות + תזכורות אוטומטיות</span>
+        <span class="task-done done">✓</span>
+      </div>
+      <div class="task">
+        <span class="task-icon">💵</span>
+        <span>חשבוניות מהטלפון — 30 שניות</span>
+        <span class="task-done done">✓</span>
+      </div>
+      <div class="task">
+        <span class="task-icon">🔥</span>
+        <span>לידים "חמים" מודגשים בראש</span>
+        <span class="task-done done">✓</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result">
+    <div class="result-num">חינם</div>
+    <div class="result-label">לתקופת ניסיון — ללא כרטיס אשראי</div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <p>קישור בביו ← נסו עכשיו ⬇️</p>
+    <div class="handle">@okun_igal</div>
+  </div>
+</body>
+</html>

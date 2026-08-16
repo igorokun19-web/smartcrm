@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    width:1080px;height:1920px;
+    background:#050a0f;
+    font-family:'Arial Black',Arial,sans-serif;
+    overflow:hidden;color:white;
+  }
+
+  .glow-blue{
+    position:absolute;width:700px;height:700px;border-radius:50%;
+    background:radial-gradient(circle,rgba(30,100,255,.18) 0%,transparent 70%);
+    top:-150px;right:-150px;animation:g1 8s ease-in-out infinite;
+  }
+  .glow-purple{
+    position:absolute;width:500px;height:500px;border-radius:50%;
+    background:radial-gradient(circle,rgba(150,50,255,.12) 0%,transparent 70%);
+    bottom:300px;left:-100px;animation:g2 10s ease-in-out infinite;
+  }
+  @keyframes g1{0%,100%{transform:translate(0,0);}50%{transform:translate(-50px,80px);}}
+  @keyframes g2{0%,100%{transform:translate(0,0);}50%{transform:translate(50px,-50px);}}
+
+  /* HOOK */
+  .hook{
+    position:absolute;top:4%;width:100%;text-align:center;
+    opacity:0;animation:hookIn .5s cubic-bezier(.175,.885,.32,1.275) .2s forwards;
+  }
+  @keyframes hookIn{from{transform:scale(2.5);opacity:0;filter:blur(12px);}to{transform:scale(1);opacity:1;filter:none;}}
+  .hook-badge{
+    display:inline-block;
+    background:linear-gradient(135deg,#1a56e8,#6c2bd9);
+    font-size:32px;font-weight:900;padding:10px 44px;border-radius:100px;
+    box-shadow:0 8px 28px rgba(100,100,255,.4);margin-bottom:16px;
+  }
+  .hook h1{
+    font-size:82px;font-weight:900;line-height:1.05;
+    background:linear-gradient(180deg,#fff 50%,rgba(255,255,255,.65));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    padding:0 24px;
+  }
+  .hook-sub{font-size:36px;color:rgba(255,255,255,.65);margin-top:10px;}
+
+  /* STEPS */
+  .steps{
+    position:absolute;top:25%;left:36px;right:36px;
+    opacity:0;animation:slideUp .7s ease 1s forwards;
+  }
+  @keyframes slideUp{from{transform:translateY(70px);opacity:0;}to{opacity:1;transform:none;}}
+
+  .step{
+    display:flex;gap:24px;align-items:flex-start;
+    margin-bottom:22px;
+  }
+  .step-num{
+    width:70px;height:70px;border-radius:50%;
+    background:linear-gradient(135deg,#1a56e8,#6c2bd9);
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;font-weight:900;
+    box-shadow:0 6px 20px rgba(100,100,255,.4);
+    flex-shrink:0;
+    margin-top:4px;
+  }
+  .step-body{
+    flex:1;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:20px;padding:22px 26px;
+  }
+  .step-title{font-size:30px;font-weight:900;margin-bottom:6px;}
+  .step-desc{font-size:21px;line-height:1.55;color:rgba(255,255,255,.7);}
+  .step-badge{
+    display:inline-block;margin-top:10px;
+    padding:5px 18px;border-radius:100px;font-size:19px;font-weight:700;
+    background:rgba(100,100,255,.2);color:#7eb6ff;
+  }
+
+  /* RESULT */
+  .result-box{
+    position:absolute;bottom:16%;left:36px;right:36px;
+    background:linear-gradient(135deg,rgba(30,80,220,.15),rgba(100,40,220,.1));
+    border:1px solid rgba(80,120,255,.3);
+    border-radius:28px;padding:36px;
+    text-align:center;
+    opacity:0;animation:slideUp .6s ease 2.6s forwards;
+  }
+  .result-title{font-size:40px;font-weight:900;margin-bottom:8px;}
+  .result-stats{
+    display:flex;justify-content:space-around;margin-top:20px;
+  }
+  .stat{text-align:center;}
+  .stat-num{
+    font-size:72px;font-weight:900;
+    background:linear-gradient(135deg,#4d9fff,#a06bff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    line-height:1;
+  }
+  .stat-label{font-size:22px;color:rgba(255,255,255,.6);margin-top:4px;}
+
+  .cta{
+    position:absolute;bottom:5%;width:100%;text-align:center;
+    opacity:0;animation:fadeIn .5s ease 3.3s forwards;
+  }
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .cta p{font-size:34px;color:rgba(255,255,255,.75);}
+  .cta .handle{font-size:30px;color:#4d9fff;font-weight:700;margin-top:8px;}
+</style>
+</head>
+<body>
+  <div class="glow-blue"></div>
+  <div class="glow-purple"></div>
+
+  <!-- HOOK -->
+  <div class="hook">
+    <div class="hook-badge">🛠️ המדריך הקצר</div>
+    <h1>3 דקות הגדרה<br>ו-20 לקוחות<br>מסודרים</h1>
+    <div class="hook-sub">CRM לבעלי מקצוע — בעברית</div>
+  </div>
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">הוספת ליד</div>
+        <div class="step-desc">שם + טלפון + מה הוא רוצה. זהו. המערכת יוצרת משימת מעקב אוטומטית.</div>
+        <div class="step-badge">⚡ 15 שניות</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">מעקב סטטוס</div>
+        <div class="step-desc">חדש → נוצר קשר → הצעת מחיר → נסגר. רואים בדיוק איפה כל ליד.</div>
+        <div class="step-badge">🔥 לידים חמים בראש</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">חשבונית מהטלפון</div>
+        <div class="step-desc">בוחרים לקוח → מכניסים סכום → שולחים. בלי PDF בידני.</div>
+        <div class="step-badge">📄 30 שניות</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-box">
+    <div class="result-title">התוצאה אחר חודש</div>
+    <div class="result-stats">
+      <div class="stat">
+        <div class="stat-num">0</div>
+        <div class="stat-label">לידים<br>שנשכחו</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3×</div>
+        <div class="stat-label">יותר<br>פולו-אפ</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">8′</div>
+        <div class="stat-label">ניהול<br>ביום</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <p>נסו חינם — קישור בביו ⬇️</p>
+    <div class="handle">@okun_igal</div>
+  </div>
+</body>
+</html>
