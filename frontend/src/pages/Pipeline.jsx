@@ -140,7 +140,7 @@ function PipelineStage({ label, color, leads, onLeadClick, now, s }) {
   );
 }
 
-function LeadDetailModal({ lead, onClose, now, s }) {
+function LeadDetailModal({ lead, onClose, now, s, language }) {
   if (!lead) return null;
 
   const score = calculateLeadScore(lead);
@@ -198,7 +198,7 @@ function LeadDetailModal({ lead, onClose, now, s }) {
             <p className="text-2xl font-bold">{lead.activity?.length || 0}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">סטטוס</p>
+            <p className="text-sm text-gray-500">{s.modalStatus}</p>
             <p className="text-lg font-bold text-blue-600">{lead.status}</p>
           </div>
         </div>
@@ -239,7 +239,7 @@ function LeadDetailModal({ lead, onClose, now, s }) {
               if (phone) {
                 window.open(`https://wa.me/972${phone.slice(-9)}?text=${encodeURIComponent(message)}`);
               } else {
-                alert("אין מספר טלפון לליד");
+                alert(language === "he" ? "אין מספר טלפון לליד" : language === "ru" ? "Нет номера телефона для лида" : "No phone number for this lead");
               }
             }}
             className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition flex items-center justify-center gap-2"
@@ -281,51 +281,51 @@ export default function Pipeline() {
   // Calculate conversion rates
   const conversionRate = leads.length > 0 ? Math.round((leadsGrouped.Won.length / leads.length) * 100) : 0;
   return (
-    <div className="p-6 space-y-8" dir="rtl">
+    <div className="p-6 space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold">🏗️ Sales Pipeline Pro</h1>
-        <p className="text-gray-500 mt-2">ניהול לידים לאורך כל שלבי המכירה</p>
+        <h1 className="text-4xl font-bold">{s.pipelineTitle}</h1>
+        <p className="text-gray-500 mt-2">{s.subtitle}</p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className={`${kpiCard} bg-blue-50`}>
-          <p className="text-sm text-gray-600 mb-1">סה״כ לידים</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiTotal}</p>
           <p className="text-3xl font-bold">{leads.length}</p>
-          <p className="text-xs text-gray-500 mt-2">בכל הצינור</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiTotalSub}</p>
         </div>
 
         <div className={`${kpiCard} bg-green-50`}>
-          <p className="text-sm text-gray-600 mb-1">שיעור המרה</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiConversion}</p>
           <p className="text-3xl font-bold text-green-600">{conversionRate}%</p>
-          <p className="text-xs text-gray-500 mt-2">{leadsGrouped.Won.length} עסקאות סגורות</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiConversionSub(leadsGrouped.Won.length)}</p>
         </div>
 
         <div className={`${kpiCard} bg-purple-50`}>
-          <p className="text-sm text-gray-600 mb-1">ניקוד ממוצע</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiScore}</p>
           <p className="text-3xl font-bold text-purple-600">{Math.round(avgScore)}</p>
-          <p className="text-xs text-gray-500 mt-2">איכות הלידים</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiScoreSub}</p>
         </div>
 
         <div className={`${kpiCard} bg-orange-50`}>
-          <p className="text-sm text-gray-600 mb-1">ערך משוער</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiValue}</p>
           <p className="text-3xl font-bold text-orange-600">₪{(totalValue / 1000).toFixed(0)}K</p>
-          <p className="text-xs text-gray-500 mt-2">מלידים שסגורים</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiValueSub}</p>
         </div>
       </div>
 
       {/* Pipeline Metrics */}
       <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="font-bold text-lg mb-4">📊 מדדי צינור</h2>
+        <h2 className="font-bold text-lg mb-4">{s.pipelineMetrics}</h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {Object.entries(leadsGrouped).map(([status, items]) => (
             <div key={status} className="text-center">
-              <p className="text-sm text-gray-600 mb-2">{pipelineStatuses[status].label}</p>
+              <p className="text-sm text-gray-600 mb-2">{s.stageLabels[status]}</p>
               <p className="text-2xl font-bold">{items.length}</p>
               {status !== "Won" && status !== "Lost" && (
                 <p className="text-xs text-gray-500 mt-1">
-                  {items.length > 0 ? Math.round((items.length / leads.length) * 100) : 0}% מהצינור
+                  {items.length > 0 ? Math.round((items.length / leads.length) * 100) : 0}% {s.ofPipeline}
                 </p>
               )}
             </div>
@@ -335,28 +335,31 @@ export default function Pipeline() {
 
       {/* Pipeline Visualization */}
       <div>
-        <h2 className="text-2xl font-bold mb-4">🏛️ צינור המכירה</h2>
+        <h2 className="text-2xl font-bold mb-4">{s.pipelineTitle}</h2>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 pb-8">
           <PipelineStage
-            label="חדש"
+            label={s.stageLabels.New}
             color="bg-blue-600"
             leads={leadsGrouped.New}
             onLeadClick={setSelectedLead}
             now={now}
+            s={s}
           />
           <PipelineStage
-            label="נוצר קשר"
+            label={s.stageLabels.Contacted}
             color="bg-purple-600"
             leads={leadsGrouped.Contacted}
             onLeadClick={setSelectedLead}
             now={now}
+            s={s}
           />
           <PipelineStage
-            label="הצעת מחיר"
+            label={s.stageLabels.Quoted}
             color="bg-amber-600"
             leads={leadsGrouped.Quoted}
             onLeadClick={setSelectedLead}
             now={now}
+            s={s}
           />
           <PipelineStage
             label={s.stageLabels.Won}
@@ -364,6 +367,7 @@ export default function Pipeline() {
             leads={leadsGrouped.Won}
             onLeadClick={setSelectedLead}
             now={now}
+            s={s}
           />
           <PipelineStage
             label={s.stageLabels.Lost}
@@ -371,6 +375,7 @@ export default function Pipeline() {
             leads={leadsGrouped.Lost}
             onLeadClick={setSelectedLead}
             now={now}
+            s={s}
           />
         </div>
       </div>

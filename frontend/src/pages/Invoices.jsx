@@ -23,8 +23,16 @@ const i18n = {
     markPaidBtn: "שולם",
     analyticsStatus: "📊 על ידי סטאטוס",
     analyticsAmounts: "💰 סכומים",
-    avgAmount: "סכום ממוצע:", highestAmount: "הגבוה ביותר:",
+    avgAmount: "סכום ממוצע:", highestAmount: "הגבוה ביותר:", lowestAmount: "הנמוך ביותר:",
+    byMonth: "📅 על ידי חודש", noData: "אין נתונים",
+    months: ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"],
     requiredAlert: "נא למלא את כל השדות הנדרשים",
+    pdfTitle: "חשבונית",
+    pdfFrom: "מ:", pdfTo: "ל:", pdfIssueDate: "תאריך הנפקה:", pdfDueDate: "תאריך תשלום:",
+    pdfDescription: "תיאור", pdfAmount: "סכום", pdfVat: "מס ערך מוסף", pdfTotal: "סה״כ לתשלום",
+    pdfThanks: "תודה על העסקה!", pdfCompany: "MyServices CRM - ניהול לידים", pdfPhone: "טל: 1-800-MYSERVICES",
+    whatsappSendBtn: "שלח ב-WhatsApp", downloadPdfBtn: "הורד PDF", markPaidBtnTitle: "סמן כשולם",
+    dateLocale: "he-IL",
   },
   en: {
     title: "💵 Invoices", subtitle: "Manage invoices and payments",
@@ -44,8 +52,16 @@ const i18n = {
     markPaidBtn: "Paid",
     analyticsStatus: "📊 By Status",
     analyticsAmounts: "💰 Amounts",
-    avgAmount: "Average:", highestAmount: "Highest:",
+    avgAmount: "Average:", highestAmount: "Highest:", lowestAmount: "Lowest:",
+    byMonth: "📅 By Month", noData: "No data",
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     requiredAlert: "Please fill in all required fields",
+    pdfTitle: "Invoice",
+    pdfFrom: "From:", pdfTo: "To:", pdfIssueDate: "Issue Date:", pdfDueDate: "Due Date:",
+    pdfDescription: "Description", pdfAmount: "Amount", pdfVat: "Value Added Tax", pdfTotal: "Total Due",
+    pdfThanks: "Thank you for your business!", pdfCompany: "MyServices CRM - Lead Management", pdfPhone: "Phone: 1-800-MYSERVICES",
+    whatsappSendBtn: "Send via WhatsApp", downloadPdfBtn: "Download PDF", markPaidBtnTitle: "Mark as Paid",
+    dateLocale: "en-US",
   },
   ru: {
     title: "💵 Счета", subtitle: "Управление счетами и оплатой",
@@ -65,8 +81,16 @@ const i18n = {
     markPaidBtn: "Оплачен",
     analyticsStatus: "📊 По статусу",
     analyticsAmounts: "💰 Суммы",
-    avgAmount: "Средняя:", highestAmount: "Максимальная:",
+    avgAmount: "Средняя:", highestAmount: "Максимальная:", lowestAmount: "Минимальная:",
+    byMonth: "📅 По месяцам", noData: "Нет данных",
+    months: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
     requiredAlert: "Заполните все обязательные поля",
+    pdfTitle: "Счёт",
+    pdfFrom: "От:", pdfTo: "Кому:", pdfIssueDate: "Дата выставления:", pdfDueDate: "Дата оплаты:",
+    pdfDescription: "Описание", pdfAmount: "Сумма", pdfVat: "Налог на добавленную стоимость", pdfTotal: "Итого к оплате",
+    pdfThanks: "Спасибо за ваш заказ!", pdfCompany: "MyServices CRM - Управление лидами", pdfPhone: "Тел: 1-800-MYSERVICES",
+    whatsappSendBtn: "Отправить через WhatsApp", downloadPdfBtn: "Скачать PDF", markPaidBtnTitle: "Отметить как оплачено",
+    dateLocale: "ru-RU",
   },
 };
 
@@ -213,7 +237,7 @@ export default function Invoices() {
         </head>
         <body>
           <div class="header">
-            <h1>חשבונית</h1>
+            <h1>{pdfTitle}</h1>
             <p>מס' ${invoice.number}</p>
           </div>
           
@@ -492,7 +516,7 @@ export default function Invoices() {
                           onClick={() => {
                             const lead = leads.find(l => l.id === invoice.leadId);
                             if (lead) {
-                              const message = `שלום ${lead.name}! חשבונית INV-${invoice.number} בסכום ₪${invoice.amount} מחכה לך. MyServices CRM`;
+                              const message = language === "he" ? `שלום ${lead.name}! חשבונית INV-${invoice.number} בסכום ₪${invoice.amount} מחכה לך. MyServices CRM` : language === "ru" ? `Привет ${lead.name}! Счёт INV-${invoice.number} на сумму ₪${invoice.amount} ждёт вас. MyServices CRM` : `Hello ${lead.name}! Invoice INV-${invoice.number} for ₪${invoice.amount} is waiting for you. MyServices CRM`;
                               const phone = lead.phone?.replace(/\D/g, "");
                               if (phone) {
                                 window.open(`https://wa.me/972${phone.slice(-9)}?text=${encodeURIComponent(message)}`);
@@ -500,14 +524,14 @@ export default function Invoices() {
                             }
                           }}
                           className={`${btnClass} bg-green-100 text-green-700 hover:bg-green-200`}
-                          title="שלח ב-WhatsApp"
+                          title={s.whatsappSendBtn}
                         >
                           <MessageCircle size={16} />
                         </button>
                         <button
                           onClick={() => generatePDF(invoice)}
                           className={`${btnClass} bg-blue-100 text-blue-700 hover:bg-blue-200`}
-                          title="הורד PDF"
+                          title={s.downloadPdfBtn}
                         >
                           <Download size={16} />
                         </button>
@@ -515,9 +539,9 @@ export default function Invoices() {
                           <button
                             onClick={() => markPaid(invoice.id)}
                             className={`${btnClass} bg-green-100 text-green-700 hover:bg-green-200`}
-                            title="סמן כשולם"
-                          >
-                            <CheckCircle size={14} /> שולם
+                          title={s.markPaidBtnTitle}
+                        >
+                          <CheckCircle size={14} /> {s.markPaidBtn}
                           </button>
                         )}
                         <button
@@ -573,7 +597,7 @@ export default function Invoices() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">הנמוך ביותר:</span>
+              <span className="text-gray-600">{s.lowestAmount}</span>
               <span className="font-bold">
                 ₪{invoices.length > 0 ? Math.min(...invoices.map((i) => parseFloat(i.amount) || 0)).toFixed(0) : 0}
               </span>
@@ -582,10 +606,10 @@ export default function Invoices() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-bold mb-4">📅 על ידי חודש</h3>
+          <h3 className="text-lg font-bold mb-4">{s.byMonth}</h3>
           <div className="space-y-2 text-sm">
             {invoices.length > 0 ? (
-              ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"].map((month, idx) => {
+              s.months.map((month, idx) => {
                 const monthInvoices = invoices.filter((i) => new Date(i.issueDate).getMonth() === idx);
                 return monthInvoices.length > 0 ? (
                   <div key={idx} className="flex justify-between text-gray-600">
@@ -595,7 +619,7 @@ export default function Invoices() {
                 ) : null;
               })
             ) : (
-              <p className="text-gray-400">אין נתונים</p>
+              <p className="text-gray-400">{s.noData}</p>
             )}
           </div>
         </div>
