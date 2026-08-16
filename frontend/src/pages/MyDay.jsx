@@ -2,15 +2,74 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCrm, getLeadTemperature } from "../context/CrmContext";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { Plus, MessageCircle } from "lucide-react";
 
-function greeting(user) {
-  const h = new Date().getHours();
-  const n = user?.name?.split(" ")[0] || "";
-  if (h < 12) return `בוקר טוב${n ? `, ${n}` : ""} 👋`;
-  if (h < 17) return `צהריים טובים${n ? `, ${n}` : ""} ☀️`;
-  return `ערב טוב${n ? `, ${n}` : ""} 🌙`;
-}
+const i18n = {
+  he: {
+    greeting: (h, n) => h < 12 ? `בוקר טוב${n ? `, ${n}` : ""} 👋` : h < 17 ? `צהריים טובים${n ? `, ${n}` : ""} ☀️` : `ערב טוב${n ? `, ${n}` : ""} 🌙`,
+    dateLocale: "he-IL",
+    newBtn: "חדש",
+    fabItems: [{ label: "ליד חדש", path: "/leads" }, { label: "משימה", path: "/tasks" }, { label: "חשבונית", path: "/invoices" }, { label: "שירות", path: "/services" }],
+    overdue: "באיחור", leads: "לידים", invoices: "חשבוניות", quotes: "הצעות",
+    todayTitle: "✅ המשימות שלי היום", todayEmpty: "אין משימות להיום 🎉",
+    hotTitle: "🔥 לידים חמים", hotEmpty: "אין לידים חמים כרגע",
+    recTitle: "💡 המלצה יומית",
+    actTitle: "🕒 פעילות אחרונה", actEmpty: "אין פעילות עדיין",
+    urgent: "דחוף", normal: "רגיל",
+    revenue: "הכנסות", customers: "לקוחות", leadsLabel: "לידים", closings: "סגירות",
+    rec: {
+      noLeads: "הוסף ליד ראשון כדי להתחיל",
+      great: "המשיכו כך! העסק מנוהל מצוין 🎉",
+      noResponse: (n) => `צור קשר עם ${n} לידים שממתינים למענה`,
+      overdue: (n) => `סגור ${n} משימות באיחור להעלאת הציון`,
+      unpaid: (n) => `גבה ${n} חשבוניות פתוחות`,
+      staleQuote: (n) => `עקוב אחרי ${n} הצעות מחיר תקועות`,
+    },
+  },
+  en: {
+    greeting: (h, n) => h < 12 ? `Good morning${n ? `, ${n}` : ""} 👋` : h < 17 ? `Good afternoon${n ? `, ${n}` : ""} ☀️` : `Good evening${n ? `, ${n}` : ""} 🌙`,
+    dateLocale: "en-US",
+    newBtn: "New",
+    fabItems: [{ label: "New Lead", path: "/leads" }, { label: "Task", path: "/tasks" }, { label: "Invoice", path: "/invoices" }, { label: "Service", path: "/services" }],
+    overdue: "Overdue", leads: "Leads", invoices: "Invoices", quotes: "Quotes",
+    todayTitle: "✅ Today's Tasks", todayEmpty: "No tasks for today 🎉",
+    hotTitle: "🔥 Hot Leads", hotEmpty: "No hot leads right now",
+    recTitle: "💡 Daily Recommendation",
+    actTitle: "🕒 Recent Activity", actEmpty: "No activity yet",
+    urgent: "Urgent", normal: "Normal",
+    revenue: "Revenue", customers: "Customers", leadsLabel: "Leads", closings: "Closings",
+    rec: {
+      noLeads: "Add your first lead to get started",
+      great: "Keep it up! Business is running great 🎉",
+      noResponse: (n) => `Contact ${n} lead${n === 1 ? "" : "s"} waiting for a response`,
+      overdue: (n) => `Close ${n} overdue task${n === 1 ? "" : "s"} to boost your score`,
+      unpaid: (n) => `Collect payment on ${n} open invoice${n === 1 ? "" : "s"}`,
+      staleQuote: (n) => `Follow up on ${n} stale quote${n === 1 ? "" : "s"}`,
+    },
+  },
+  ru: {
+    greeting: (h, n) => h < 12 ? `Доброе утро${n ? `, ${n}` : ""} 👋` : h < 17 ? `Добрый день${n ? `, ${n}` : ""} ☀️` : `Добрый вечер${n ? `, ${n}` : ""} 🌙`,
+    dateLocale: "ru-RU",
+    newBtn: "Создать",
+    fabItems: [{ label: "Новый лид", path: "/leads" }, { label: "Задача", path: "/tasks" }, { label: "Счёт", path: "/invoices" }, { label: "Услуга", path: "/services" }],
+    overdue: "Просрочено", leads: "Лиды", invoices: "Счета", quotes: "Предложения",
+    todayTitle: "✅ Задачи на сегодня", todayEmpty: "Задач на сегодня нет 🎉",
+    hotTitle: "🔥 Горячие лиды", hotEmpty: "Горячих лидов пока нет",
+    recTitle: "💡 Рекомендация дня",
+    actTitle: "🕒 Последняя активность", actEmpty: "Активности пока нет",
+    urgent: "Срочно", normal: "Обычная",
+    revenue: "Доходы", customers: "Клиенты", leadsLabel: "Лиды", closings: "Сделки",
+    rec: {
+      noLeads: "Добавьте первого лида, чтобы начать",
+      great: "Отлично! Бизнес идёт великолепно 🎉",
+      noResponse: (n) => `Свяжитесь с ${n} лидами, ожидающими ответа`,
+      overdue: (n) => `Закройте ${n} просроченных задач для повышения оценки`,
+      unpaid: (n) => `Получите оплату по ${n} открытым счетам`,
+      staleQuote: (n) => `Следите за ${n} зависшими предложениями`,
+    },
+  },
+};
 
 function StatPill({ emoji, label, count, urgency, onClick }) {
   const styles = {
@@ -43,8 +102,11 @@ function Section({ title, children, empty, emptyText }) {
 export default function MyDay() {
   const { leads } = useCrm();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [fabOpen, setFabOpen] = useState(false);
+  const s = i18n[language] || i18n.he;
+  const isRtl = language === "he";
 
   const today = new Date().toISOString().split("T")[0];
   const invoices = JSON.parse(localStorage.getItem("invoices") || "[]");
@@ -73,7 +135,7 @@ export default function MyDay() {
 
   // ── Health score ─────────────────────────────────────────────────────────
   const { score, recommendation } = useMemo(() => {
-    if (!leads.length) return { score: 0, recommendation: "הוסף ליד ראשון כדי להתחיל" };
+    if (!leads.length) return { score: 0, recommendation: s.rec.noLeads };
     const taskDone = allTasks.filter((t) => t.completed).length;
     const taskTotal = allTasks.length;
     const taskScore = taskTotal > 0 ? Math.round((taskDone / taskTotal) * 30) : 20;
@@ -87,15 +149,15 @@ export default function MyDay() {
       (l.activity || []).some((a) => (Date.now() - new Date(a.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000)
     );
     const recencyScore = recentActive ? 10 : 3;
-    const s = Math.min(taskScore + responseScore + conversionScore + invoiceScore + recencyScore, 100);
+    const total = Math.min(taskScore + responseScore + conversionScore + invoiceScore + recencyScore, 100);
 
-    let rec = "המשיכו כך! העסק מנוהל מצוין 🎉";
-    if (noResponseCount > 0)  rec = `צור קשר עם ${noResponseCount} לידים שממתינים למענה`;
-    else if (overdueCount > 0) rec = `סגור ${overdueCount} משימות באיחור להעלאת הציון`;
-    else if (unpaidCount > 0)  rec = `גבה ${unpaidCount} חשבוניות פתוחות`;
-    else if (staleQuoteCount > 0) rec = `עקוב אחרי ${staleQuoteCount} הצעות מחיר תקועות`;
-    return { score: s, recommendation: rec };
-  }, [leads, invoices, allTasks, noResponseCount, overdueCount, unpaidCount, staleQuoteCount]);
+    let rec = s.rec.great;
+    if (noResponseCount > 0)  rec = s.rec.noResponse(noResponseCount);
+    else if (overdueCount > 0) rec = s.rec.overdue(overdueCount);
+    else if (unpaidCount > 0)  rec = s.rec.unpaid(unpaidCount);
+    else if (staleQuoteCount > 0) rec = s.rec.staleQuote(staleQuoteCount);
+    return { score: total, recommendation: rec };
+  }, [leads, invoices, allTasks, noResponseCount, overdueCount, unpaidCount, staleQuoteCount, s]);
 
   // ── Recent activity ───────────────────────────────────────────────────────
   const recentActivity = useMemo(() =>
@@ -113,14 +175,16 @@ export default function MyDay() {
   const scoreEmoji    = score >= 80 ? "🟢" : score >= 60 ? "🟡" : "🔴";
 
   return (
-    <div className="p-3 md:p-5 space-y-4 max-w-xl mx-auto" dir="rtl">
+    <div className="p-3 md:p-5 space-y-4 max-w-xl mx-auto" dir={isRtl ? "rtl" : "ltr"}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-neutral-900">{greeting(user)}</h1>
+          <h1 className="text-xl font-bold text-neutral-900">
+            {s.greeting(new Date().getHours(), user?.name?.split(" ")[0] || "")}
+          </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            {new Date().toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long" })}
+            {new Date().toLocaleDateString(s.dateLocale, { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
         <div className="relative">
@@ -128,18 +192,13 @@ export default function MyDay() {
             onClick={() => setFabOpen((v) => !v)}
             className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-3 py-2 rounded-xl shadow transition"
           >
-            <Plus size={16} /> חדש
+            <Plus size={16} /> {s.newBtn}
           </button>
           {fabOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setFabOpen(false)} />
               <div className="absolute left-0 top-10 bg-white border rounded-xl shadow-xl z-20 min-w-[140px] py-1 text-sm">
-                {[
-                  { label: "ליד חדש",  path: "/leads" },
-                  { label: "משימה",    path: "/tasks" },
-                  { label: "חשבונית", path: "/invoices" },
-                  { label: "שירות",   path: "/services" },
-                ].map((item) => (
+                {s.fabItems.map((item) => (
                   <button key={item.path}
                     onClick={() => { navigate(item.path, { state: { openNew: true } }); setFabOpen(false); }}
                     className="w-full text-right px-4 py-2 hover:bg-slate-50 text-slate-700"
@@ -155,14 +214,14 @@ export default function MyDay() {
 
       {/* ── 4 Stat Pills ───────────────────────────────────────────────── */}
       <div className="flex gap-2">
-        <StatPill emoji="🔴" label="באיחור"   count={overdueCount}    urgency="red"    onClick={() => navigate("/tasks")} />
-        <StatPill emoji="🟡" label="לידים"    count={noResponseCount} urgency="yellow" onClick={() => navigate("/leads")} />
-        <StatPill emoji="🔴" label="חשבוניות" count={unpaidCount}     urgency="red"    onClick={() => navigate("/invoices")} />
-        <StatPill emoji="🟠" label="הצעות"    count={staleQuoteCount} urgency="orange" onClick={() => navigate("/leads")} />
+        <StatPill emoji="🔴" label={s.overdue}   count={overdueCount}    urgency="red"    onClick={() => navigate("/tasks")} />
+        <StatPill emoji="🟡" label={s.leads}     count={noResponseCount} urgency="yellow" onClick={() => navigate("/leads")} />
+        <StatPill emoji="🔴" label={s.invoices}  count={unpaidCount}     urgency="red"    onClick={() => navigate("/invoices")} />
+        <StatPill emoji="🟠" label={s.quotes}    count={staleQuoteCount} urgency="orange" onClick={() => navigate("/leads")} />
       </div>
 
       {/* ── Today's tasks ──────────────────────────────────────────────── */}
-      <Section title="✅ המשימות שלי היום" empty={todayTasks.length === 0} emptyText="אין משימות להיום 🎉">
+      <Section title={s.todayTitle} empty={todayTasks.length === 0} emptyText={s.todayEmpty}>
         {todayTasks.map((task) => (
           <button key={task.id + task.leadId} onClick={() => navigate("/tasks")}
             className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition text-right"
@@ -173,13 +232,13 @@ export default function MyDay() {
             </div>
             <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 mr-2 ${
               task.priority === "High" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
-            }`}>{task.priority === "High" ? "דחוף" : "רגיל"}</span>
+            }`}>{task.priority === "High" ? s.urgent : s.normal}</span>
           </button>
         ))}
       </Section>
 
       {/* ── Hot leads ──────────────────────────────────────────────────── */}
-      <Section title="🔥 לידים חמים" empty={hotLeads.length === 0} emptyText="אין לידים חמים כרגע">
+      <Section title={s.hotTitle} empty={hotLeads.length === 0} emptyText={s.hotEmpty}>
         {hotLeads.map((lead) => {
           const temp = getLeadTemperature(lead);
           return (
@@ -209,14 +268,14 @@ export default function MyDay() {
       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl px-5 py-4">
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-lg">💡</span>
-          <span className="font-bold text-indigo-800 text-sm">המלצה יומית</span>
+          <span className="font-bold text-indigo-800 text-sm">{s.recTitle}</span>
           <span className={`mr-auto text-sm font-bold ${scoreColor}`}>{scoreEmoji} {score}/100</span>
         </div>
         <p className="text-sm text-indigo-700">{recommendation}</p>
       </div>
 
       {/* ── Recent activity ────────────────────────────────────────────── */}
-      <Section title="🕒 פעילות אחרונה" empty={recentActivity.length === 0} emptyText="אין פעילות עדיין">
+      <Section title={s.actTitle} empty={recentActivity.length === 0} emptyText={s.actEmpty}>
         {recentActivity.map((act, i) => {
           const iconMap = { "lead-created": "🌱", "status-changed": "🔄", "note-added": "📝", "task-added": "✅", "lead-updated": "🖊" };
           return (
@@ -225,7 +284,7 @@ export default function MyDay() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-slate-700 truncate">{act.text}</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  {act.leadName} · {act.createdAt ? new Date(act.createdAt).toLocaleDateString("he-IL") : ""}
+                  {act.leadName} · {act.createdAt ? new Date(act.createdAt).toLocaleDateString(s.dateLocale) : ""}
                 </p>
               </div>
             </div>
@@ -236,14 +295,14 @@ export default function MyDay() {
       {/* ── Bottom stats ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: "הכנסות",  value: `₪${totalRevenue > 0 ? totalRevenue.toLocaleString() : "0"}` },
-          { label: "לקוחות", value: leads.length },
-          { label: "לידים",   value: leads.length },
-          { label: "סגירות", value: wonCount },
-        ].map((s) => (
-          <div key={s.label} className="bg-white border rounded-xl p-2.5 text-center shadow-sm">
-            <p className="text-[10px] text-slate-400">{s.label}</p>
-            <p className="font-bold text-sm text-slate-800 mt-0.5 truncate">{s.value}</p>
+          { label: s.revenue,    value: `₪${totalRevenue > 0 ? totalRevenue.toLocaleString() : "0"}` },
+          { label: s.customers,  value: leads.length },
+          { label: s.leadsLabel, value: leads.length },
+          { label: s.closings,   value: wonCount },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white border rounded-xl p-2.5 text-center shadow-sm">
+            <p className="text-[10px] text-slate-400">{stat.label}</p>
+            <p className="font-bold text-sm text-slate-800 mt-0.5 truncate">{stat.value}</p>
           </div>
         ))}
       </div>

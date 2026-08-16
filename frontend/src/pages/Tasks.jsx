@@ -2,6 +2,82 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Clock, CheckCircle2, Edit3, Trash2, AlertTriangle, Bell } from "lucide-react";
 import { useCrm, getPriorityLabel } from "../context/CrmContext";
+import { useLanguage } from "../context/LanguageContext";
+
+const i18n = {
+  he: {
+    pageTitle: "משימות",
+    alertsHeader: (n) => `התרעות — ${n} לידים דורשים תשומת לב`,
+    alertNoAction: "לידים ללא פעולה הבאה",
+    alertNoFollowup: "הצעות מחיר ללא מעקב",
+    alertDormant: "לידים ללא פעילות (3+ ימים)",
+    kpiTotal: "סה״כ משימות", kpiTotalSub: "בכל הלידים",
+    kpiOverdue: "🔴 באיחור", kpiOverdueSub: "דחוף!",
+    kpiToday: "🟡 להיום", kpiTodaySub: "עד סיום היום",
+    kpiOpen: "🔵 עדיין פתוח", kpiOpenSub: "לא הושלם",
+    kpiDone: "✅ הושלם", kpiDoneSub: "עד כה",
+    colOverdue: "באיחור", colToday: "להיום", colUpcoming: "עתידיות",
+    colNoDate: "ללא תאריך", colDone: "הושלם",
+    colTasks: (n) => `${n} משימות`,
+    noTasks: "אין משימות",
+    doneBadge: "הושלם", openBadge: "פתוח",
+    completeBtn: "הושלם", reopenBtn: "פתח",
+    editModalTitle: "עריכת משימה",
+    taskTitleLabel: "כותרת משימה", taskTitlePlaceholder: "כותרת המשימה",
+    dueDateLabel: "תאריך יעד",
+    priorityLabel: "דחיפות",
+    priorityHigh: "גבוהה", priorityMed: "בינונית", priorityLow: "נמוכה",
+    saveBtn: "שמור שינויים", cancelBtn: "ביטול",
+  },
+  en: {
+    pageTitle: "Tasks",
+    alertsHeader: (n) => `Alerts — ${n} lead${n === 1 ? "" : "s"} need attention`,
+    alertNoAction: "Leads without a next action",
+    alertNoFollowup: "Quotes without follow-up",
+    alertDormant: "Dormant leads (3+ days)",
+    kpiTotal: "Total Tasks", kpiTotalSub: "Across all leads",
+    kpiOverdue: "🔴 Overdue", kpiOverdueSub: "Urgent!",
+    kpiToday: "🟡 Today", kpiTodaySub: "Due by end of day",
+    kpiOpen: "🔵 Open", kpiOpenSub: "Not completed",
+    kpiDone: "✅ Completed", kpiDoneSub: "So far",
+    colOverdue: "Overdue", colToday: "Today", colUpcoming: "Upcoming",
+    colNoDate: "No Date", colDone: "Completed",
+    colTasks: (n) => `${n} task${n === 1 ? "" : "s"}`,
+    noTasks: "No tasks",
+    doneBadge: "Done", openBadge: "Open",
+    completeBtn: "Done", reopenBtn: "Reopen",
+    editModalTitle: "Edit Task",
+    taskTitleLabel: "Task title", taskTitlePlaceholder: "Task title",
+    dueDateLabel: "Due date",
+    priorityLabel: "Priority",
+    priorityHigh: "High", priorityMed: "Medium", priorityLow: "Low",
+    saveBtn: "Save Changes", cancelBtn: "Cancel",
+  },
+  ru: {
+    pageTitle: "Задачи",
+    alertsHeader: (n) => `Уведомления — ${n} лидов требуют внимания`,
+    alertNoAction: "Лиды без следующего действия",
+    alertNoFollowup: "Предложения без отслеживания",
+    alertDormant: "Неактивные лиды (3+ дней)",
+    kpiTotal: "Всего задач", kpiTotalSub: "По всем лидам",
+    kpiOverdue: "🔴 Просрочено", kpiOverdueSub: "Срочно!",
+    kpiToday: "🟡 На сегодня", kpiTodaySub: "До конца дня",
+    kpiOpen: "🔵 Открыты", kpiOpenSub: "Не завершены",
+    kpiDone: "✅ Выполнено", kpiDoneSub: "На данный момент",
+    colOverdue: "Просрочено", colToday: "Сегодня", colUpcoming: "Предстоящие",
+    colNoDate: "Без даты", colDone: "Выполнено",
+    colTasks: (n) => `${n} задач`,
+    noTasks: "Нет задач",
+    doneBadge: "Выполнено", openBadge: "Открыта",
+    completeBtn: "Выполнено", reopenBtn: "Открыть",
+    editModalTitle: "Редактировать задачу",
+    taskTitleLabel: "Название задачи", taskTitlePlaceholder: "Название задачи",
+    dueDateLabel: "Срок выполнения",
+    priorityLabel: "Приоритет",
+    priorityHigh: "Высокий", priorityMed: "Средний", priorityLow: "Низкий",
+    saveBtn: "Сохранить", cancelBtn: "Отмена",
+  },
+};
 
 const kpiCard =
   "rounded-xl border p-4 bg-white shadow-sm";
@@ -31,7 +107,7 @@ function useAlerts(leads) {
   return { noNextAction, unhandledQuotes, dormant };
 }
 
-function AlertsPanel({ leads, onNavigate }) {
+function AlertsPanel({ leads, onNavigate, s }) {
   const { noNextAction, unhandledQuotes, dormant } = useAlerts(leads);
   const total = noNextAction.length + unhandledQuotes.length + dormant.length;
   if (total === 0) return null;
@@ -40,7 +116,7 @@ function AlertsPanel({ leads, onNavigate }) {
     {
       key: "noAction",
       icon: "⚡",
-      label: "לידים ללא פעולה הבאה",
+      label: s.alertNoAction,
       items: noNextAction,
       color: "text-amber-700",
       bg: "bg-amber-50",
@@ -49,7 +125,7 @@ function AlertsPanel({ leads, onNavigate }) {
     {
       key: "quotes",
       icon: "📋",
-      label: "הצעות מחיר ללא מעקב",
+      label: s.alertNoFollowup,
       items: unhandledQuotes,
       color: "text-blue-700",
       bg: "bg-blue-50",
@@ -58,7 +134,7 @@ function AlertsPanel({ leads, onNavigate }) {
     {
       key: "dormant",
       icon: "😴",
-      label: "לידים ללא פעילות (3+ ימים)",
+      label: s.alertDormant,
       items: dormant,
       color: "text-gray-700",
       bg: "bg-gray-50",
@@ -70,7 +146,7 @@ function AlertsPanel({ leads, onNavigate }) {
     <div className="rounded-xl border border-rose-200 bg-white shadow-sm overflow-hidden">
       <div className="px-4 py-2.5 bg-rose-50 border-b border-rose-200 flex items-center gap-2">
         <Bell size={15} className="text-rose-600" />
-        <p className="text-sm font-bold text-rose-700">התרעות — {total} לידים דורשים תשומת לב</p>
+        <p className="text-sm font-bold text-rose-700">{s.alertsHeader(total)}</p>
       </div>
       <div className="divide-y divide-neutral-100">
         {groups.map((group) =>
@@ -98,7 +174,7 @@ function AlertsPanel({ leads, onNavigate }) {
   );
 }
 
-function KanbanColumn({ title, icon, tasks, onComplete, onReopen, onDelete, onEdit, taskCount, bgColor }) {
+function KanbanColumn({ title, icon, tasks, onComplete, onReopen, onDelete, onEdit, taskCount, bgColor, s }) {
   return (
     <div className="flex flex-col bg-gray-50 rounded-lg overflow-hidden" style={{ minHeight: "600px" }}>
       {/* Column Header */}
@@ -107,7 +183,7 @@ function KanbanColumn({ title, icon, tasks, onComplete, onReopen, onDelete, onEd
           <span className="text-2xl">{icon}</span>
           <div>
             <h3 className="font-bold text-lg">{title}</h3>
-            <p className="text-sm opacity-90">{taskCount} משימות</p>
+            <p className="text-sm opacity-90">{s.colTasks(taskCount)}</p>
           </div>
         </div>
       </div>
@@ -116,7 +192,7 @@ function KanbanColumn({ title, icon, tasks, onComplete, onReopen, onDelete, onEd
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {tasks.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
-            אין משימות
+            {s.noTasks}
           </div>
         ) : (
           tasks.map((task) => (
@@ -127,6 +203,7 @@ function KanbanColumn({ title, icon, tasks, onComplete, onReopen, onDelete, onEd
               onReopen={onReopen}
               onDelete={onDelete}
               onEdit={onEdit}
+              s={s}
             />
           ))
         )}
@@ -135,7 +212,7 @@ function KanbanColumn({ title, icon, tasks, onComplete, onReopen, onDelete, onEd
   );
 }
 
-function KanbanCard({ task, onComplete, onReopen, onDelete, onEdit }) {
+function KanbanCard({ task, onComplete, onReopen, onDelete, onEdit, s }) {
   const priorityColors = {
     High: "bg-red-100 border-l-4 border-red-500",
     Medium: "bg-amber-100 border-l-4 border-amber-500",
@@ -187,12 +264,12 @@ function KanbanCard({ task, onComplete, onReopen, onDelete, onEdit }) {
         {task.completed ? (
           <span className="inline-flex items-center gap-1 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
             <CheckCircle2 size={14} />
-            הושלם
+            {s.doneBadge}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
             <Clock size={14} />
-            פתוח
+            {s.openBadge}
           </span>
         )}
       </div>
@@ -203,19 +280,17 @@ function KanbanCard({ task, onComplete, onReopen, onDelete, onEdit }) {
           <button
             onClick={() => onComplete(task.id, task.leadId)}
             className="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs py-1 rounded transition flex items-center justify-center gap-1"
-            title="הושלם"
           >
             <CheckCircle2 size={14} />
-            הושלם
+            {s.completeBtn}
           </button>
         ) : (
           <button
             onClick={() => onReopen(task.id, task.leadId)}
             className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white text-xs py-1 rounded transition flex items-center justify-center gap-1"
-            title="פתח מחדש"
           >
             <Clock size={14} />
-            פתח
+            {s.reopenBtn}
           </button>
         )}
         
@@ -241,7 +316,10 @@ function KanbanCard({ task, onComplete, onReopen, onDelete, onEdit }) {
 
 export default function Tasks() {
   const { leads, toggleTask, deleteTask: deleteTaskFromContext, editTask } = useCrm();
+  const { language } = useLanguage();
   const navigate = useNavigate();
+  const s = i18n[language] || i18n.he;
+  const isRtl = language === "he";
 
   const [editingTask, setEditingTask] = useState(null);
 
@@ -341,209 +419,98 @@ export default function Tasks() {
   };
 
   return (
-    <div className="p-6 space-y-8" dir="rtl">
+    <div className="p-6 space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">משימות</h1>
+        <h1 className="text-2xl font-bold text-neutral-900">{s.pageTitle}</h1>
       </div>
 
       {/* Smart alerts */}
-      <AlertsPanel leads={leads} onNavigate={navigate} />
+      <AlertsPanel leads={leads} onNavigate={navigate} s={s} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className={`${kpiCard} bg-slate-50`}>
-          <p className="text-sm text-gray-600 mb-1">סה״כ משימות</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiTotal}</p>
           <p className="text-3xl font-bold">{allTasks.length}</p>
-          <p className="text-xs text-gray-500 mt-2">בכל הלידים</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiTotalSub}</p>
         </div>
-
         <div className={`${kpiCard} bg-red-50`}>
-          <p className="text-sm text-gray-600 mb-1">🔴 באיחור</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiOverdue}</p>
           <p className="text-3xl font-bold text-red-600">{overdueTasks.length}</p>
-          <p className="text-xs text-gray-500 mt-2">דחוף!</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiOverdueSub}</p>
         </div>
-
         <div className={`${kpiCard} bg-yellow-50`}>
-          <p className="text-sm text-gray-600 mb-1">🟡 להיום</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiToday}</p>
           <p className="text-3xl font-bold text-yellow-600">{todayTasks.length}</p>
-          <p className="text-xs text-gray-500 mt-2">עד סיום היום</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiTodaySub}</p>
         </div>
-
         <div className={`${kpiCard} bg-blue-50`}>
-          <p className="text-sm text-gray-600 mb-1">🔵 עדיין פתוח</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiOpen}</p>
           <p className="text-3xl font-bold text-blue-600">{openTasks.length}</p>
-          <p className="text-xs text-gray-500 mt-2">לא הושלם</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiOpenSub}</p>
         </div>
-
         <div className={`${kpiCard} bg-green-50`}>
-          <p className="text-sm text-gray-600 mb-1">✅ הושלם</p>
+          <p className="text-sm text-gray-600 mb-1">{s.kpiDone}</p>
           <p className="text-3xl font-bold text-green-600">{completedTasks.length}</p>
-          <p className="text-xs text-gray-500 mt-2">עד כה</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiDoneSub}</p>
         </div>
       </div>
 
       {/* Kanban Board */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-4 pb-8">
-        {/* Overdue Column */}
-        <KanbanColumn
-          title="באיחור"
-          icon="🔴"
-          color="red"
-          bgColor="bg-red-500"
-          tasks={overdueTasks}
-          taskCount={overdueTasks.length}
-          onComplete={completeTask}
-          onReopen={reopenTask}
-          onDelete={deleteTask}
-          onEdit={openEditModal}
-        />
-
-        {/* Today Column */}
-        <KanbanColumn
-          title="להיום"
-          icon="🟡"
-          color="yellow"
-          bgColor="bg-yellow-500"
-          tasks={todayTasks}
-          taskCount={todayTasks.length}
-          onComplete={completeTask}
-          onReopen={reopenTask}
-          onDelete={deleteTask}
-          onEdit={openEditModal}
-        />
-
-        {/* Upcoming Column */}
-        <KanbanColumn
-          title="עתידיות"
-          icon="🔵"
-          color="blue"
-          bgColor="bg-blue-500"
-          tasks={upcomingTasks}
-          taskCount={upcomingTasks.length}
-          onComplete={completeTask}
-          onReopen={reopenTask}
-          onDelete={deleteTask}
-          onEdit={openEditModal}
-        />
-
-        {/* No Date Column */}
-        <KanbanColumn
-          title="ללא תאריך"
-          icon="⚪"
-          color="gray"
-          bgColor="bg-slate-500"
-          tasks={noDateTasks}
-          taskCount={noDateTasks.length}
-          onComplete={completeTask}
-          onReopen={reopenTask}
-          onDelete={deleteTask}
-          onEdit={openEditModal}
-        />
-
-        {/* Completed Column */}
-        <KanbanColumn
-          title="הושלם"
-          icon="✅"
-          color="green"
-          bgColor="bg-green-500"
-          tasks={completedTasks}
-          taskCount={completedTasks.length}
-          onComplete={completeTask}
-          onReopen={reopenTask}
-          onDelete={deleteTask}
-          onEdit={openEditModal}
-        />
+        <KanbanColumn title={s.colOverdue}  icon="🔴" bgColor="bg-red-500"    tasks={overdueTasks}   taskCount={overdueTasks.length}   onComplete={completeTask} onReopen={reopenTask} onDelete={deleteTask} onEdit={openEditModal} s={s} />
+        <KanbanColumn title={s.colToday}    icon="🟡" bgColor="bg-yellow-500" tasks={todayTasks}     taskCount={todayTasks.length}     onComplete={completeTask} onReopen={reopenTask} onDelete={deleteTask} onEdit={openEditModal} s={s} />
+        <KanbanColumn title={s.colUpcoming} icon="🔵" bgColor="bg-blue-500"   tasks={upcomingTasks}  taskCount={upcomingTasks.length}  onComplete={completeTask} onReopen={reopenTask} onDelete={deleteTask} onEdit={openEditModal} s={s} />
+        <KanbanColumn title={s.colNoDate}   icon="⚪" bgColor="bg-slate-500"  tasks={noDateTasks}    taskCount={noDateTasks.length}    onComplete={completeTask} onReopen={reopenTask} onDelete={deleteTask} onEdit={openEditModal} s={s} />
+        <KanbanColumn title={s.colDone}     icon="✅" bgColor="bg-green-500"  tasks={completedTasks} taskCount={completedTasks.length} onComplete={completeTask} onReopen={reopenTask} onDelete={deleteTask} onEdit={openEditModal} s={s} />
       </div>
 
       {editingTask && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">
-              עריכת משימה
-            </h2>
+            <h2 className="text-2xl font-bold mb-4">{s.editModalTitle}</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  כותרת משימה
-                </label>
-
+                <label className="block text-sm text-gray-600 mb-1">{s.taskTitleLabel}</label>
                 <input
                   type="text"
                   value={editForm.title}
-                  onChange={(event) =>
-                    setEditForm({
-                      ...editForm,
-                      title: event.target.value,
-                    })
-                  }
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   className="w-full border rounded-lg px-3 py-2"
-                  placeholder="כותרת המשימה"
+                  placeholder={s.taskTitlePlaceholder}
                 />
               </div>
-
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  תאריך יעד
-                </label>
-
+                <label className="block text-sm text-gray-600 mb-1">{s.dueDateLabel}</label>
                 <input
                   type="date"
                   value={editForm.dueDate}
-                  onChange={(event) =>
-                    setEditForm({
-                      ...editForm,
-                      dueDate: event.target.value,
-                    })
-                  }
+                  onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
                   className="w-full border rounded-lg px-3 py-2"
                 />
               </div>
-
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
-                  דחיפות
-                </label>
-
+                <label className="block text-sm text-gray-600 mb-1">{s.priorityLabel}</label>
                 <select
                   value={editForm.priority}
-                  onChange={(event) =>
-                    setEditForm({
-                      ...editForm,
-                      priority: event.target.value,
-                    })
-                  }
+                  onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
                   className="w-full border rounded-lg px-3 py-2"
                 >
-                  <option value="High">
-                    גבוהה
-                  </option>
-
-                  <option value="Medium">
-                    בינונית
-                  </option>
-
-                  <option value="Low">
-                    נמוכה
-                  </option>
+                  <option value="High">{s.priorityHigh}</option>
+                  <option value="Medium">{s.priorityMed}</option>
+                  <option value="Low">{s.priorityLow}</option>
                 </select>
               </div>
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={saveEditedTask}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-              >
-                שמור שינויים
+              <button onClick={saveEditedTask} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                {s.saveBtn}
               </button>
-
-              <button
-                onClick={closeEditModal}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg"
-              >
-                ביטול
+              <button onClick={closeEditModal} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg">
+                {s.cancelBtn}
               </button>
             </div>
           </div>
@@ -552,3 +519,4 @@ export default function Tasks() {
     </div>
   );
 }
+

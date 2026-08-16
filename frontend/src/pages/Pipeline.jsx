@@ -1,17 +1,93 @@
 import { useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { useCrm, calculateLeadScore, getLeadQuality, getPipelineStats } from "../context/CrmContext";
+import { useLanguage } from "../context/LanguageContext";
+
+const i18n = {
+  he: {
+    subtitle: "ניהול לידים לאורך כל שלבי המכירה",
+    kpiTotal: "סה״כ לידים", kpiTotalSub: "בכל הצינור",
+    kpiConversion: "שיעור המרה", kpiConversionSub: (n) => `${n} עסקאות סגורות`,
+    kpiScore: "ניקוד ממוצע", kpiScoreSub: "איכות הלידים",
+    kpiValue: "ערך משוער", kpiValueSub: "מלידים שסגורים",
+    pipelineMetrics: "📊 מדדי צינור", ofPipeline: "מהצינור",
+    pipelineTitle: "🏗️ צינור המכירה",
+    emptyStage: "אין לידים בשלב זה",
+    stageLeads: (n) => `${n} לידים`,
+    modalScore: "ניקוד", modalQuality: "איכות", modalDays: "ימים כלקוח",
+    modalTasks: "משימות", modalNotes: "הערות", modalActivity: "פעילויות", modalStatus: "סטאטוס",
+    lastActivity: "📊 פעילות אחרונה",
+    recommendations: "💡 המלצות",
+    rec0: "צרו קשר חדש עם הלקוח",
+    rec30: "שלחו הצעת מחיר",
+    rec50: "עקבו אחרי הצעת המחיר",
+    rec75: "סגרו את העסקה",
+    recTasks: "צרו משימות עזר",
+    recInactive: "הלקוח לא פעיל - שקלו צעדי תזכורת",
+    closeBtn: "סגור",
+    stageLabels: { New: "חדש", Contacted: "נוצר קשר", Quoted: "הצעת מחיר", Won: "ניצחון", Lost: "הפסד" },
+    dateLocale: "he-IL",
+  },
+  en: {
+    subtitle: "Manage leads through every stage of the sales process",
+    kpiTotal: "Total Leads", kpiTotalSub: "In the pipeline",
+    kpiConversion: "Conversion Rate", kpiConversionSub: (n) => `${n} closed deal${n === 1 ? "" : "s"}`,
+    kpiScore: "Avg. Score", kpiScoreSub: "Lead quality",
+    kpiValue: "Est. Value", kpiValueSub: "From closed leads",
+    pipelineMetrics: "📊 Pipeline Metrics", ofPipeline: "of pipeline",
+    pipelineTitle: "🏗️ Sales Pipeline",
+    emptyStage: "No leads in this stage",
+    stageLeads: (n) => `${n} lead${n === 1 ? "" : "s"}`,
+    modalScore: "Score", modalQuality: "Quality", modalDays: "Days as Client",
+    modalTasks: "Tasks", modalNotes: "Notes", modalActivity: "Activities", modalStatus: "Status",
+    lastActivity: "📊 Last Activity",
+    recommendations: "💡 Recommendations",
+    rec0: "Reach out to the client",
+    rec30: "Send a quote",
+    rec50: "Follow up on the quote",
+    rec75: "Close the deal",
+    recTasks: "Create follow-up tasks",
+    recInactive: "Client inactive — consider a reminder",
+    closeBtn: "Close",
+    stageLabels: { New: "New", Contacted: "Contacted", Quoted: "Quoted", Won: "Won", Lost: "Lost" },
+    dateLocale: "en-US",
+  },
+  ru: {
+    subtitle: "Управляйте лидами на каждом этапе продаж",
+    kpiTotal: "Всего лидов", kpiTotalSub: "В воронке",
+    kpiConversion: "Конверсия", kpiConversionSub: (n) => `${n} закрытых сделок`,
+    kpiScore: "Средний балл", kpiScoreSub: "Качество лидов",
+    kpiValue: "Имющее значение", kpiValueSub: "От закрытых лидов",
+    pipelineMetrics: "📊 Показатели", ofPipeline: "воронки",
+    pipelineTitle: "🏗️ Воронка продаж",
+    emptyStage: "Нет лидов на этом этапе",
+    stageLeads: (n) => `${n} лидов`,
+    modalScore: "Балл", modalQuality: "Качество", modalDays: "Дней как клиент",
+    modalTasks: "Задачи", modalNotes: "Заметки", modalActivity: "Активность", modalStatus: "Статус",
+    lastActivity: "📊 Последняя активность",
+    recommendations: "💡 Рекомендации",
+    rec0: "Свяжитесь с клиентом",
+    rec30: "Отправьте предложение",
+    rec50: "Подтвердите предложение",
+    rec75: "Закройте сделку",
+    recTasks: "Создайте задачи по отслеживанию",
+    recInactive: "Клиент неактивен — отправьте напоминание",
+    closeBtn: "Закрыть",
+    stageLabels: { New: "Новый", Contacted: "Обработан", Quoted: "Предложение", Won: "Победа", Lost: "Проигрыш" },
+    dateLocale: "ru-RU",
+  },
+};
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 
-function PipelineStage({ label, color, leads, onLeadClick, now }) {
+function PipelineStage({ label, color, leads, onLeadClick, now, s }) {
   return (
     <div className="bg-gray-50 rounded-lg overflow-hidden flex flex-col" style={{ minHeight: "300px" }}>
       {/* Stage Header */}
       <div className={`${color} text-white p-4 flex items-center justify-between`}>
         <div>
           <h3 className="font-bold text-lg">{label}</h3>
-          <p className="text-sm opacity-90">{leads.length} לידים</p>
+          <p className="text-sm opacity-90">{s.stageLeads(leads.length)}</p>
         </div>
         <div className="text-2xl font-bold">{leads.length}</div>
       </div>
@@ -20,7 +96,7 @@ function PipelineStage({ label, color, leads, onLeadClick, now }) {
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {leads.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
-            אין לידים בשלב זה
+            {s.emptyStage}
           </div>
         ) : (
           leads.map((lead) => {
@@ -52,8 +128,8 @@ function PipelineStage({ label, color, leads, onLeadClick, now }) {
                 {/* Metadata */}
                 <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
                   <span>📅 {daysOld}d</span>
-                  <span>💼 {lead.tasks?.length || 0} משימות</span>
-                  <span>📝 {lead.notes?.length || 0} הערות</span>
+                  <span>💼 {lead.tasks?.length || 0}</span>
+                  <span>📝 {lead.notes?.length || 0}</span>
                 </div>
               </div>
             );
@@ -64,7 +140,7 @@ function PipelineStage({ label, color, leads, onLeadClick, now }) {
   );
 }
 
-function LeadDetailModal({ lead, onClose, now }) {
+function LeadDetailModal({ lead, onClose, now, s }) {
   if (!lead) return null;
 
   const score = calculateLeadScore(lead);
@@ -91,17 +167,17 @@ function LeadDetailModal({ lead, onClose, now }) {
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-6">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <p className="text-sm text-gray-600 mb-1">ניקוד</p>
+              <p className="text-sm text-gray-600 mb-1">{s.modalScore}</p>
               <p className="text-3xl font-bold text-blue-600">{score}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">איכות</p>
+              <p className="text-sm text-gray-600 mb-1">{s.modalQuality}</p>
               <div className={`${quality.color} text-white px-3 py-1 rounded font-bold inline-block`}>
                 {quality.label}
               </div>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">ימים כלקוח</p>
+              <p className="text-sm text-gray-600 mb-1">{s.modalDays}</p>
               <p className="text-3xl font-bold text-green-600">{daysOld}</p>
             </div>
           </div>
@@ -110,15 +186,15 @@ function LeadDetailModal({ lead, onClose, now }) {
         {/* Stats Grid */}
         <div className="grid grid-cols-4 gap-3 mb-6 pb-6 border-b">
           <div>
-            <p className="text-sm text-gray-500">משימות</p>
+            <p className="text-sm text-gray-500">{s.modalTasks}</p>
             <p className="text-2xl font-bold">{lead.tasks?.length || 0}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">הערות</p>
+            <p className="text-sm text-gray-500">{s.modalNotes}</p>
             <p className="text-2xl font-bold">{lead.notes?.length || 0}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">פעילויות</p>
+            <p className="text-sm text-gray-500">{s.modalActivity}</p>
             <p className="text-2xl font-bold">{lead.activity?.length || 0}</p>
           </div>
           <div>
@@ -130,11 +206,11 @@ function LeadDetailModal({ lead, onClose, now }) {
         {/* Last Activity */}
         {lead.activity && lead.activity.length > 0 && (
           <div className="mb-6">
-            <h3 className="font-bold text-lg mb-3">📊 פעילות אחרונה</h3>
+            <h3 className="font-bold text-lg mb-3">{s.lastActivity}</h3>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-gray-700 mb-2">{lead.activity[lead.activity.length - 1].action || lead.activity[lead.activity.length - 1].text}</p>
               <p className="text-xs text-gray-500">
-                {new Date(lead.activity[lead.activity.length - 1].createdAt || lead.activity[lead.activity.length - 1].timestamp).toLocaleString("he-IL")}
+                {new Date(lead.activity[lead.activity.length - 1].createdAt || lead.activity[lead.activity.length - 1].timestamp).toLocaleString(s.dateLocale)}
               </p>
             </div>
           </div>
@@ -143,15 +219,15 @@ function LeadDetailModal({ lead, onClose, now }) {
         {/* Recommendations */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <h3 className="font-bold mb-2 flex items-center gap-2">
-            💡 המלצות
+            {s.recommendations}
           </h3>
           <ul className="text-sm text-gray-700 space-y-1">
-            {score < 30 && <li>• צרו קשר חדש עם הלקוח</li>}
-            {score >= 30 && score < 50 && <li>• שלחו הצעת מחיר</li>}
-            {score >= 50 && score < 75 && <li>• עקבו אחרי הצעת המחיר</li>}
-            {score >= 75 && lead.status !== "Won" && <li>• סגרו את העסקה</li>}
-            {(lead.tasks?.length || 0) === 0 && <li>• צרו משימות עזר</li>}
-            {daysOld > 7 && lead.status === "New" && <li>• הלקוח לא פעיל - שקלו צעדי תזכורת</li>}
+            {score < 30 && <li>• {s.rec0}</li>}
+            {score >= 30 && score < 50 && <li>• {s.rec30}</li>}
+            {score >= 50 && score < 75 && <li>• {s.rec50}</li>}
+            {score >= 75 && lead.status !== "Won" && <li>• {s.rec75}</li>}
+            {(lead.tasks?.length || 0) === 0 && <li>• {s.recTasks}</li>}
+            {daysOld > 7 && lead.status === "New" && <li>• {s.recInactive}</li>}
           </ul>
         </div>
 
@@ -175,7 +251,7 @@ function LeadDetailModal({ lead, onClose, now }) {
             onClick={onClose}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
           >
-            סגור
+            {s.closeBtn}
           </button>
         </div>
       </div>
@@ -185,8 +261,11 @@ function LeadDetailModal({ lead, onClose, now }) {
 
 export default function Pipeline() {
   const { leads } = useCrm();
+  const { language } = useLanguage();
   const [selectedLead, setSelectedLead] = useState(null);
   const [now] = useState(() => Date.now());
+  const s = i18n[language] || i18n.he;
+  const isRtl = language === "he";
 
   const { statuses: pipelineStatuses, totalValue, avgScore } = getPipelineStats(leads);
 
@@ -280,14 +359,14 @@ export default function Pipeline() {
             now={now}
           />
           <PipelineStage
-            label="נסגר בהצלחה"
+            label={s.stageLabels.Won}
             color="bg-green-600"
             leads={leadsGrouped.Won}
             onLeadClick={setSelectedLead}
             now={now}
           />
           <PipelineStage
-            label="אבוד"
+            label={s.stageLabels.Lost}
             color="bg-red-600"
             leads={leadsGrouped.Lost}
             onLeadClick={setSelectedLead}
@@ -297,7 +376,10 @@ export default function Pipeline() {
       </div>
 
       {/* Lead Detail Modal */}
-      <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} now={now} />
+      <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} now={now} s={s} />
     </div>
   );
 }
+
+
+

@@ -2,13 +2,77 @@ import { useEffect, useState } from "react";
 import { Save, Building2 } from "lucide-react";
 import { useCrm } from "../context/CrmContext";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+
+const i18n = {
+  he: {
+    title: "⚙️ הגדרות", subtitle: "ניהול הגדרות והנתונים של החברה",
+    savedMsg: "✅ ההגדרות נשמרו בהצלחה!",
+    billingTitle: "💳 מנוי וחיוב", refreshBtn: "רענן סטאטוס",
+    billingLoading: "טוען נתוני מנוי...", noBilling: "לא נמצאו נתוני מנוי כרגע.",
+    statusLabel: "סטאטוס מנוי", planLabel: "תוכנית",
+    daysLeftLabel: "ימים שנותרו", billingNameLabel: "שם חיוב",
+    trialEndLabel: "סיום ניסיון", effectiveEndLabel: "סיום אפקטיבי",
+    upgradeBasic: "שדרוג ל-Basic ($12.90)", upgradePro: "שדרוג ל-Pro ($20.90)",
+    extendTrial: "הארכת ניסיון 14 ימים", cancelSub: "ביטול מיידי",
+    companyTitle: "📋 נתוני החברה",
+    companyName: "שם החברה", emailLabel: "דוא״ל", phoneLabel: "טלפון", whatsappLabel: "טלפון WhatsApp", addressLabel: "כתובת",
+    saveBtn: "שמור הגדרות",
+    statsTitle: "📊 סטאטיסטיקות מהירות",
+    backupTitle: "💾 גיבוי וייצוא", backupBtn: "גיבוי מלא של הנתונים",
+    backupDesc: "✅ גיבוי מלא כולל לידים, שירותים וחשבוניות בקובץ JSON",
+    integrationsTitle: "🔌 אינטגרציות",
+    webhookLabel: "📧 Webhook URL", webhookDesc: "השתמש בקישור זה כדי לשלוח נתונים מחוץ למערכת",
+  },
+  en: {
+    title: "⚙️ Settings", subtitle: "Manage your company settings and data",
+    savedMsg: "✅ Settings saved successfully!",
+    billingTitle: "💳 Subscription & Billing", refreshBtn: "Refresh Status",
+    billingLoading: "Loading subscription data...", noBilling: "No subscription data found.",
+    statusLabel: "Subscription Status", planLabel: "Plan",
+    daysLeftLabel: "Days Remaining", billingNameLabel: "Billing Name",
+    trialEndLabel: "Trial Ends", effectiveEndLabel: "Effective End",
+    upgradeBasic: "Upgrade to Basic ($12.90)", upgradePro: "Upgrade to Pro ($20.90)",
+    extendTrial: "Extend Trial 14 Days", cancelSub: "Cancel Immediately",
+    companyTitle: "📋 Company Information",
+    companyName: "Company Name", emailLabel: "Email", phoneLabel: "Phone", whatsappLabel: "WhatsApp Phone", addressLabel: "Address",
+    saveBtn: "Save Settings",
+    statsTitle: "📊 Quick Stats",
+    backupTitle: "💾 Backup & Export", backupBtn: "Full Data Backup",
+    backupDesc: "✅ Full backup including leads, services and invoices as JSON",
+    integrationsTitle: "🔌 Integrations",
+    webhookLabel: "📧 Webhook URL", webhookDesc: "Use this URL to send data from outside the system",
+  },
+  ru: {
+    title: "⚙️ Настройки", subtitle: "Управление настройками и данными компании",
+    savedMsg: "✅ Настройки успешно сохранены!",
+    billingTitle: "💳 Подписка и оплата", refreshBtn: "Обновить",
+    billingLoading: "Загрузка данных...", noBilling: "Данных подписке не найдено.",
+    statusLabel: "Статус", planLabel: "Тариф",
+    daysLeftLabel: "Осталось дней", billingNameLabel: "Название в чеке",
+    trialEndLabel: "Окончание пробного", effectiveEndLabel: "Фактическое окончание",
+    upgradeBasic: "Обновить до Basic ($12.90)", upgradePro: "Обновить до Pro ($20.90)",
+    extendTrial: "Продлить пробный период на 14 дней", cancelSub: "Отменить немедленно",
+    companyTitle: "📋 Информация о компании",
+    companyName: "Название компании", emailLabel: "Эл. почта", phoneLabel: "Телефон", whatsappLabel: "Тел. WhatsApp", addressLabel: "Адрес",
+    saveBtn: "Сохранить",
+    statsTitle: "📊 Быстрая статистика",
+    backupTitle: "💾 Резервное копирование", backupBtn: "Полное резервное копирование",
+    backupDesc: "✅ Полное копирование: лиды, услуги, счета — файл JSON",
+    integrationsTitle: "🔌 Интеграции",
+    webhookLabel: "📧 Webhook URL", webhookDesc: "Используйте этот URL для отправки данных извне",
+  },
+};
 
 const inputClass = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500";
 const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
 export default function Settings() {
   const { leads } = useCrm();
+  const { language } = useLanguage();
   const { billing, billingLoading, extendTrial, cancelSubscription, refreshBillingStatus, startCheckout } = useAuth();
+  const s = i18n[language] || i18n.he;
+  const isRtl = language === "he";
   const [companyInfo, setCompanyInfo] = useState(
     JSON.parse(localStorage.getItem("companyInfo") || '{"name":"MyServices CRM","email":"info@myservices.com","phone":"1-800-MYSERVICES","address":"תל אביב, ישראל","logo":""}')
   );
@@ -45,9 +109,9 @@ export default function Settings() {
   };
 
   const statsData = [
-    { label: "סה״כ לידים", value: leads.length, icon: "👥" },
-    { label: "לידים פעילים", value: leads.filter(l => ["New", "Contacted"].includes(l.status)).length, icon: "⚡" },
-    { label: "עסקאות סגורות", value: leads.filter(l => l.status === "Won").length, icon: "🏆" },
+    { label: language === "he" ? "סה״כ לידים" : language === "ru" ? "Всего лидов" : "Total Leads", value: leads.length, icon: "👥" },
+    { label: language === "he" ? "לידים פעילים" : language === "ru" ? "Активные лиды" : "Active Leads", value: leads.filter(l => ["New", "Contacted"].includes(l.status)).length, icon: "⚡" },
+    { label: language === "he" ? "עסקאות סגורות" : language === "ru" ? "Закрытые сделки" : "Closed Deals", value: leads.filter(l => l.status === "Won").length, icon: "🏆" },
   ];
 
   const formatDateTime = (rawValue) => {
@@ -101,30 +165,30 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">⚙️ הגדרות</h1>
-        <p className="text-gray-600 mt-1">ניהול הגדרות והנתונים של החברה</p>
+        <h1 className="text-3xl font-bold text-gray-900">{s.title}</h1>
+        <p className="text-gray-600 mt-1">{s.subtitle}</p>
       </div>
 
       {/* Save Notification */}
       {saved && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
           <span>✅</span>
-          <span>ההגדרות נשמרו בהצלחה!</span>
+          <span>{s.savedMsg}</span>
         </div>
       )}
 
       {/* Billing & Trial */}
       <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <h2 className="text-2xl font-bold">💳 מנוי וחיוב</h2>
+          <h2 className="text-2xl font-bold">{s.billingTitle}</h2>
           <button
             onClick={refreshBillingStatus}
             className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50"
           >
-            רענן סטטוס
+            {s.refreshBtn}
           </button>
         </div>
 
@@ -134,42 +198,42 @@ export default function Settings() {
           </div>
         )}
 
-        {billingLoading && <p className="text-sm text-gray-600">טוען נתוני מנוי...</p>}
+        {billingLoading && <p className="text-sm text-gray-600">{s.billingLoading}</p>}
 
         {!billingLoading && !billing && (
-          <p className="text-sm text-gray-600">לא נמצאו נתוני מנוי כרגע.</p>
+          <p className="text-sm text-gray-600">{s.noBilling}</p>
         )}
 
         {!billingLoading && billing && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                <p className="text-gray-500">סטטוס מנוי</p>
+                <p className="text-gray-500">{s.statusLabel}</p>
                 <p className="font-semibold text-lg">{billing.subscriptionStatus}</p>
               </div>
 
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                <p className="text-gray-500">תוכנית</p>
+                <p className="text-gray-500">{s.planLabel}</p>
                 <p className="font-semibold text-lg">{billing.plan}</p>
               </div>
 
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                <p className="text-gray-500">ימים שנותרו</p>
+                <p className="text-gray-500">{s.daysLeftLabel}</p>
                 <p className="font-semibold text-lg">{billing.daysLeft}</p>
               </div>
 
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                <p className="text-gray-500">שם חיוב</p>
+                <p className="text-gray-500">{s.billingNameLabel}</p>
                 <p className="font-semibold text-lg">{billing.billingDescriptor || "RYNEX"}</p>
               </div>
 
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                <p className="text-gray-500">סיום ניסיון</p>
+                <p className="text-gray-500">{s.trialEndLabel}</p>
                 <p className="font-semibold">{formatDateTime(billing.trialEndsAt)}</p>
               </div>
 
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                <p className="text-gray-500">סיום אפקטיבי</p>
+                <p className="text-gray-500">{s.effectiveEndLabel}</p>
                 <p className="font-semibold">{formatDateTime(billing.effectiveEndAt)}</p>
               </div>
             </div>
@@ -180,7 +244,7 @@ export default function Settings() {
                 disabled={billingLoading}
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                שדרוג ל-Basic ($12.90)
+                {s.upgradeBasic}
               </button>
 
               <button
@@ -188,7 +252,7 @@ export default function Settings() {
                 disabled={billingLoading}
                 className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                שדרוג ל-Pro ($20.90)
+                {s.upgradePro}
               </button>
 
               <button
@@ -196,7 +260,7 @@ export default function Settings() {
                 disabled={!canExtendTrial || billingLoading}
                 className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                הארכת ניסיון 14 ימים
+                {s.extendTrial}
               </button>
 
               <button
@@ -204,7 +268,7 @@ export default function Settings() {
                 disabled={billing.subscriptionStatus === "canceled" || billingLoading}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                ביטול מיידי
+                {s.cancelSub}
               </button>
             </div>
           </>
@@ -215,12 +279,12 @@ export default function Settings() {
       <div className="bg-white rounded-xl shadow-sm border p-6">
         <div className="flex items-center gap-3 mb-6">
           <Building2 size={24} className="text-blue-600" />
-          <h2 className="text-2xl font-bold">📋 נתוני החברה</h2>
+          <h2 className="text-2xl font-bold">{s.companyTitle}</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelClass}>שם החברה</label>
+            <label className={labelClass}>{s.companyName}</label>
             <input
               type="text"
               value={companyInfo.name}
@@ -231,7 +295,7 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className={labelClass}>דוא״ל</label>
+            <label className={labelClass}>{s.emailLabel}</label>
             <input
               type="email"
               value={companyInfo.email}
@@ -242,7 +306,7 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className={labelClass}>טלפון</label>
+            <label className={labelClass}>{s.phoneLabel}</label>
             <input
               type="tel"
               value={companyInfo.phone}
@@ -253,7 +317,7 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className={labelClass}>טלפון WhatsApp</label>
+            <label className={labelClass}>{s.whatsappLabel}</label>
             <input
               type="tel"
               value={companyInfo.whatsapp || ""}
@@ -264,7 +328,7 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className={labelClass}>כתובת</label>
+            <label className={labelClass}>{s.addressLabel}</label>
             <input
               type="text"
               value={companyInfo.address}
@@ -279,13 +343,13 @@ export default function Settings() {
           onClick={handleSave}
           className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
         >
-          <Save size={18} /> שמור הגדרות
+          <Save size={18} /> {s.saveBtn}
         </button>
       </div>
 
       {/* Quick Stats */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h2 className="text-2xl font-bold mb-6">📊 סטטיסטיקות מהירות</h2>
+        <h2 className="text-2xl font-bold mb-6">{s.statsTitle}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {statsData.map((stat, idx) => (
             <div key={idx} className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
@@ -299,7 +363,7 @@ export default function Settings() {
 
       {/* Backup & Export */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h2 className="text-2xl font-bold mb-6">💾 גיבוי וייצוא</h2>
+        <h2 className="text-2xl font-bold mb-6">{s.backupTitle}</h2>
         <div className="space-y-4">
           <button
             onClick={() => {
@@ -319,30 +383,28 @@ export default function Settings() {
             }}
             className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2"
           >
-            <span>📥</span> גיבוי מלא של הנתונים
+            <span>📥</span> {s.backupBtn}
           </button>
 
           <p className="text-sm text-gray-600 text-center">
-            ✅ גיבוי מלא כולל לידים, שירותים וחשבוניות בקובץ JSON
+            {s.backupDesc}
           </p>
         </div>
       </div>
 
       {/* API & Integration */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h2 className="text-2xl font-bold mb-6">🔌 אינטגרציות</h2>
+        <h2 className="text-2xl font-bold mb-6">{s.integrationsTitle}</h2>
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h3 className="font-semibold mb-2">📧 Webhook URL</h3>
+            <h3 className="font-semibold mb-2">{s.webhookLabel}</h3>
             <input
               type="text"
               value={`${window.location.origin}/api/webhook`}
               readOnly
               className="w-full px-3 py-2 border rounded-lg bg-white text-gray-600 text-sm"
             />
-            <p className="text-xs text-gray-500 mt-2">
-              השתמש בקישור זה כדי לשלוח נתונים מחוץ למערכת
-            </p>
+            <p className="text-xs text-gray-500 mt-2">{s.webhookDesc}</p>
           </div>
 
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">

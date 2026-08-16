@@ -1,7 +1,62 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCrm } from "../context/CrmContext";
+import { useLanguage } from "../context/LanguageContext";
 import { AlertCircle, CheckSquare, FileText, Users, ArrowLeft } from "lucide-react";
+
+const i18n = {
+  he: {
+    title: "⚡ מרכז פעולות",
+    allClear: "הכל נקי — אין פעולות ממתינות",
+    actionsNeeded: (n) => `${n} פעולות דורשות טיפול`,
+    overdueTasks: "משימות באיחור", todayTasks: "משימות להיום",
+    noResponse: "לידים ללא מענה", staleQuotes: "הצעות מחיר תקועות", unpaidInvoices: "חשבוניות שלא שולמו",
+    emptyOverdue: "אין משימות באיחור ✓", emptyToday: "אין משימות להיום ✓",
+    emptyNoResponse: "כל הלידים קיבלו מענה ✓", emptyStale: "אין הצעות מחיר תקועות ✓", emptyUnpaid: "כל החשבוניות שולמו ✓",
+    allTasks: "לכל המשימות", allLeads: "לכל הלידים", allInvoices: "לכל החשבוניות",
+    noResponseBadge: "ללא מענה", urgentBadge: "דחוף", todayBadge: "היום", sentBadge: "נשלחה", draftBadge: "טיוטה",
+    createdOn: (d) => `נוצר ${d}`,
+    openDays: (n) => `הצעת מחיר פתוחה ${n} ימים`,
+    overdueDays: (n) => `באיחור ${n} ימים`,
+    forLead: (n) => `ל: ${n}`,
+    invoiceRef: (num, total) => `חשבונית ${num} — ₪${total}`,
+    dateLocale: "he-IL",
+  },
+  en: {
+    title: "⚡ Command Center",
+    allClear: "All clear — no pending actions",
+    actionsNeeded: (n) => `${n} action${n === 1 ? "" : "s"} need attention`,
+    overdueTasks: "Overdue Tasks", todayTasks: "Today's Tasks",
+    noResponse: "Leads Without Response", staleQuotes: "Stale Quotes", unpaidInvoices: "Unpaid Invoices",
+    emptyOverdue: "No overdue tasks ✓", emptyToday: "No tasks for today ✓",
+    emptyNoResponse: "All leads have been contacted ✓", emptyStale: "No stale quotes ✓", emptyUnpaid: "All invoices paid ✓",
+    allTasks: "View all tasks", allLeads: "View all leads", allInvoices: "View all invoices",
+    noResponseBadge: "No response", urgentBadge: "Urgent", todayBadge: "Today", sentBadge: "Sent", draftBadge: "Draft",
+    createdOn: (d) => `Created ${d}`,
+    openDays: (n) => `Quote open ${n} day${n === 1 ? "" : "s"}`,
+    overdueDays: (n) => `${n} day${n === 1 ? "" : "s"} overdue`,
+    forLead: (n) => `For: ${n}`,
+    invoiceRef: (num, total) => `Invoice ${num} — ₪${total}`,
+    dateLocale: "en-US",
+  },
+  ru: {
+    title: "⚡ Центр управления",
+    allClear: "Всё в порядке — нет ожидающих действий",
+    actionsNeeded: (n) => `${n} действий требуют внимания`,
+    overdueTasks: "Просроченные задачи", todayTasks: "Задачи на сегодня",
+    noResponse: "Лиды без ответа", staleQuotes: "Зависшие предложения", unpaidInvoices: "Неоплаченные счета",
+    emptyOverdue: "Нет просроченных задач ✓", emptyToday: "Задач на сегодня нет ✓",
+    emptyNoResponse: "Все лиды получили ответ ✓", emptyStale: "Нет зависших предложений ✓", emptyUnpaid: "Все счета оплачены ✓",
+    allTasks: "Все задачи", allLeads: "Все лиды", allInvoices: "Все счета",
+    noResponseBadge: "Нет ответа", urgentBadge: "Срочно", todayBadge: "Сегодня", sentBadge: "Отправлен", draftBadge: "Черновик",
+    createdOn: (d) => `Создан ${d}`,
+    openDays: (n) => `Предложение открыто ${n} дней`,
+    overdueDays: (n) => `Просрочено ${n} дней`,
+    forLead: (n) => `Для: ${n}`,
+    invoiceRef: (num, total) => `Счёт ${num} — ₪${total}`,
+    dateLocale: "ru-RU",
+  },
+};
 
 function ActionCard({ icon: Icon, iconColor, title, items, onAction, emptyText, actionLabel }) {
   return (
@@ -55,7 +110,10 @@ function ActionCard({ icon: Icon, iconColor, title, items, onAction, emptyText, 
 
 export default function CommandCenter() {
   const { leads } = useCrm();
+  const { language } = useLanguage();
   const navigate = useNavigate();
+  const s = i18n[language] || i18n.he;
+  const isRtl = language === "he";
 
   const today = new Date().toISOString().split("T")[0];
   const invoices = JSON.parse(localStorage.getItem("invoices") || "[]");
@@ -65,16 +123,14 @@ export default function CommandCenter() {
       (l.tasks || []).map((t) => ({ ...t, leadName: l.name, leadId: l.id }))
     );
 
-    // Leads without any response (New status, no tasks at all, or no activity beyond creation)
     const noResponse = leads
       .filter((l) => l.status === "New" && (l.activity || []).length <= 1 && (l.tasks || []).filter(t => !t.completed).length === 0)
       .map((l) => ({
         id: l.id, name: l.name,
-        sub: `נוצר ${new Date(l.createdAt).toLocaleDateString("he-IL")}`,
-        badge: "ללא מענה", badgeClass: "bg-orange-100 text-orange-700",
+        sub: s.createdOn(new Date(l.createdAt).toLocaleDateString(s.dateLocale)),
+        badge: s.noResponseBadge, badgeClass: "bg-orange-100 text-orange-700",
       }));
 
-    // Stale quotes (Quoted > 5 days)
     const staleQuotes = leads
       .filter((l) => {
         if (l.status !== "Quoted") return false;
@@ -85,12 +141,11 @@ export default function CommandCenter() {
         const days = Math.round((Date.now() - new Date(l.createdAt).getTime()) / (24 * 60 * 60 * 1000));
         return {
           id: l.id, name: l.name,
-          sub: `הצעת מחיר פתוחה ${days} ימים`,
-          badge: `${days} ימים`, badgeClass: "bg-blue-100 text-blue-700",
+          sub: s.openDays(days),
+          badge: `${days}d`, badgeClass: "bg-blue-100 text-blue-700",
         };
       });
 
-    // Unpaid invoices
     const unpaid = invoices
       .filter((i) => i.status !== "paid")
       .map((i) => {
@@ -98,46 +153,44 @@ export default function CommandCenter() {
         const total = (parseFloat(i.amount || 0) * (1 + parseFloat(i.tax || 0) / 100)).toFixed(0);
         return {
           id: i.id, name: lead?.name || i.number,
-          sub: `חשבונית ${i.number} — ₪${total}`,
-          badge: i.status === "sent" ? "נשלחה" : "טיוטה",
+          sub: s.invoiceRef(i.number, total),
+          badge: i.status === "sent" ? s.sentBadge : s.draftBadge,
           badgeClass: "bg-yellow-100 text-yellow-700",
         };
       });
 
-    // Today's tasks
     const todayTasks = allTasks
       .filter((t) => !t.completed && t.dueDate === today)
       .map((t) => ({
         id: t.id + t.leadId, name: t.title,
-        sub: `ל: ${t.leadName}`,
-        badge: t.priority === "High" ? "דחוף" : "היום",
+        sub: s.forLead(t.leadName),
+        badge: t.priority === "High" ? s.urgentBadge : s.todayBadge,
         badgeClass: t.priority === "High" ? "bg-red-100 text-red-700" : "bg-indigo-100 text-indigo-700",
       }));
 
-    // Overdue tasks
     const overdue = allTasks
       .filter((t) => !t.completed && t.dueDate && t.dueDate < today)
       .map((t) => {
         const days = Math.round((Date.now() - new Date(t.dueDate).getTime()) / (24 * 60 * 60 * 1000));
         return {
           id: t.id + t.leadId + "od", name: t.title,
-          sub: `ל: ${t.leadName} — באיחור ${days} ימים`,
-          badge: `${days} ימים`, badgeClass: "bg-red-100 text-red-700",
+          sub: s.forLead(t.leadName) + " — " + s.overdueDays(days),
+          badge: `${days}d`, badgeClass: "bg-red-100 text-red-700",
         };
       });
 
     return { noResponse, staleQuotes, unpaid, todayTasks, overdue };
-  }, [leads, today, invoices]);
+  }, [leads, today, invoices, s]);
 
   const totalActions = data.noResponse.length + data.staleQuotes.length + data.unpaid.length + data.todayTasks.length + data.overdue.length;
 
   return (
-    <div className="p-4 md:p-6 space-y-6" dir="rtl">
+    <div className="p-4 md:p-6 space-y-6" dir={isRtl ? "rtl" : "ltr"}>
       <div className="flex items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">⚡ מרכז פעולות</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">{s.title}</h1>
           <p className="text-sm text-slate-400 mt-0.5">
-            {totalActions === 0 ? "הכל נקי — אין פעולות ממתינות" : `${totalActions} פעולות דורשות טיפול`}
+            {totalActions === 0 ? s.allClear : s.actionsNeeded(totalActions)}
           </p>
         </div>
       </div>
@@ -145,43 +198,43 @@ export default function CommandCenter() {
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
         <ActionCard
           icon={AlertCircle} iconColor="text-red-500"
-          title="משימות באיחור"
+          title={s.overdueTasks}
           items={data.overdue}
           onAction={(item) => navigate(item ? "/tasks" : "/tasks")}
-          emptyText="אין משימות באיחור ✓"
-          actionLabel="לכל המשימות"
+          emptyText={s.emptyOverdue}
+          actionLabel={s.allTasks}
         />
         <ActionCard
           icon={CheckSquare} iconColor="text-indigo-500"
-          title="משימות להיום"
+          title={s.todayTasks}
           items={data.todayTasks}
           onAction={() => navigate("/tasks")}
-          emptyText="אין משימות להיום ✓"
-          actionLabel="לכל המשימות"
+          emptyText={s.emptyToday}
+          actionLabel={s.allTasks}
         />
         <ActionCard
           icon={Users} iconColor="text-orange-500"
-          title="לידים ללא מענה"
+          title={s.noResponse}
           items={data.noResponse}
           onAction={() => navigate("/leads")}
-          emptyText="כל הלידים קיבלו מענה ✓"
-          actionLabel="לכל הלידים"
+          emptyText={s.emptyNoResponse}
+          actionLabel={s.allLeads}
         />
         <ActionCard
           icon={FileText} iconColor="text-blue-500"
-          title="הצעות מחיר תקועות"
+          title={s.staleQuotes}
           items={data.staleQuotes}
           onAction={() => navigate("/leads")}
-          emptyText="אין הצעות מחיר תקועות ✓"
-          actionLabel="לכל הלידים"
+          emptyText={s.emptyStale}
+          actionLabel={s.allLeads}
         />
         <ActionCard
           icon={FileText} iconColor="text-yellow-600"
-          title="חשבוניות שלא שולמו"
+          title={s.unpaidInvoices}
           items={data.unpaid}
           onAction={() => navigate("/invoices")}
-          emptyText="כל החשבוניות שולמו ✓"
-          actionLabel="לכל החשבוניות"
+          emptyText={s.emptyUnpaid}
+          actionLabel={s.allInvoices}
         />
       </div>
     </div>

@@ -1,6 +1,55 @@
 import { useState, useMemo } from "react";
 import { Download } from "lucide-react";
 import { useCrm, calculateLeadScore, formatDate } from "../context/CrmContext";
+import { useLanguage } from "../context/LanguageContext";
+
+const i18n = {
+  he: {
+    title: "דוחות",
+    selectReport: "בחר דוח",
+    reports: {
+      summary: { name: "סיכום כללי", metrics: ["סה״כ לידים","עסקאות סגורות","הצעות מחיר","ממתינות","אבדו"] },
+      activity: { name: "פעילויות", metrics: ["סה״כ משימות","הושלמו","פתוחות","הערות"] },
+      quality: { name: "איכות לידים", metrics: ["ניקוד ממוצע","שיעור המרה","לידים איכותיים (70+)"] },
+    },
+    exportTitle: "ייצוא נתונים",
+    exportDesc: "ייצא את כל לידיך בפורמטים שונים:",
+    exportTip: "💡 טיפ: ייצא בכל פעם שאתה רוצה לגבות או לשתף את הנתונים",
+    tableTitle: "📊 טבלת נתונים מפורטת",
+    colName: "שם", colPhone: "טלפון", colStatus: "סטאטוס", colScore: "ניקוד", colTasks: "משימות", colNotes: "הערות", colActivities: "פעילויות", colDate: "תאריך יצירה",
+    noLeads: "אין לידים להצגה",
+  },
+  en: {
+    title: "Reports",
+    selectReport: "Select Report",
+    reports: {
+      summary: { name: "Summary", metrics: ["Total Leads","Won Deals","Quoted","Pending Contact","Lost"] },
+      activity: { name: "Activities", metrics: ["Total Tasks","Completed","Open","Notes"] },
+      quality: { name: "Lead Quality", metrics: ["Avg. Score","Conversion Rate","High Quality (70+)"] },
+    },
+    exportTitle: "Export Data",
+    exportDesc: "Export all your leads in different formats:",
+    exportTip: "💡 Tip: Export whenever you want to back up or share your data with other tools",
+    tableTitle: "📊 Detailed Data Table",
+    colName: "Name", colPhone: "Phone", colStatus: "Status", colScore: "Score", colTasks: "Tasks", colNotes: "Notes", colActivities: "Activities", colDate: "Created",
+    noLeads: "No leads to display",
+  },
+  ru: {
+    title: "Отчёты",
+    selectReport: "Выбрать отчёт",
+    reports: {
+      summary: { name: "Общая сводка", metrics: ["Всего лидов","Закрытых сделок","Предложений","Ожидают связи","Потерян"] },
+      activity: { name: "Активность", metrics: ["Всего задач","Выполнено","Открыты","Заметки"] },
+      quality: { name: "Качество лидов", metrics: ["Средний балл","Конверсия","Высокое качество (70+)"] },
+    },
+    exportTitle: "Экспорт данных",
+    exportDesc: "Экспортируйте все ваши лиды в разных форматах:",
+    exportTip: "💡 Совет: экспортируйте данные для резервного копирования",
+    tableTitle: "📊 Детальная таблица",
+    colName: "Имя", colPhone: "Телефон", colStatus: "Статус", colScore: "Балл", colTasks: "Задачи", colNotes: "Заметки", colActivities: "Активность", colDate: "Создан",
+    noLeads: "Нет лидов для отображения",
+  },
+};
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 
@@ -147,6 +196,9 @@ function ExportButton({ format, data, filename }) {
 
 export default function Reports() {
   const { leads } = useCrm();
+  const { language } = useLanguage();
+  const s = i18n[language] || i18n.he;
+  const isRtl = language === "he";
   const [selectedReport, setSelectedReport] = useState("summary");
 
   // Calculate metrics
@@ -178,33 +230,33 @@ export default function Reports() {
 
   const reportsData = {
     summary: {
-      name: "סיכום כללי",
+      name: s.reports.summary.name,
       icon: "📊",
       metrics: [
-        { label: "סה״כ לידים", value: totalLeads, color: "blue" },
-        { label: "עסקאות סגורות", value: wonDeals, color: "green" },
-        { label: "הצעות מחיר", value: quotedDeals, color: "blue" },
-        { label: "ממתינות ליצירת קשר", value: newLeads, color: "yellow" },
-        { label: "עסקאות שאבדו", value: lostLeads, color: "red" },
+        { label: s.reports.summary.metrics[0], value: totalLeads, color: "blue" },
+        { label: s.reports.summary.metrics[1], value: wonDeals, color: "green" },
+        { label: s.reports.summary.metrics[2], value: quotedDeals, color: "blue" },
+        { label: s.reports.summary.metrics[3], value: newLeads, color: "yellow" },
+        { label: s.reports.summary.metrics[4], value: lostLeads, color: "red" },
       ],
     },
     activity: {
-      name: "פעילויות",
+      name: s.reports.activity.name,
       icon: "📋",
       metrics: [
-        { label: "סה״כ משימות", value: totalTasks, color: "blue" },
-        { label: "משימות שהושלמו", value: completedTasks, color: "green" },
-        { label: "משימות פתוחות", value: totalTasks - completedTasks, color: "yellow" },
-        { label: "סה״כ הערות", value: totalNotes, color: "purple" },
+        { label: s.reports.activity.metrics[0], value: totalTasks, color: "blue" },
+        { label: s.reports.activity.metrics[1], value: completedTasks, color: "green" },
+        { label: s.reports.activity.metrics[2], value: totalTasks - completedTasks, color: "yellow" },
+        { label: s.reports.activity.metrics[3], value: totalNotes, color: "purple" },
       ],
     },
     quality: {
-      name: "איכות לידים",
+      name: s.reports.quality.name,
       icon: "⭐",
       metrics: [
-        { label: "ניקוד ממוצע", value: avgScore, color: "blue" },
-        { label: "שיעור המרה", value: conversionRate + "%", color: "green" },
-        { label: "לידים איכותיים (70+)", value: leads.filter((l) => calculateLeadScore(l) >= 70).length, color: "purple" },
+        { label: s.reports.quality.metrics[0], value: avgScore, color: "blue" },
+        { label: s.reports.quality.metrics[1], value: conversionRate + "%", color: "green" },
+        { label: s.reports.quality.metrics[2], value: leads.filter((l) => calculateLeadScore(l) >= 70).length, color: "purple" },
       ],
     },
   };
@@ -212,10 +264,10 @@ export default function Reports() {
   const currentReport = reportsData[selectedReport];
 
   return (
-    <div className="p-6 space-y-8" dir="rtl">
+    <div className="p-6 space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">דוחות</h1>
+        <h1 className="text-2xl font-bold text-neutral-900">{s.title}</h1>
       </div>
 
       {/* Smart text insights */}
@@ -223,7 +275,7 @@ export default function Reports() {
 
       {/* Report Type Selector */}
       <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="font-bold mb-4">בחר דוח</h2>
+        <h2 className="font-bold mb-4">{s.selectReport}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {Object.entries(reportsData).map(([key, report]) => (
             <button
@@ -279,11 +331,11 @@ export default function Reports() {
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
           <Download size={24} />
-          ייצוא נתונים
+          {s.exportTitle}
         </h2>
 
         <div className="mb-6">
-          <p className="text-gray-600 mb-4">ייצא את כל לידיך בפורמטים שונים:</p>
+          <p className="text-gray-600 mb-4">{s.exportDesc}</p>
           <div className="flex flex-wrap gap-3">
             <ExportButton format="json" data={leadsForExport} filename="myservicescrm-leads" />
             <ExportButton format="csv" data={leadsForExport} filename="myservicescrm-leads" />
@@ -293,34 +345,34 @@ export default function Reports() {
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-gray-700">
-            💡 <strong>טיפ:</strong> ייצא בכל פעם שאתה רוצה לגבות או לשתף את הנתונים שלך עם כלים אחרים
+            {s.exportTip}
           </p>
         </div>
       </div>
 
       {/* Detailed Data Table */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold mb-4">📊 טבלת נתונים מפורטת</h2>
+        <h2 className="text-2xl font-bold mb-4">{s.tableTitle}</h2>
         
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b-2 border-gray-300">
-                <th className="p-3 text-right text-gray-700">שם</th>
-                <th className="p-3 text-right text-gray-700">טלפון</th>
-                <th className="p-3 text-right text-gray-700">סטטוס</th>
-                <th className="p-3 text-right text-gray-700">ניקוד</th>
-                <th className="p-3 text-right text-gray-700">משימות</th>
-                <th className="p-3 text-right text-gray-700">הערות</th>
-                <th className="p-3 text-right text-gray-700">פעילויות</th>
-                <th className="p-3 text-right text-gray-700">תאריך יצירה</th>
+                <th className="p-3 text-right text-gray-700">{s.colName}</th>
+                <th className="p-3 text-right text-gray-700">{s.colPhone}</th>
+                <th className="p-3 text-right text-gray-700">{s.colStatus}</th>
+                <th className="p-3 text-right text-gray-700">{s.colScore}</th>
+                <th className="p-3 text-right text-gray-700">{s.colTasks}</th>
+                <th className="p-3 text-right text-gray-700">{s.colNotes}</th>
+                <th className="p-3 text-right text-gray-700">{s.colActivities}</th>
+                <th className="p-3 text-right text-gray-700">{s.colDate}</th>
               </tr>
             </thead>
             <tbody>
               {leads.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="p-4 text-center text-gray-500">
-                    אין לידים להצגה
+                      {s.noLeads}
                   </td>
                 </tr>
               ) : (

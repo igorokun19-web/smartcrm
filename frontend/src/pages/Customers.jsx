@@ -1,6 +1,73 @@
 import { useState } from "react";
 import { TrendingUp, Users, Heart, DollarSign, ChevronDown, MessageCircle } from "lucide-react";
 import { useCrm, formatDate } from "../context/CrmContext";
+import { useLanguage } from "../context/LanguageContext";
+
+const i18n = {
+  he: {
+    title: "🤝 לקוחות",
+    kpiTotal: "סה״כ לקוחות", kpiTotalSub: "בכל המערכת",
+    kpiVip: "VIP לקוחות", kpiVipSub: (p) => `${p}% מהלקוחות`,
+    kpiLtv: "LTV ממוצע", kpiLtvSub: (t) => `סה״כ ₪${t.toLocaleString()}`,
+    kpiConversion: "שיעור המרה", kpiConversionSub: (n) => `${n} לקוחות מומרים`,
+    searchPlaceholder: "חיפוש בשם או טלפון...",
+    allSegments: "כל הפילוחים",
+    allStatuses: "כל הסטאטוסים",
+    segLabels: { VIP: "VIP בלבד", Active: "פעילים", AtRisk: "בסיכון", Inactive: "לא פעילים" },
+    statLabels: { New: "חדש", Contacted: "נוצר קשר", Quoted: "הצעת מחיר", Won: "נסגר", Lost: "אבוד" },
+    sortLtv: "לפי LTV", sortDate: "לפי תאריך", sortActivity: "לפי פעילות",
+    noResults: "לא נמצאו לקוחות",
+    ltvLabel: "LTV משוער", daysLabel: "ימים כלקוח",
+    tasksLabel: "משימות", notesLabel: "הערות", activityLabel: "פעילויות",
+    closeBtn: "סגור",
+    revenueKpi: "הכנסות", daysKpi: "ימים", invoicesKpi: "חשבוניות",
+    invoicesTitle: "💵 חשבוניות", openTasksTitle: "📋 משימות פתוחות",
+    paidBadge: "שולמה", pendingBadge: "ממתינה",
+    dateLocale: "he-IL",
+  },
+  en: {
+    title: "🤝 Customers",
+    kpiTotal: "Total Customers", kpiTotalSub: "In the system",
+    kpiVip: "VIP Customers", kpiVipSub: (p) => `${p}% of customers`,
+    kpiLtv: "Avg. LTV", kpiLtvSub: (t) => `Total ₪${t.toLocaleString()}`,
+    kpiConversion: "Conversion Rate", kpiConversionSub: (n) => `${n} converted`,
+    searchPlaceholder: "Search by name or phone...",
+    allSegments: "All Segments",
+    allStatuses: "All Statuses",
+    segLabels: { VIP: "VIP only", Active: "Active only", AtRisk: "At Risk only", Inactive: "Inactive only" },
+    statLabels: { New: "New", Contacted: "Contacted", Quoted: "Quoted", Won: "Won", Lost: "Lost" },
+    sortLtv: "By LTV", sortDate: "By Date", sortActivity: "By Activity",
+    noResults: "No customers found",
+    ltvLabel: "Est. LTV", daysLabel: "Days as Client",
+    tasksLabel: "Tasks", notesLabel: "Notes", activityLabel: "Activities",
+    closeBtn: "Close",
+    revenueKpi: "Revenue", daysKpi: "Days", invoicesKpi: "Invoices",
+    invoicesTitle: "💵 Invoices", openTasksTitle: "📋 Open Tasks",
+    paidBadge: "Paid", pendingBadge: "Pending",
+    dateLocale: "en-US",
+  },
+  ru: {
+    title: "🤝 Клиенты",
+    kpiTotal: "Всего клиентов", kpiTotalSub: "В системе",
+    kpiVip: "VIP клиенты", kpiVipSub: (p) => `${p}% клиентов`,
+    kpiLtv: "Ср. LTV", kpiLtvSub: (t) => `Итого ₪${t.toLocaleString()}`,
+    kpiConversion: "Конверсия", kpiConversionSub: (n) => `${n} конвертировано`,
+    searchPlaceholder: "Поиск по имени или телефону...",
+    allSegments: "Все сегменты",
+    allStatuses: "Все статусы",
+    segLabels: { VIP: "Только VIP", Active: "Активные", AtRisk: "Под риском", Inactive: "Неактивные" },
+    statLabels: { New: "Новый", Contacted: "Обработан", Quoted: "Предложение", Won: "Победа", Lost: "Проигрыш" },
+    sortLtv: "По LTV", sortDate: "По дате", sortActivity: "По активности",
+    noResults: "Клиенты не найдены",
+    ltvLabel: "Оцен. LTV", daysLabel: "Дней как кл.",
+    tasksLabel: "Задачи", notesLabel: "Заметки", activityLabel: "Активность",
+    closeBtn: "Закрыть",
+    revenueKpi: "Доход", daysKpi: "Дней", invoicesKpi: "Счета",
+    invoicesTitle: "💵 Счета", openTasksTitle: "📋 Открытые задачи",
+    paidBadge: "Оплачен", pendingBadge: "Ожидает",
+    dateLocale: "ru-RU",
+  },
+};
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 const badgeStyle = "inline-flex items-center gap-1 rounded-full text-xs font-semibold px-3 py-1";
@@ -263,6 +330,9 @@ function CustomerDetailModal({ customer, onClose, now }) {
 
 export default function Customers() {
   const { leads } = useCrm();
+  const { language } = useLanguage();
+  const s = i18n[language] || i18n.he;
+  const isRtl = language === "he";
   const [now] = useState(() => Date.now());
   const [search, setSearch] = useState("");
   const [segmentFilter, setSegmentFilter] = useState("all");
@@ -314,10 +384,10 @@ export default function Customers() {
   const conversionRate = totalCustomers > 0 ? Math.round((wonCount / totalCustomers) * 100) : 0;
 
   return (
-    <div className="p-6 space-y-8" dir="rtl">
+    <div className="p-6 space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">🤝 לקוחות</h1>
+        <h1 className="text-2xl font-bold text-neutral-900">{s.title}</h1>
       </div>
 
       {/* KPI Cards */}
@@ -325,37 +395,37 @@ export default function Customers() {
         <div className={`${kpiCard} bg-blue-50`}>
           <div className="flex items-center gap-2 mb-2">
             <Users size={18} className="text-blue-600" />
-            <p className="text-sm text-gray-600">סה״כ לקוחות</p>
+            <p className="text-sm text-gray-600">{s.kpiTotal}</p>
           </div>
           <p className="text-3xl font-bold">{totalCustomers}</p>
-          <p className="text-xs text-gray-500 mt-2">בכל המערכת</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiTotalSub}</p>
         </div>
 
         <div className={`${kpiCard} bg-purple-50`}>
           <div className="flex items-center gap-2 mb-2">
             <Heart size={18} className="text-purple-600" />
-            <p className="text-sm text-gray-600">VIP לקוחות</p>
+            <p className="text-sm text-gray-600">{s.kpiVip}</p>
           </div>
           <p className="text-3xl font-bold text-purple-600">{vipCount}</p>
-          <p className="text-xs text-gray-500 mt-2">{totalCustomers > 0 ? Math.round((vipCount / totalCustomers) * 100) : 0}% מהלקוחות</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiVipSub(totalCustomers > 0 ? Math.round((vipCount / totalCustomers) * 100) : 0)}</p>
         </div>
 
         <div className={`${kpiCard} bg-green-50`}>
           <div className="flex items-center gap-2 mb-2">
             <DollarSign size={18} className="text-green-600" />
-            <p className="text-sm text-gray-600">LTV ממוצע</p>
+            <p className="text-sm text-gray-600">{s.kpiLtv}</p>
           </div>
           <p className="text-3xl font-bold">₪{avgLTV.toLocaleString()}</p>
-          <p className="text-xs text-gray-500 mt-2">סה״כ ₪{totalLTV.toLocaleString()}</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiLtvSub(totalLTV)}</p>
         </div>
 
         <div className={`${kpiCard} bg-orange-50`}>
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={18} className="text-orange-600" />
-            <p className="text-sm text-gray-600">שיעור המרה</p>
+            <p className="text-sm text-gray-600">{s.kpiConversion}</p>
           </div>
           <p className="text-3xl font-bold text-orange-600">{conversionRate}%</p>
-          <p className="text-xs text-gray-500 mt-2">{wonCount} לקוחות מומרים</p>
+          <p className="text-xs text-gray-500 mt-2">{s.kpiConversionSub(wonCount)}</p>
         </div>
       </div>
 
@@ -364,7 +434,7 @@ export default function Customers() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <input
             type="text"
-            placeholder="חיפוש בשם או טלפון..."
+            placeholder={s.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm"
@@ -375,11 +445,11 @@ export default function Customers() {
             onChange={(e) => setSegmentFilter(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm"
           >
-            <option value="all">כל הפילוחים</option>
-            <option value="VIP">VIP בלבד</option>
-            <option value="Active">פעילים בלבד</option>
-            <option value="AtRisk">בסיכון בלבד</option>
-            <option value="Inactive">לא פעילים בלבד</option>
+            <option value="all">{s.allSegments}</option>
+            <option value="VIP">{s.segLabels.VIP}</option>
+            <option value="Active">{s.segLabels.Active}</option>
+            <option value="AtRisk">{s.segLabels.AtRisk}</option>
+            <option value="Inactive">{s.segLabels.Inactive}</option>
           </select>
 
           <select
@@ -387,12 +457,12 @@ export default function Customers() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="border rounded-lg px-3 py-2 text-sm"
           >
-            <option value="all">כל הסטטוסים</option>
-            <option value="New">חדש</option>
-            <option value="Contacted">נוצר קשר</option>
-            <option value="Quoted">הצעת מחיר</option>
-            <option value="Won">נסגר בהצלחה</option>
-            <option value="Lost">אבוד</option>
+            <option value="all">{s.allStatuses}</option>
+            <option value="New">{s.statLabels.New}</option>
+            <option value="Contacted">{s.statLabels.Contacted}</option>
+            <option value="Quoted">{s.statLabels.Quoted}</option>
+            <option value="Won">{s.statLabels.Won}</option>
+            <option value="Lost">{s.statLabels.Lost}</option>
           </select>
 
           <select

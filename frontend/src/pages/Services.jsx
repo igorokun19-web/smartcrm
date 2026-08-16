@@ -1,6 +1,70 @@
 import { useState } from "react";
 import { Plus, Trash2, Edit2, Package } from "lucide-react";
 import { useCrm } from "../context/CrmContext";
+import { useLanguage } from "../context/LanguageContext";
+
+const i18n = {
+  he: {
+    title: "📦 ניהול שירותים", subtitle: "קטלוג שירותים, תמחורים ודירוגים",
+    addBtn: "שירות חדש",
+    kpiTotal: "סה״כ שירותים", kpiAvgPrice: "סכום ממוצע", kpiAvgMargin: "רווח ממוצע", kpiLeads: "לידים עם שירותים",
+    modalAdd: "שירות חדש", modalEdit: "עדכן שירות",
+    namePlaceholder: "שם השירות (צביעה, אינסטלציה וכו...)",
+    descPlaceholder: "תיאור השירות",
+    categoryLabel: "קטגוריה", durationLabel: "משך זמן (דקות)",
+    priceLabel: "מחיר בסיסי (₪)", marginLabel: "מרווח רווח (%)",
+    saveBtn: "💾 שמור", cancelBtn: "ביטול",
+    tableTitle: "📋 קטלוג שירותים",
+    colName: "שם", colCategory: "קטגוריה", colPrice: "מחיר", colDuration: "משך זמן", colMargin: "מרווח", colActions: "פעולות",
+    emptyMsg: "אין שירותים עדיין. בואו נוסיף את הראשון!",
+    minutes: (n) => `${n} דקות`,
+    revenueTitle: "💰 ניתוח הכנסות",
+    totalRevLabel: "סכום כולל שירותים:", highestLabel: "שירות יקר ביותר:", lowestLabel: "שירות זול ביותר:",
+    catTitle: "📊 התפלגות קטגוריות",
+    requiredAlert: "נא למלא את השם והמחיר",
+    catNames: { "צביעה": "צביעה", "אינסטלציה": "אינסטלציה", "תיקון": "תיקון", "ניקיון": "ניקיון", "פיתוח": "פיתוח", "ייעוץ": "ייעוץ", "אחר": "אחר" },
+  },
+  en: {
+    title: "📦 Service Management", subtitle: "Service catalog, pricing and margins",
+    addBtn: "New Service",
+    kpiTotal: "Total Services", kpiAvgPrice: "Avg. Price", kpiAvgMargin: "Avg. Margin", kpiLeads: "Leads with Services",
+    modalAdd: "New Service", modalEdit: "Edit Service",
+    namePlaceholder: "Service name (painting, plumbing, etc.)",
+    descPlaceholder: "Service description",
+    categoryLabel: "Category", durationLabel: "Duration (minutes)",
+    priceLabel: "Base Price (₪)", marginLabel: "Profit Margin (%)",
+    saveBtn: "💾 Save", cancelBtn: "Cancel",
+    tableTitle: "📋 Service Catalog",
+    colName: "Name", colCategory: "Category", colPrice: "Price", colDuration: "Duration", colMargin: "Margin", colActions: "Actions",
+    emptyMsg: "No services yet. Let's add the first one!",
+    minutes: (n) => `${n} min`,
+    revenueTitle: "💰 Revenue Analysis",
+    totalRevLabel: "Total services value:", highestLabel: "Most expensive:", lowestLabel: "Least expensive:",
+    catTitle: "📊 Category Distribution",
+    requiredAlert: "Please fill in the name and price",
+    catNames: { "צביעה": "Painting", "אינסטלציה": "Plumbing", "תיקון": "Repairs", "ניקיון": "Cleaning", "פיתוח": "Development", "ייעוץ": "Consulting", "אחר": "Other" },
+  },
+  ru: {
+    title: "📦 Управление услугами", subtitle: "Каталог услуг, цены и маржа",
+    addBtn: "Новая услуга",
+    kpiTotal: "Всего услуг", kpiAvgPrice: "Средняя цена", kpiAvgMargin: "Средняя маржа", kpiLeads: "Лидов с услугами",
+    modalAdd: "Новая услуга", modalEdit: "Редактировать услугу",
+    namePlaceholder: "Название услуги (покраска, сантехника и т.д.)",
+    descPlaceholder: "Описание услуги",
+    categoryLabel: "Категория", durationLabel: "Продолжительность (мин)",
+    priceLabel: "Базовая цена (₪)", marginLabel: "Маржа прибыли (%)",
+    saveBtn: "💾 Сохранить", cancelBtn: "Отмена",
+    tableTitle: "📋 Каталог услуг",
+    colName: "Название", colCategory: "Категория", colPrice: "Цена", colDuration: "Длительность", colMargin: "Маржа", colActions: "Действия",
+    emptyMsg: "Услуг пока нет. Добавим первую!",
+    minutes: (n) => `${n} мин`,
+    revenueTitle: "💰 Анализ доходов",
+    totalRevLabel: "Общая стоимость услуг:", highestLabel: "Самая дорогая:", lowestLabel: "Самая дешёвая:",
+    catTitle: "📊 Распределение по категориям",
+    requiredAlert: "Заполните название и цену",
+    catNames: { "צביעה": "Покраска", "אינסטלציה": "Сантехника", "תיקון": "Ремонт", "ניקיון": "Уборка", "פיתוח": "Разработка", "ייעוץ": "Консалтинг", "אחר": "Другое" },
+  },
+};
 
 const kpiCard = "rounded-xl border p-4 bg-white shadow-sm";
 const tableClass = "w-full border-collapse";
@@ -9,6 +73,9 @@ const inputClass = "w-full px-3 py-2 border rounded-lg focus:outline-none focus:
 
 export default function Services() {
   const { leads } = useCrm();
+  const { language } = useLanguage();
+  const s = i18n[language] || i18n.he;
+  const isRtl = language === "he";
   const [services, setServices] = useState(JSON.parse(localStorage.getItem("services") || "[]"));
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -26,7 +93,7 @@ export default function Services() {
 
   const handleSave = () => {
     if (!formData.name || !formData.basePrice) {
-      alert("נא למלא את השם והמחיר");
+      alert(s.requiredAlert);
       return;
     }
 
@@ -61,12 +128,12 @@ export default function Services() {
   const leadsWithServices = leads.filter((l) => l.services && l.services.length > 0).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRtl ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">📦 ניהול שירותים</h1>
-          <p className="text-gray-600 mt-1">קטלוג שירותים, תמחורים ודירוגים</p>
+          <h1 className="text-3xl font-bold text-gray-900">{s.title}</h1>
+          <p className="text-gray-600 mt-1">{s.subtitle}</p>
         </div>
         <button
           onClick={() => {
@@ -76,26 +143,26 @@ export default function Services() {
           }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
         >
-          <Plus size={18} /> שירות חדש
+          <Plus size={18} /> {s.addBtn}
         </button>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className={kpiCard}>
-          <p className="text-sm text-gray-600">סה״כ שירותים</p>
+          <p className="text-sm text-gray-600">{s.kpiTotal}</p>
           <p className="text-3xl font-bold mt-2">{services.length}</p>
         </div>
         <div className={kpiCard}>
-          <p className="text-sm text-gray-600">סכום ממוצע</p>
+          <p className="text-sm text-gray-600">{s.kpiAvgPrice}</p>
           <p className="text-3xl font-bold mt-2">₪{(totalRevenue / (services.length || 1)).toFixed(0)}</p>
         </div>
         <div className={kpiCard}>
-          <p className="text-sm text-gray-600">רווח ממוצע</p>
+          <p className="text-sm text-gray-600">{s.kpiAvgMargin}</p>
           <p className="text-3xl font-bold mt-2">{avgMargin}%</p>
         </div>
         <div className={kpiCard}>
-          <p className="text-sm text-gray-600">לידים עם שירותים</p>
+          <p className="text-sm text-gray-600">{s.kpiLeads}</p>
           <p className="text-3xl font-bold mt-2">{leadsWithServices}</p>
         </div>
       </div>
@@ -104,18 +171,18 @@ export default function Services() {
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-lg max-w-lg w-full p-6 space-y-4">
-            <h2 className="text-2xl font-bold">{editingId ? "עדכן שירות" : "שירות חדש"}</h2>
+            <h2 className="text-2xl font-bold">{editingId ? s.modalEdit : s.modalAdd}</h2>
             
             <input
               type="text"
-              placeholder="שם השירות (צביעה, אינסטלציה וכו...)"
+              placeholder={s.namePlaceholder}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className={inputClass}
             />
 
             <textarea
-              placeholder="תיאור השירות"
+              placeholder={s.descPlaceholder}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows="2"
@@ -124,19 +191,19 @@ export default function Services() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">קטגוריה</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{s.categoryLabel}</label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className={inputClass}
                 >
                   {categories.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>{s.catNames[c] || c}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">משך זמן (דקות)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{s.durationLabel}</label>
                 <input
                   type="number"
                   value={formData.duration}
@@ -148,7 +215,7 @@ export default function Services() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">מחיר בסיסי (₪)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{s.priceLabel}</label>
                 <input
                   type="number"
                   value={formData.basePrice}
@@ -158,7 +225,7 @@ export default function Services() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">מרווח רווח (%)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{s.marginLabel}</label>
                 <input
                   type="number"
                   value={formData.profitMargin}
@@ -174,13 +241,13 @@ export default function Services() {
                 onClick={handleSave}
                 className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium"
               >
-                💾 שמור
+                {s.saveBtn}
               </button>
               <button
                 onClick={() => setShowForm(false)}
                 className="flex-1 bg-gray-300 text-gray-900 py-2 rounded-lg hover:bg-gray-400 font-medium"
               >
-                ביטול
+                {s.cancelBtn}
               </button>
             </div>
           </div>
@@ -189,23 +256,23 @@ export default function Services() {
 
       {/* Services Table */}
       <div className="bg-white rounded-xl shadow-sm border p-6 overflow-x-auto">
-        <h2 className="text-xl font-bold mb-4">📋 קטלוג שירותים</h2>
+        <h2 className="text-xl font-bold mb-4">{s.tableTitle}</h2>
         
         {services.length === 0 ? (
           <div className="text-center py-8">
             <Package size={40} className="mx-auto text-gray-300 mb-2" />
-            <p className="text-gray-500">אין שירותים עדיין. בואו נוסיף את הראשון!</p>
+            <p className="text-gray-500">{s.emptyMsg}</p>
           </div>
         ) : (
           <table className={tableClass}>
             <thead>
               <tr className="border-b bg-gray-50">
-                <th className="text-right p-3 font-semibold">שם</th>
-                <th className="text-right p-3 font-semibold">קטגוריה</th>
-                <th className="text-right p-3 font-semibold">מחיר</th>
-                <th className="text-right p-3 font-semibold">משך זמן</th>
-                <th className="text-right p-3 font-semibold">מרווח</th>
-                <th className="text-right p-3 font-semibold">פעולות</th>
+                <th className="text-right p-3 font-semibold">{s.colName}</th>
+                <th className="text-right p-3 font-semibold">{s.colCategory}</th>
+                <th className="text-right p-3 font-semibold">{s.colPrice}</th>
+                <th className="text-right p-3 font-semibold">{s.colDuration}</th>
+                <th className="text-right p-3 font-semibold">{s.colMargin}</th>
+                <th className="text-right p-3 font-semibold">{s.colActions}</th>
               </tr>
             </thead>
             <tbody>
@@ -217,7 +284,7 @@ export default function Services() {
                   </td>
                   <td className="p-3 text-sm">{service.category}</td>
                   <td className="p-3 font-semibold">₪{parseFloat(service.basePrice).toFixed(0)}</td>
-                  <td className="p-3 text-sm">{service.duration} דקות</td>
+                  <td className="p-3 text-sm">{s.minutes(service.duration)}</td>
                   <td className="p-3">
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
                       {service.profitMargin}%
@@ -249,14 +316,14 @@ export default function Services() {
       {/* Revenue Analytics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-bold mb-4">💰 ניתוח הכנסות</h3>
+          <h3 className="text-lg font-bold mb-4">{s.revenueTitle}</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">סכום כולל שירותים:</span>
+              <span className="text-gray-600">{s.totalRevLabel}</span>
               <span className="font-bold text-lg">₪{totalRevenue.toFixed(0)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">שירות יקר ביותר:</span>
+              <span className="text-gray-600">{s.highestLabel}</span>
               <span className="font-bold">
                 {services.length > 0
                   ? `₪${Math.max(...services.map((s) => parseFloat(s.basePrice) || 0)).toFixed(0)}`
@@ -264,7 +331,7 @@ export default function Services() {
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">שירות זול ביותר:</span>
+              <span className="text-gray-600">{s.lowestLabel}</span>
               <span className="font-bold">
                 {services.length > 0
                   ? `₪${Math.min(...services.map((s) => parseFloat(s.basePrice) || 0)).toFixed(0)}`
@@ -275,7 +342,7 @@ export default function Services() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-bold mb-4">📊 התפלגות קטגוריות</h3>
+          <h3 className="text-lg font-bold mb-4">{s.catTitle}</h3>
           <div className="space-y-2">
             {categories.map((cat) => {
               const count = services.filter((s) => s.category === cat).length;
