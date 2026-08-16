@@ -12,7 +12,7 @@ export function LanguageProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem("language", language);
-    document.documentElement.dir = language === "he" ? "rtl" : "ltr";
+    document.documentElement.dir = ["he"].includes(language) ? "rtl" : "ltr";
     document.documentElement.lang = language;
   }, [language]);
 

@@ -51,6 +51,7 @@ export default function Header() {
             >
               <option value="he">עברית</option>
               <option value="en">English</option>
+              <option value="ru">Русский</option>
             </select>
           </div>
 
