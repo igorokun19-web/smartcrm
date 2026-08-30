@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
+const { requireAuth } = require('../middleware/requireAuth');
 
 const router = express.Router();
 
@@ -24,17 +25,6 @@ function getOptionalUserId(req) {
   } catch {
     return null;
   }
-}
-
-function requireAuth(req, res, next) {
-  const userId = getOptionalUserId(req);
-
-  if (!userId) {
-    return res.status(401).json({ success: false, error: 'נדרשת התחברות' });
-  }
-
-  req.userId = userId;
-  next();
 }
 
 function normalizeString(value, maxLength = 255) {

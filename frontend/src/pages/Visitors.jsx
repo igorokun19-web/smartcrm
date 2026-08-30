@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Users, Eye, Globe, LogIn, RefreshCw } from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
 
 const API_URL = import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? "http://localhost:3001" : "https://smartcrm-3cle.onrender.com");
@@ -77,7 +78,11 @@ export default function Visitors() {
     setError(null);
 
     try {
-      const token = localStorage.getItem("authToken");
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error("Authentication is required");
+      }
       const response = await fetch(`${API_URL}/api/analytics/summary?days=${selectedDays}`, {
         headers: {
           Authorization: `Bearer ${token}`,
