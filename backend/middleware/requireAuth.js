@@ -42,6 +42,10 @@ async function requireAuth(req, res, next) {
   }
   const { data: { user: supaUser }, error } = await admin.auth.getUser(token);
 
+  if (error?.status >= 500 || error?.code === 'PGRST002') {
+    return res.status(503).json({ success: false, error: 'שירות האימות אינו זמין זמנית. נסה שוב בעוד רגע.' });
+  }
+
   if (error || !supaUser) {
     return res.status(403).json({ success: false, error: 'טוקן לא חוקי או פג תוקף' });
   }
