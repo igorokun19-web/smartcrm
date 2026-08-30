@@ -11,6 +11,9 @@ const db = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
+let databaseState = 'starting';
+let server;
+let isShuttingDown = false;
 
 if (!process.env.JWT_SECRET) {
   if (isProduction) {
@@ -244,6 +247,38 @@ app.use(express.static(publicPath, {
 // API ROUTES
 // ============================================
 
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    database: databaseState,
+    message: 'MyServices CRM Backend API',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/ready', (req, res) => {
+  if (databaseState !== 'ready') {
+    return res.status(503).json({
+      status: 'starting',
+      message: 'Service is initializing'
+    });
+  }
+
+  res.json({ status: 'ready' });
+});
+
+app.use('/api', (req, res, next) => {
+  if (databaseState === 'ready') {
+    return next();
+  }
+
+  res.status(503).json({
+    success: false,
+    error: 'השירות עדיין עולה. נסה שוב בעוד רגע.'
+  });
+});
+
 // Auth routes with rate limiting on login/register/password-reset
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', registerLimiter);
@@ -256,16 +291,6 @@ app.use('/api/billing/cancel', billingMutationLimiter);
 app.use('/api/billing/extend-trial', billingMutationLimiter);
 app.use('/api/billing', billingRoutes);
 app.use('/api/subscribe', subscribeRoutes);
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'MyServices CRM Backend API',
-    version: '1.0.0',
-    timestamp: new Date().toISOString()
-  });
-});
 
 // Keep trial lifecycle up to date without manual intervention.
 const BILLING_LIFECYCLE_INTERVAL_MS = Number(process.env.BILLING_LIFECYCLE_INTERVAL_MS || 6 * 60 * 60 * 1000);
@@ -309,7 +334,28 @@ app.use((req, res) => {
 // START SERVER
 // ============================================
 async function startServer() {
-  await db.ready;
+  server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`
+╔════════════════════════════════════════╗
+║  🚀 MyServices CRM Backend Server      ║
+╠════════════════════════════════════════╣
+║  ✅ Running on port ${PORT}              ║
+║  📍 Local: http://localhost:${PORT}      ║
+║  🌐 Frontend: ${process.env.FRONTEND_URL}  ║
+║  🔐 Database: PostgreSQL                ║
+╚════════════════════════════════════════╝
+  `);
+  });
+
+  try {
+    await db.ready;
+    databaseState = 'ready';
+    console.log('✓ Database is ready to accept requests');
+  } catch (error) {
+    databaseState = 'error';
+    console.error('❌ Database initialization failed:', error.message);
+    throw error;
+  }
 
   try {
     const startupLifecycleResult = await runBillingLifecycle('startup');
@@ -329,23 +375,6 @@ async function startServer() {
     }
   }, BILLING_LIFECYCLE_INTERVAL_MS);
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`
-╔════════════════════════════════════════╗
-║  🚀 MyServices CRM Backend Server      ║
-╠════════════════════════════════════════╣
-║  ✅ Running on port ${PORT}              ║
-║  📍 Local: http://localhost:${PORT}      ║
-║  🌐 Frontend: ${process.env.FRONTEND_URL}  ║
-║  🔐 Database: PostgreSQL                ║
-║  ✨ Features:                          ║
-║    • Password Hashing (bcryptjs)       ║
-║    • JWT Authentication                ║
-║    • Remember Me (7/30 days)           ║
-║    • Password Recovery Email           ║
-╚════════════════════════════════════════╝
-  `);
-  });
 }
 
 startServer().catch((error) => {
@@ -353,8 +382,24 @@ startServer().catch((error) => {
   process.exit(1);
 });
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n⛔ Server shutting down...');
-  db.pool.end().finally(() => process.exit(0));
-});
+function shutdown(signal) {
+  if (isShuttingDown) {
+    return;
+  }
+
+  isShuttingDown = true;
+  console.log(`\n⛔ Server shutting down after ${signal}...`);
+
+  const closeDatabase = () => {
+    db.pool.end().finally(() => process.exit(0));
+  };
+
+  if (server) {
+    server.close(closeDatabase);
+  } else {
+    closeDatabase();
+  }
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
