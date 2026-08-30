@@ -295,6 +295,10 @@ app.use('/api/subscribe', subscribeRoutes);
 // Keep trial lifecycle up to date without manual intervention.
 const BILLING_LIFECYCLE_INTERVAL_MS = Number(process.env.BILLING_LIFECYCLE_INTERVAL_MS || 6 * 60 * 60 * 1000);
 
+app.get('/', (req, res) => {
+  res.status(200).send('MyServices CRM Backend API');
+});
+
 // ============================================
 // ERROR HANDLING
 // ============================================
